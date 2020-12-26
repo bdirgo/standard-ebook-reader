@@ -62,8 +62,8 @@ var rendition = book.renderTo("viewer", {
   flow: "paginated",
   width: targetWidth,
   height: targetHeight,
-  script: '../../swiped-events.js',
-  stylesheet: isDarkMode ? '../../dark-ebook-styles.css' : '../../ebook-styles.css',
+  script: '../../../lib/swiped-events.js',
+  stylesheet: isDarkMode ? '../../../css/dark-ebook-styles.css' : '../../../css/ebook-styles.css',
 });
 console.log('rendition')
 console.log(rendition)
