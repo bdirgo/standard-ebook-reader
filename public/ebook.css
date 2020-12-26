@@ -1,0 +1,79 @@
+body {
+    display: grid;
+    grid-template: auto 1fr auto / minmax(15px, 4%) minmax(200px, 92%) minmax(15px, 4%);;
+    /* grid-template-columns: minmax(15px, 4%) minmax(200px, 92%) minmax(15px, 4%); */
+    padding: 0;
+    margin: 0;
+}
+
+
+/*
+  <div class="parent">
+    <header class="pink section">Header</header>
+    <div class="left-side blue section" contenteditable>Left Sidebar</div>
+    <main class="section coral" contenteditable> Main Content</main>
+    <div class="right-side yellow section" contenteditable>Right Sidebar</div>
+    <footer class="green section">Footer</footer>
+  </div> */
+
+  
+header {
+    padding: 2rem;
+    grid-column: 1 / 4;
+}
+
+.left-side {
+    grid-column: 1 / 2;
+}
+
+main {
+    grid-column: 2 / 3;
+}
+
+.right-side {
+    grid-column: 3 / 4;
+}
+
+footer {
+    grid-column: 1 / 4;
+}
+
+.loading-cover {
+    display: grid;
+    place-items: center;
+}
+
+img {
+    max-width: 90%;
+}
+
+.view {
+    position: relative;
+    left: -7px;
+}
+
+.dark > .left-side {
+    background-color: rgb(70, 80, 89);
+
+}
+
+.dark > .right-side {
+    background-color: rgb(70, 80, 89);
+
+}
+
+.left-side {
+    background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M20 .755l-14.374 11.245 14.374 11.219-.619.781-15.381-12 15.391-12 .609.755z"/></svg>');
+    background-position: 50%;
+    background-repeat: no-repeat;
+    z-index: 100;
+    background-color: azure;
+}
+
+.right-side {
+    background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M4 .755l14.374 11.245-14.374 11.219.619.781 15.381-12-15.391-12-.609.755z"/></svg>');
+    background-position: 50%;
+    background-repeat: no-repeat;
+    z-index: 100;
+    background-color: azure;
+}
