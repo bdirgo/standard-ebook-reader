@@ -97,9 +97,39 @@ displayed.then(function(renderer){
   // -- do stuff
 });
 
+function display(item){
+  var section = book.spine.get(item);
+  if(section) {
+    currentSection = section;
+    section.render().then(function(html){
+      saveCurrentLocation(rendition.currentLocation());
+      // viewer.srcdoc = html;
+      viewer.innerHTML = html;
+    });
+  }
+  return section;
+}
+
 // Navigation loaded
 book.loaded.navigation.then(function(toc){
   console.log(toc);
+  const docfrag = document.createDocumentFragment();
+  toc.forEach(function(chapter) {
+    var option = document.createElement("option");
+    option.textContent = chapter.label;
+    option.ref = chapter.href;
+
+    docfrag.appendChild(option);
+  });
+  tocSelect.appendChild(docfrag);
+  tocSelect.onchange = function(){
+      var index = tocSelect.selectedIndex,
+          url = tocSelect.options[index].ref;
+      rendition.display(url);
+      saveCurrentLocation(rendition.currentLocation());
+      // display(url);
+      return false;
+  };
 });
 
 var next = document.getElementById("next");

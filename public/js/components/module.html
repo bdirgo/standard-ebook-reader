@@ -1,0 +1,10 @@
+<script type="module">
+  import { h, render } from 'https://unpkg.com/preact?module';
+  import TodoList from './todo-list.js';
+  import htm from 'https://unpkg.com/htm?module';
+
+  // Initialize htm with Preact
+  const html = htm.bind(h);
+
+  render(html`<${TodoList} />`, document.body);
+</script>
