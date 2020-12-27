@@ -4,7 +4,7 @@ const windowHeight = window.innerHeight
 const windowWidth = window.innerWidth
 const fontSize = 18
 const padding = 24
-const targetHeight = windowHeight
+const targetHeight = windowHeight * 0.94
 const targetWidth = windowWidth * 0.94
 const CURRENTPAGEID = `${bookUrl}-currentPage`
 const CURRENTLYREADING = 'currentlyReading'
@@ -70,24 +70,22 @@ console.log(rendition)
 
 rendition.hooks.render.register(function(contents, view) {
 
-  contents.document.addEventListener('swiped-left', async function(e) {
+  contents.document.addEventListener('swiped-left', function(e) {
     console.log("swiped-left");
-    await rendition.next();
-    saveCurrentLocation(rendition.currentLocation());
+    rendition.next().then(() => afterDisplay(rendition.currentLocation()));
   });
   
-  contents.document.addEventListener('swiped-right', async function(e) {
+  contents.document.addEventListener('swiped-right', function(e) {
     console.log("swiped-right");
-    await rendition.prev();
-    saveCurrentLocation(rendition.currentLocation());
+    rendition.prev().then(() => afterDisplay(rendition.currentLocation()));
   });
 })
 
 var displayed
 if(localStorage.getItem(CURRENTPAGEID)) {
-  displayed = rendition.display(getStorage(CURRENTPAGEID));
+  displayed = rendition.display(getStorage(CURRENTPAGEID)).then(() => afterDisplay(rendition.currentLocation()));
 } else {
-  displayed = rendition.display()
+  displayed = rendition.display().then(() => afterDisplay(rendition.currentLocation()));
 }
 console.log('displayed')
 console.log(displayed)
@@ -97,17 +95,15 @@ displayed.then(function(renderer){
   // -- do stuff
 });
 
-function display(item){
-  var section = book.spine.get(item);
-  if(section) {
-    currentSection = section;
-    section.render().then(function(html){
-      saveCurrentLocation(rendition.currentLocation());
-      // viewer.srcdoc = html;
-      viewer.innerHTML = html;
-    });
-  }
-  return section;
+function afterDisplay(currentLocation){
+  console.log(currentLocation)
+  saveCurrentLocation(currentLocation);
+  const {
+    page,
+    total
+  } = currentLocation.start.displayed
+  footer.textContent = `${page} / ${total}`
+  tocSelect.selectedIndex = currentLocation.start.index
 }
 
 // Navigation loaded
@@ -125,42 +121,36 @@ book.loaded.navigation.then(function(toc){
   tocSelect.onchange = function(){
       var index = tocSelect.selectedIndex,
           url = tocSelect.options[index].ref;
-      rendition.display(url);
-      saveCurrentLocation(rendition.currentLocation());
-      // display(url);
+      rendition.display(url).then(() => {
+        afterDisplay(rendition.currentLocation());
+      })
       return false;
   };
 });
 
 var next = document.getElementById("next");
-next.addEventListener("click", async function(){
+next.addEventListener("click", function(){
 
-  await rendition.next();
-  saveCurrentLocation(rendition.currentLocation());
-
+  rendition.next().then(() => afterDisplay(rendition.currentLocation()));
 }, false);
 
 var prev = document.getElementById("prev");
-prev.addEventListener("click", async function(){
+prev.addEventListener("click", function(){
 
-  await rendition.prev();
-  saveCurrentLocation(rendition.currentLocation());
-
+  rendition.prev().then(() => afterDisplay(rendition.currentLocation()));
 }, false);
 
-var keyListener = async function(e) {
+var keyListener = function(e) {
 
   // Left Key
   if ((e.code || e.key) === "ArrowLeft") {
-    await rendition.prev();
+    rendition.prev().then(() => afterDisplay(rendition.currentLocation()));
   }
 
   // Right Key
   if ((e.code || e.key) === "ArrowRight") {
-    await rendition.next();
+    rendition.next().then(() => afterDisplay(rendition.currentLocation()));
   }
-  
-  saveCurrentLocation(rendition.currentLocation());
 }
 rendition.on("keyup", keyListener);
 document.addEventListener("keyup", keyListener, false);

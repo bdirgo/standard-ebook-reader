@@ -22,8 +22,10 @@
   </head>
   <body>
     <header class="section">
-        <a href="/">Back</a>
-        <select id="tocSelect"></select>
+        <!-- <a href="/">Back</a> -->
+        <div class="select">
+            <select id="tocSelect"></select>
+        </div>
     </header>
     <div id="prev" class="left-side">&nbsp;</div>
     <main>
@@ -31,7 +33,7 @@
         <div id="viewer" class="view"></div>
     </main>
     <div id="next" class="right-side">&nbsp;</div>
-    <footer class="section">Footer</footer>
+    <footer id="footer" class="section"></footer>
     <script>
         const params = (new URL(document.location)).searchParams;
         const bookParam = params.get('book')
