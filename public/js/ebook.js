@@ -108,15 +108,28 @@ function afterDisplay(currentLocation){
 
 // Navigation loaded
 book.loaded.navigation.then(function(toc){
+  const {
+    tocByHref
+  } = toc;
   console.log(toc);
+  console.log(tocByHref);
   const docfrag = document.createDocumentFragment();
-  toc.forEach(function(chapter) {
-    var option = document.createElement("option");
-    option.textContent = chapter.label;
-    option.ref = chapter.href;
-
-    docfrag.appendChild(option);
-  });
+  function tickToc(toc) {
+    function createOption(chapterObj) {
+      var option = document.createElement("option");
+      option.textContent = chapterObj.label;
+      option.ref = chapterObj.href;
+      return option
+    }
+    toc.forEach(function(chapter) {
+      var option = createOption(chapter)
+      docfrag.appendChild(option);
+      if (chapter.subitems.length >= 0) {
+        tickToc(chapter.subitems)
+      }
+    });
+  }
+  tickToc(toc)
   tocSelect.appendChild(docfrag);
   tocSelect.onchange = function(){
       var index = tocSelect.selectedIndex,
