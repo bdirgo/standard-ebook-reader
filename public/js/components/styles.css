@@ -7,18 +7,24 @@ ul {
     overflow-x: scroll;
 }
 
-li {
+.subject-list-image {
     display: inline;
     padding: 0 1em 0 0 ;
 }
 
-li a {
+.subject-list-image a {
     text-decoration: none;
 }
 
-img {
+.book-cover {
     object-fit: cover;
-    max-height: 250px;
+    max-width: 167px;
+    height: auto;
+}
+
+.detail-book-cover {
+    max-width: 50%;
+    height: auto;
 }
 
 .hide {
@@ -46,6 +52,10 @@ img {
     margin: auto;
     padding: 1em;
     border: 1px solid #888;
+    height: 100%;
+    height: -moz-available;          /* WebKit-based browsers will ignore this. */
+    height: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
+    height: fill-available;
 }
 
 /* The Close Button */
@@ -54,6 +64,8 @@ img {
     float: right;
     font-size: 28px;
     font-weight: bold;
+    border: 1px solid black;
+    padding: 0 7px;
 }
 
 .close:hover,

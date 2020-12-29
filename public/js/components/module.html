@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="preload" href="https://unpkg.com/preact?module" as="script" crossorigin>
   <link rel="preload" href="https://unpkg.com/htm?module" as="script" crossorigin>
+  <link rel="stylesheet" type="text/css" href="../../css/index.css">
   <link rel="stylesheet" type="text/css" href="./styles.css">
 
   <!-- 
@@ -32,21 +33,24 @@
   // Initialize htm with Preact
   const html = htm.bind(h);
 
-  class App extends Component {
+  class AllSubjects extends Component {
     constructor() {
         super();
         this.state = {
           error: null,
           isLoaded: false,
           subjects: [],
+          numberOfSubjects: 4,
           currentEntry: null,
           showDetailsView: false,
         }
         this.showDetailsFor = this.showDetailsFor.bind(this);
         this.toggleDetails = this.toggleDetails.bind(this);
+        this.loadMore = this.loadMore.bind(this);
         this.subjects_url = 'https://standardebooks.org/opds/subjects';
     }
     componentDidMount() {
+      window.addEventListener('scroll', this.loadMore);
       fetch(this.subjects_url).then(res => res.text())
             .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")), 
                 (error) => {
@@ -74,6 +78,22 @@
                 }
             )
     }
+    componentWillUnmount(){
+        window.removeEventListener('scroll', this.loadMore);
+    }
+    loadMore(){
+      const {
+        subjects,
+        numberOfSubjects
+      } = this.state;
+      if (window.innerHeight + document.documentElement.scrollTop === document.scrollingElement.scrollHeight) {
+        if (subjects.length > numberOfSubjects) {
+          this.setState( prev => ({
+            numberOfSubjects: prev.numberOfSubjects + prev.numberOfSubjects
+          }))
+        }
+      }
+    }
     toggleDetails() {
       this.setState({ showDetailsView: !this.state.showDetailsView })
     }
@@ -100,6 +120,7 @@
     }
     render() {
       console.log(this.state)
+      const subjectsMap = this.state.subjects.slice(0,this.state.numberOfSubjects)
       return (html`
         <${Clock} />
         <div
@@ -109,7 +130,7 @@
         >
           ${this.state.showDetailsView && 
             html`<${DetailView} toggleDetails=${this.toggleDetails} show=${this.state.showDetailsView} entry=${this.state.currentEntry}/>`}
-          ${this.state.subjects.map(subject => {
+          ${subjectsMap.map(subject => {
             return html`
               <${Subject}
                 key=${subject.id}
@@ -126,7 +147,7 @@
   }
 
   render(html`
-    <${App} />
+    <${AllSubjects} />
     `, document.body);
 </script>
 

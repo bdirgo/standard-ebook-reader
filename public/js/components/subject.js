@@ -3,6 +3,7 @@ import htm from 'https://unpkg.com/htm?module';
 const html = htm.bind(h);
 
 import xmlToJson from '../../lib/xmlToJson.js';
+import shuffle from '../../lib/shuffle.js';
 
 export class Clock extends Component {
     constructor() {
@@ -202,7 +203,7 @@ class SubjectList extends Component {
                     const entries = result.feed.entry.map(e => new Entry(e))
                     this.setState({
                         isLoaded: true,
-                        entries: entries
+                        entries: shuffle(entries)
                     });
                 },
                 // Note: it's important to handle errors here
@@ -244,7 +245,7 @@ class SubjectList extends Component {
                         `
                     })}
                     <li class="subject-list-link">
-                        <a>See all</a>
+                        <a href=${'#'}>See all</a>
                     </li>
                 </ul>
             `)
@@ -255,8 +256,8 @@ class SubjectList extends Component {
 const SubjectListEntry = ({entry, onClick}) => {
     const standardURL = 'https://standardebooks.org/'
     return (html`
-        <li onClick=${onClick}>
-            <img id=${entry.id} src=${standardURL + entry.thumbnail} alt=${entry.title}/>
+        <li class="subject-list-image" onClick=${onClick}>
+            <img class="book-cover" id=${entry.id} width=${'350'} height=${'525'} src=${standardURL + entry.thumbnail} alt=${entry.title}/>
         </li>
     `)
 }
@@ -264,6 +265,7 @@ const SubjectListEntry = ({entry, onClick}) => {
 export class DetailView extends Component {
     constructor() {
         super();
+        this.standardURL = 'https://standardebooks.org'
         this.escFunction = this.escFunction.bind(this);
     }
     escFunction(event) {
@@ -272,32 +274,39 @@ export class DetailView extends Component {
       }
     }
     componentDidMount() {
-        const standardURL = 'https://standardebooks.org'
         document.addEventListener("keydown", this.escFunction, false);
-        fetch(standardURL + this.props.entry.epubLink).then(() => console.log('fetched'))
+        fetch(this.standardURL + this.props.entry.epubLink).then(() => console.log('fetched'))
     }
     componentWillUnmount(){
         document.removeEventListener("keydown", this.escFunction, false);
     }
     render() {
         const {
+            toggleDetails,
+            show,
+            entry,
+        } = this.props;
+        const {
             title,
             summary,
             authorArray,
-            epubLink
-        } = this.props.entry;
-        const {
-            toggleDetails,
-            show,
-        } = this.props;
+            epubLink,
+            cover,
+            categories,
+        } = entry;
+        const readLink = `/ebook.html?book=${epubLink.slice(0, -5)}`
+        console.log(entry)
         return (html`
             <div class="modal ${!show ? 'hide' : ''}">
                 <div class="modal-content">
-                    <span onClick=${toggleDetails} class="close">x</span>
-                    <h2>${title}</h2>
+                    <span onClick=${toggleDetails} class="close">X</span>
+                    <a href=${readLink}>
+                        <img class="img-fluid detail-book-cover " width=1400 height=2100 src=${this.standardURL + cover} />
+                    </a>
+                    <h2><a href=${readLink}>${title}</a></h2>
                     <${AuthorDetails} authors=${authorArray} />
                     <p>${summary}</p>
-                    <a href='/ebook.html?book=${epubLink.slice(0, -5)}'>Read now</a>
+                    <a href=${readLink}>Read now</a>
                 </div>
             </div>
         `);
