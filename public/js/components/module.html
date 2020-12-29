@@ -1,10 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preload" href="https://unpkg.com/preact?module" as="script" crossorigin>
+  <link rel="preload" href="https://unpkg.com/htm?module" as="script" crossorigin>
+  <link rel="stylesheet" type="text/css" href="./styles.css">
+
+  <!-- 
+    Resources that are pointed to from inside CSS, like fonts or images.
+    Resources that JavaScript can request, like JSON, imported scripts, or web workers.
+    Larger images and video files.
+
+  - document: An HTML document intended to be embedded by a <frame> or <iframe>.
+  - fetch: Resource to be accessed by a fetch or XHR request, such as an ArrayBuffer or JSON file.
+  - font: Font file.
+  - image: Image file.
+  - script: JavaScript file.
+  - style: CSS stylesheet.
+  - worker: A JavaScript web worker or shared worker.
+
+  -->
+</head>
 <script type="module">
-  import { h, render } from 'https://unpkg.com/preact?module';
-  import TodoList from './todo-list.js';
+  import { h, render, Component } from 'https://unpkg.com/preact?module';
   import htm from 'https://unpkg.com/htm?module';
+  import {Clock, Subject, SubjectEntry, DetailView} from './subject.js';
+  import xmlToJson from '../../lib/xmlToJson.js';
+  import shuffle from '../../lib/shuffle.js';
 
   // Initialize htm with Preact
   const html = htm.bind(h);
 
-  render(html`<${TodoList} />`, document.body);
+  class App extends Component {
+    constructor() {
+        super();
+        this.state = {
+          error: null,
+          isLoaded: false,
+          subjects: [],
+          currentEntry: null,
+          shouldShowDetailsView: false,
+        }
+        this.showDetailsFor = this.showDetailsFor.bind(this);
+        this.toggleDetails = this.toggleDetails.bind(this);
+        this.subjects_url = 'https://standardebooks.org/opds/subjects';
+    }
+    componentDidMount() {
+      fetch(this.subjects_url).then(res => res.text())
+            .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")), 
+                (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                })
+            .then(
+                (result) => {
+                    console.log(result)
+                    this.setState({
+                        isLoaded: true,
+                        subjects: shuffle(result.feed.entry.map(e => new SubjectEntry(e)))
+                    });
+                },
+                // Note: it's important to handle errors here
+                // instead of a catch() block so that we don't swallow
+                // exceptions from actual bugs in components.
+                (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            )
+    }
+    toggleDetails() {
+      this.setState({ shouldShowDetailsView: !this.state.shouldShowDetailsView })
+    }
+    showDetailsFor(entry) {
+      console.log(entry)
+      this.setState({ currentEntry: entry });
+      this.toggleDetails()
+    }
+    render() {
+      return (html`
+        <${Clock} />
+        ${this.state.currentEntry && html`<${DetailView} onClose=${this.toggleDetails} show=${this.state.shouldShowDetailsView} entry=${this.state.currentEntry}/>`}
+        ${this.state.subjects.map(subject => {
+          return html`
+            <${Subject}
+              key=${subject.id}
+              subject=${subject.title}
+              text=${subject.content}
+              url=${subject.id}
+              onClick=${this.showDetailsFor}
+            />
+        `})}
+      `)
+    }
+
+  }
+
+  render(html`
+    <${App} />
+    `, document.body);
 </script>
+
+</html>
