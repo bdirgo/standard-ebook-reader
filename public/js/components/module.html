@@ -40,7 +40,7 @@
           isLoaded: false,
           subjects: [],
           currentEntry: null,
-          shouldShowDetailsView: false,
+          showDetailsView: false,
         }
         this.showDetailsFor = this.showDetailsFor.bind(this);
         this.toggleDetails = this.toggleDetails.bind(this);
@@ -75,7 +75,23 @@
             )
     }
     toggleDetails() {
-      this.setState({ shouldShowDetailsView: !this.state.shouldShowDetailsView })
+      this.setState({ showDetailsView: !this.state.showDetailsView })
+    }
+    handleClick() {
+      console.log('click on app')
+      if (!this.state.showDetailsView) {
+        document.addEventListener("click", this.handleOutsideClick, false);
+      } else {
+        document.removeEventListener("click", this.handleOutsideClick, false);
+      }
+
+      this.setState(prevState => ({
+        showDetailsView: !prevState.showDetailsView,
+        entry: prevState.showDetailsView ? null : prevState.entry
+      }));
+    }
+    handleOutsideClick(ev) {
+      if (!this.node.contains(e.target)) this.handleClick();
     }
     showDetailsFor(entry) {
       console.log(entry)
@@ -83,19 +99,27 @@
       this.toggleDetails()
     }
     render() {
+      console.log(this.state)
       return (html`
         <${Clock} />
-        ${this.state.currentEntry && html`<${DetailView} onClose=${this.toggleDetails} show=${this.state.shouldShowDetailsView} entry=${this.state.currentEntry}/>`}
-        ${this.state.subjects.map(subject => {
-          return html`
-            <${Subject}
-              key=${subject.id}
-              subject=${subject.title}
-              text=${subject.content}
-              url=${subject.id}
-              onClick=${this.showDetailsFor}
-            />
-        `})}
+        <div
+          ref=${node => {
+            this.node = node;
+          }}
+        >
+          ${this.state.showDetailsView && 
+            html`<${DetailView} toggleDetails=${this.toggleDetails} show=${this.state.showDetailsView} entry=${this.state.currentEntry}/>`}
+          ${this.state.subjects.map(subject => {
+            return html`
+              <${Subject}
+                key=${subject.id}
+                subject=${subject.title}
+                text=${subject.content}
+                url=${subject.id}
+                onClick=${this.showDetailsFor}
+              />
+          `})}
+        </div>
       `)
     }
 

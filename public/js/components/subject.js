@@ -74,7 +74,7 @@ export const Subject = ({subject, text, url, onClick}) => {
     return (html`
         <${Heading} text=${subject} />
         <${Content} text=${text} />
-        <${SubjectList} url=${url} onClick=${onClick} />
+        <${SubjectList} isBrowse=${true} url=${url} onClick=${onClick} />
     `);
 }
 
@@ -186,7 +186,8 @@ class SubjectList extends Component {
     }
 
     componentDidMount() {
-        const { url } = this.props;
+        const { url } = this.props; // clamp number of items to 10 ish, add see all button
+        // lazy load in the images, need placeholders so no jumping
         fetch(url).then(res => res.text())
             .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")), 
                 (error) => {
@@ -198,9 +199,10 @@ class SubjectList extends Component {
             .then(
                 (result) => {
                     console.log(result.feed.entry)
+                    const entries = result.feed.entry.map(e => new Entry(e))
                     this.setState({
                         isLoaded: true,
-                        entries: result.feed.entry.map(e => new Entry(e))
+                        entries: entries
                     });
                 },
                 // Note: it's important to handle errors here
@@ -222,19 +224,28 @@ class SubjectList extends Component {
         onClick(clickedEntry)
     }
     render() {
-        const { error, isLoaded, entries } = this.state;
+        const { isBrowse } = this.props;
+        const { error, isLoaded, entries = [] } = this.state;
+        let entriesMap = entries;
+        if (isBrowse) {
+            entriesMap = entries.slice(0,6)
+        }
         if (error) {
             return html`<div>Error: ${error.message}</div>`;
         } else if (!isLoaded) {
             return html`<div>Loading...</div>`;
         } else {
+            // add class from index
             return (html`
-                <ul>
-                    ${entries.map((entry) => {
+                <ul class="subject-list ${isBrowse ? 'browse' : ''}">
+                    ${entriesMap.map((entry) => {
                         return html`
                             <${SubjectListEntry} entry=${entry} onClick=${this.handleClick}/>
                         `
                     })}
+                    <li class="subject-list-link">
+                        <a>See all</a>
+                    </li>
                 </ul>
             `)
         }
@@ -254,35 +265,18 @@ export class DetailView extends Component {
     constructor() {
         super();
         this.escFunction = this.escFunction.bind(this);
-        this.handleClick = this.handleClick.bind(this);
-        this.handleClickOutside = this.handleClickOutside.bind(this);
     }
     escFunction(event) {
       if(event.keyCode === 27) {
-        this.props.onClose()
+        this.props.toggleDetails()
       }
-    }
-    handleClick(ev) {
-        if (this.node.contains(ev.target)) {
-            console.log('inside')
-            // clicked inside component
-            return;
-        }
-        console.log('outside')
-
-        this.handleClickOutside(ev);
-    }
-    handleClickOutside(ev){
-        this.props.onClose()
     }
     componentDidMount() {
         const standardURL = 'https://standardebooks.org'
         document.addEventListener("keydown", this.escFunction, false);
-        document.addEventListener('mousedown', this.handleClick, false);
         fetch(standardURL + this.props.entry.epubLink).then(() => console.log('fetched'))
     }
     componentWillUnmount(){
-        document.removeEventListener('mousedown', this.handleClick, false);
         document.removeEventListener("keydown", this.escFunction, false);
     }
     render() {
@@ -293,19 +287,30 @@ export class DetailView extends Component {
             epubLink
         } = this.props.entry;
         const {
-            onClose,
+            toggleDetails,
             show,
         } = this.props;
         return (html`
             <div class="modal ${!show ? 'hide' : ''}">
-                <div ref=${node => this.node = node} class="modal-content">
-                <span onClick=${onClose} class="close">x</span>
-                    <p>${title}</p>
-                    <p>${authorArray.map(author => html`<span key=${JSON.stringify(author)}>${author}</span>`)}</p>
+                <div class="modal-content">
+                    <span onClick=${toggleDetails} class="close">x</span>
+                    <h2>${title}</h2>
+                    <${AuthorDetails} authors=${authorArray} />
                     <p>${summary}</p>
                     <a href='/ebook.html?book=${epubLink.slice(0, -5)}'>Read now</a>
                 </div>
             </div>
         `);
     }
+}
+
+const AuthorDetails = ({
+    authors,
+}) => {
+    console.log(authors)
+    return (html`
+        <i>${authors.map((author, index) => {
+            return (html`${index > 0 ? ', and ' : ''}<a key=${JSON.stringify(author)} href=${`/?q=${author}`}>${author}</a>`) 
+        })}</i>
+    `)
 }
