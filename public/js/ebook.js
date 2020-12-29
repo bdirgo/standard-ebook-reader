@@ -54,9 +54,11 @@ console.log('book')
 console.log(book)
 
 // https://www.gutenberg.org/cache/epub/25717/pg25717.epub
-// const response = await fetch('https://cors-anywhere.herokuapp.com/https://www.gutenberg.org/cache/epub/25717/pg25717-images.epub')
+// const response = await fetch(standardUrl + bookUrl)
 // const buffer = await response.arrayBuffer()
 // var book = ePub(buffer)
+console.log('book')
+console.log(book)
 var rendition = book.renderTo("viewer", {
   manager: "continuous",
   flow: "paginated",
