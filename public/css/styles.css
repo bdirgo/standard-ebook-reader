@@ -1,7 +1,6 @@
 
-ul {
+.subject-list {
     list-style-type: none;
-    margin: 0;
     padding: 0;
     display: flex;
     overflow-x: scroll;
@@ -18,8 +17,12 @@ ul {
 
 .book-cover {
     object-fit: cover;
-    max-width: 167px;
+    max-width: 160px;
     height: auto;
+}
+
+.block {
+    display: block;
 }
 
 .detail-book-cover {
@@ -66,6 +69,8 @@ ul {
     font-weight: bold;
     border: 1px solid black;
     padding: 0 7px;
+    margin: 5px;
+    cursor: pointer;
 }
 
 .close:hover,

@@ -17,7 +17,7 @@
     <title>Standard Ebook Reader</title>
   </head>
   <body>
-    <h1><a href="/">Standard Ebook Reader</a></h1>
+    <b><a id="update-button" href="/">Standard Ebook Reader</a></b>
     <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
     <nav>
       <form>
@@ -26,15 +26,14 @@
       </form>
       <div class="parent">
         <a href="?q=new_release" class="box button">New</a>
-        <a href="?q=_subjects" class="box button">By Subject</a>
-        <a href="?q=_all" class="box button">All</a>
+        <a href="./browse.html" class="box button">Browse</a>
+        <!-- <a href="?q=_all" class="box button">All</a> -->
       </div>
     </nav>
     <div id="root" class="root loading"></div>
     <p id="install-prompt"><b>Add this website to your home screen to get to the newsest books quicker.</b></p>
     <p id="explainer">Click on a book to start reading right away in your browser.</p>
     <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p> 
-    <button class="hide" id="update-button">Request App Update</button>
     <script src="./js/index.js"></script>
     <script type="module" src="./darkMode/darkMode.js"></script>
   </body>

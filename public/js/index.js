@@ -180,26 +180,26 @@ const renderApp = (response) => {
     return (`
         ${
         q === subjects ? (`
-            <h2>${feedtitleText}</h2>
+            <h2 class="index">${feedtitleText}</h2>
             ${ListNav(entriesArray)}
         `) :
         q === null ? (
             recentBook.length > 0 ? (`
-                <h2>Recent Books</h2>
+                <h2 class="index">Recent Books</h2>
                 ${List(recentBook)}
             `) : ''
         ) :
         q === all ? (`
-            <h2>${feedtitleText}</h2>
+            <h2 class="index">${feedtitleText}</h2>
             ${List(entriesArray)}
         `) :
         q === new_release ? (`
-            <h2>${feedtitleText}</h2>
+            <h2 class="index">${feedtitleText}</h2>
             ${List(entriesArray)}
         `) :
         // Else its a Query
         (`
-            <h2>${feedtitleText}</h2>
+            <h2 class="index">${feedtitleText}</h2>
             ${List(entriesArray)}
         `)}
     `)

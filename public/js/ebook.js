@@ -46,7 +46,6 @@ const saveCurrentLocation = ({
 }) => {
   populateStorage(CURRENTPAGEID, atStart ? start.href: start.cfi)
 }
-addBookToCurrentlyReading()
 console.log(standardUrl)
 console.log(bookUrl)
 var book = ePub(standardUrl + bookUrl);
@@ -69,6 +68,7 @@ var rendition = book.renderTo("viewer", {
 });
 console.log('rendition')
 console.log(rendition)
+addBookToCurrentlyReading()
 
 rendition.hooks.render.register(function(contents, view) {
 

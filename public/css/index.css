@@ -28,7 +28,7 @@ label {
 	visibility: hidden;
 }
 
-h1, h2 {
+h1.index, h2.index {
 	margin-top: 0;
 }
 

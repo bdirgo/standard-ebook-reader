@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preload" href="https://unpkg.com/preact?module" as="script" crossorigin>
+  <link rel="preload" href="https://unpkg.com/htm?module" as="script" crossorigin>
+  <link rel="stylesheet" type="text/css" href="./css/index.css">
+  <link rel="stylesheet" type="text/css" href="./css/styles.css">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#1271e6">
+  <meta property="og:title" content="Standard Ebook Reader" />
+  <meta property="og:image" content="https://standardebooks.org/images/logo.png" />
+  <meta name="Description" content="Read books from Standard Ebooks">
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <title>Standard Ebook Reader</title>
+</head>
+<body>
+  <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
+</body>
+
+<script type="module">
+  import { h, render, Component } from 'https://unpkg.com/preact?module';
+  import htm from 'https://unpkg.com/htm?module';
+  import {Clock, Subject, SubjectEntry, SubjectList, Entry, DetailView} from './js/components/subject.js';
+  import xmlToJson from './lib/xmlToJson.js';
+  import shuffle from './lib/shuffle.js';
+
+  // Initialize htm with Preact
+  const html = htm.bind(h);
+
+  const ALLSUBJECTSID = 'ALLSUBJECTS'
+  const CURRENTLYREADING = 'currentlyReading'
+
+  const populateStorage = (id, value) => {
+    window.localStorage.setItem(id, JSON.stringify(value));
+    
+  }
+  const getStorage = (id) => {
+    return JSON.parse(window.localStorage.getItem(id));
+  }
+
+  class AllSubjects extends Component {
+    constructor() {
+        super();
+        if (getStorage(ALLSUBJECTSID)) {
+          this.state = getStorage(ALLSUBJECTSID)
+        } else {
+          this.state = {
+            error: null,
+            isLoaded: false,
+            shouldLoad: true,
+            subjects: [],
+            numberOfSubjects: 4,
+            oneSubjectId: null,
+            currentEntry: null,
+            showOneSubject: false,
+            showDetailsView: false,
+            showRecent: false,
+            showNavigation: false,
+          }
+          populateStorage(ALLSUBJECTSID, this.state)
+        }
+        this.all_url = 'https://standardebooks.org/opds/all'
+        this.showDetailsFor = this.showDetailsFor.bind(this);
+        this.toggleDetails = this.toggleDetails.bind(this);
+        this.loadMore = this.loadMore.bind(this);
+        this.toggleBrowse = this.toggleBrowse.bind(this);
+        this.toggleAllOfSubject = this.toggleAllOfSubject.bind(this);
+        this.subjects_url = 'https://standardebooks.org/opds/subjects';
+    }
+    componentDidMount() {
+
+      window.addEventListener('scroll', this.loadMore);
+      // if (getStorage(CURRENTLYREADING)) {
+      //   this.setState({showRecent: true, showNavigation: true})
+      // }
+      // if (q !== '') {
+      //   this.setState({showQuery: true})
+      // }
+      if (this.state.shouldLoad) {
+        fetch(this.subjects_url).then(res => res.text())
+              .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")), 
+                  (error) => {
+                      this.setState({
+                          isLoaded: true,
+                          error
+                      });
+                  })
+              .then(
+                  (result) => {
+                      console.log(result)
+                      this.setState({
+                          isLoaded: true,
+                          shouldLoad: false,
+                          subjects: result.feed.entry.map(e => new SubjectEntry(e))
+                      });
+                  },
+                  // Note: it's important to handle errors here
+                  // instead of a catch() block so that we don't swallow
+                  // exceptions from actual bugs in components.
+                  (error) => {
+                      this.setState({
+                          isLoaded: true,
+                          error
+                      });
+                  }
+              )
+      }
+    }
+    componentWillUnmount(){
+        window.removeEventListener('scroll', this.loadMore);
+    }
+    loadMore(){
+      const {
+        subjects,
+        numberOfSubjects
+      } = this.state;
+      if (window.innerHeight + document.documentElement.scrollTop === document.scrollingElement.scrollHeight) {
+        if (subjects.length > numberOfSubjects) {
+          this.setState( prev => ({
+            numberOfSubjects: prev.numberOfSubjects + prev.numberOfSubjects
+          }))
+        }
+      }
+    }
+    toggleDetails() {
+      this.setState({ showDetailsView: !this.state.showDetailsView })
+    }
+    handleClick() {
+      console.log('click on app')
+      if (!this.state.showDetailsView) {
+        document.addEventListener("click", this.handleOutsideClick, false);
+      } else {
+        document.removeEventListener("click", this.handleOutsideClick, false);
+      }
+
+      this.setState(prevState => ({
+        showDetailsView: !prevState.showDetailsView,
+        entry: prevState.showDetailsView ? null : prevState.entry
+      }));
+    }
+    handleOutsideClick(ev) {
+      if (!this.node.contains(e.target)) this.handleClick();
+    }
+    showDetailsFor(entry) {
+      console.log(entry)
+      this.setState({ currentEntry: entry });
+      this.toggleDetails()
+    }
+    toggleBrowse(ev) {
+      ev.preventDefault()
+      this.setState((state, props) => ({
+        showRecent: !state.showRecent,
+      }))
+    }
+    toggleAllOfSubject(ev) {
+      ev.preventDefault();
+      this.setState(state => ({
+        showOneSubject: !state.showOneSubject,
+        oneSubjectId: ev.target.id,
+      }))
+    }
+    render() {
+      populateStorage(ALLSUBJECTSID, this.state)
+      console.log(this.state)
+      const {
+        subjects,
+        numberOfSubjects,
+        showDetailsView,
+        currentEntry,
+        showOneSubject,
+        oneSubjectId,
+      } = this.state;
+      const subjectsMap = subjects.slice(0,numberOfSubjects)
+      let content = html`
+          <div
+            ref=${node => {
+              this.node = node;
+            }}
+          >
+            ${showDetailsView && 
+              html`<${DetailView} toggleDetails=${this.toggleDetails} show=${showDetailsView} entry=${currentEntry}/>`}
+            ${subjectsMap.filter((subject) => {
+              if (showOneSubject) {
+                return subject.id === oneSubjectId
+              } else {
+                return true
+              }
+            }).map(subject => {
+              return html`
+                <${Subject}
+                  key=${subject.id}
+                  id=${subject.id}
+                  subject=${subject.title}
+                  isBrowse=${true}
+                  text=${subject.content}
+                  url=${subject.id}
+                  seeAll=${!showOneSubject}
+                  onClick=${this.toggleAllOfSubject}
+                  onClickBook=${this.showDetailsFor}
+                />
+            `})}
+          </div>
+        `
+      // }
+      console.log(content)
+      return (html`
+          <b><a href="/">Standard Ebook Reader</a></b>
+          ${this.state.showNavigation && html`<nav>
+            <button onClick=${this.toggleBrowse}>${this.state.showRecent ? `Browse` : `Recent`}</button>
+          </nav>`}
+          ${content}
+      `)
+    }
+
+  }
+
+  class RecentBooks extends Component {
+    constructor(props) {
+      super(props);
+      this.all_url = 'https://standardebooks.org/opds/all'
+      this.state = {
+        error: null,
+        isLoaded: false,
+        allBooks: [],
+        currentEntry: null,
+        showDetailsView: false,
+      }
+      this.handleClick = this.handleClick.bind(this)
+      this.showDetailsFor = this.showDetailsFor.bind(this)
+      this.toggleDetails = this.toggleDetails.bind(this)
+    }
+    showDetailsFor(entry) {
+      console.log(entry)
+      this.setState({ currentEntry: entry });
+      this.toggleDetails()
+    }
+    toggleDetails() {
+      this.setState({ showDetailsView: !this.state.showDetailsView })
+    }
+    handleClick(ev) {
+        ev.preventDefault();
+        const { onClick } = this.props
+        const target = ev.target
+        const clickedEntry = this.state.entries.filter(entry => entry.id === target.id)[0]
+        onClick(clickedEntry)
+    }
+    render() {
+      return (html`
+        <h2 class="index">Recent Books</h2>
+        <ol class="parent list">
+          <${SubjectList}
+            id=${this.all_url}
+            isBrowse=${false}
+            url=${this.all_url}
+            onClick=${this.showDetailsFor}
+          />
+        </ol>
+      `)
+    }
+  }
+
+  render(html`
+    <${AllSubjects} />
+    `, document.body);
+</script>
+<script type="module" src="./darkMode/darkMode.js"></script>
+
+</html>

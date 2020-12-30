@@ -1,9 +1,18 @@
 import { h, Component } from 'https://unpkg.com/preact?module';
 import htm from 'https://unpkg.com/htm?module';
-const html = htm.bind(h);
-
 import xmlToJson from '../../lib/xmlToJson.js';
 import shuffle from '../../lib/shuffle.js';
+
+const html = htm.bind(h);
+const CURRENTLYREADING = 'currentlyReading'
+
+const populateStorage = (id, value) => {
+    // TODO: use IndexDB
+    window.localStorage.setItem(id, JSON.stringify(value));
+}
+const getStorage = (id) => {
+    return JSON.parse(window.localStorage.getItem(id));
+}
 
 export class Clock extends Component {
     constructor() {
@@ -60,22 +69,27 @@ export class HelloName extends Component {
     }
 }
 
-export const Subject = ({subject, text, url, onClick}) => {
-    /*
-     * <entry>
-     *  <title>Adventure</title>
-     *  <link href="/opds/subjects/adventure" rel="subsection" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
-     *  <updated>2020-12-23T22:54:14Z</updated>
-     *  <id>https://standardebooks.org/opds/subjects/adventure</id>
-     *  <content type="text">
-     *      30 Standard Ebooks tagged with “adventure,” most-recently-released first.
-     *  </content>
-     * </entry>
-     **/
+/*
+* <entry>
+*  <title>Adventure</title>
+*  <link href="/opds/subjects/adventure" rel="subsection" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+*  <updated>2020-12-23T22:54:14Z</updated>
+*  <id>https://standardebooks.org/opds/subjects/adventure</id>
+*  <content type="text">
+*      30 Standard Ebooks tagged with “adventure,” most-recently-released first.
+*  </content>
+* </entry>
+**/
+export const Subject = ({ subject, id, isBrowse, seeAll, url, onClick, onClickBook }) => {
     return (html`
         <${Heading} text=${subject} />
-        <${Content} text=${text} />
-        <${SubjectList} isBrowse=${true} url=${url} onClick=${onClick} />
+        ${!seeAll ? html`<a href='#' onClick=${onClick}>Back</a>` : html``}
+        <ul class="subject-list ${isBrowse && 'browse'} ${seeAll ? '' : 'block'}">
+            <${SubjectList} id=${id} isBrowse=${isBrowse} seeAll=${seeAll} url=${url} onClick=${onClickBook} />
+            ${seeAll && html`<li class="subject-list-link">
+                <a href='#' id=${id} onClick=${onClick}>See all</a>
+            </li>`}
+        </ul>
     `);
 }
 
@@ -91,7 +105,7 @@ const Content = ({text}) => {
     return html`<p>${text}</p>`
 }
 
-class Entry {
+export class Entry {
     constructor(entry){
         this.id = this.getText(entry.id)
         this.title = this.getText(entry.title)
@@ -103,6 +117,7 @@ class Entry {
         this.thumbnail = this.filterThumbnail(entry.link)
         this.cover = this.filterCover(entry.link)
         this.epubLink = this.filterRecommendedEpub(entry.link)
+        this.ebookLink = this.epubLink.slice(0, -5)
         this.sources = this.filterSources(entry['dc:source'])
         this.categories = this.filterCategories(entry.category)
     }
@@ -175,47 +190,61 @@ export class SubjectEntry {
     }
 }
 
-class SubjectList extends Component {
-    constructor() {
+export class SubjectList extends Component {
+    constructor(props) {
         super();
         this.state = {
             error: null,
             isLoaded: false,
-            items: [],
+            entries: [],
+            filteredEntries: [],
         };
         this.handleClick = this.handleClick.bind(this)
     }
-
+    filterRecentBooks(entries) {
+        const currentBookUrls = getStorage(CURRENTLYREADING)
+        if(currentBookUrls.length === 0) {
+            return []
+        }
+        const recentBooks = currentBookUrls.slice(0,8)
+        const bumpyArray = recentBooks.map((bookUrl) => {
+            return entries.filter((entry) => bookUrl === entry.ebookLink)
+        })
+        if (!Array.prototype.flat) {
+            return bumpyArray.reduce((acc, val) => acc.concat(val), [])
+        }
+        return bumpyArray.flat()   
+    }
     componentDidMount() {
-        const { url } = this.props; // clamp number of items to 10 ish, add see all button
-        // lazy load in the images, need placeholders so no jumping
-        fetch(url).then(res => res.text())
-            .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")), 
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
-                })
-            .then(
-                (result) => {
-                    console.log(result.feed.entry)
-                    const entries = result.feed.entry.map(e => new Entry(e))
-                    this.setState({
-                        isLoaded: true,
-                        entries: shuffle(entries)
-                    });
-                },
-                // Note: it's important to handle errors here
-                // instead of a catch() block so that we don't swallow
-                // exceptions from actual bugs in components.
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
-                }
-            )
+        const { url } = this.props;
+            fetch(url).then(res => res.text())
+                .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")), 
+                    (error) => {this.setState({isLoaded: true,error})})
+                .then(
+                    (result) => {
+                        console.log(result.feed.entry)
+                        let entries = result.feed.entry.map(e => new Entry(e))
+                        let filteredEntries = [];
+                        console.log(this.props.isBrowse)
+                        if (!this.props.isBrowse) {
+                            filteredEntries = this.filterRecentBooks(entries)
+                        }
+                        this.setState({
+                            isLoaded: true,
+                            entries: entries,
+                            filteredEntries: filteredEntries,
+                        });
+                    },
+                    // Note: it's important to handle errors here
+                    // instead of a catch() block so that we don't swallow
+                    // exceptions from actual bugs in components.
+                    (error) => {
+                        this.setState({
+                            isLoaded: true,
+                            error
+                        });
+                    }
+                )
     }
     handleClick(ev) {
         ev.preventDefault();
@@ -225,35 +254,30 @@ class SubjectList extends Component {
         onClick(clickedEntry)
     }
     render() {
-        const { isBrowse } = this.props;
-        const { error, isLoaded, entries = [] } = this.state;
-        let entriesMap = entries;
-        if (isBrowse) {
-            entriesMap = entries.slice(0,6)
-        }
+        const { id, seeAll } = this.props;
+        const { error, isLoaded, entries, filteredEntries } = this.state;
+        populateStorage(id, this.state)
+        // const entriesMap = isBrowse ? entries.slice(0,6) : filteredEntries
+        const entriesMap = !seeAll ? entries : entries.slice(0,6)
+        console.log(entries)
         if (error) {
             return html`<div>Error: ${error.message}</div>`;
         } else if (!isLoaded) {
             return html`<div>Loading...</div>`;
         } else {
-            // add class from index
+            // add class from index, for "see all" case
             return (html`
-                <ul class="subject-list ${isBrowse ? 'browse' : ''}">
-                    ${entriesMap.map((entry) => {
-                        return html`
-                            <${SubjectListEntry} entry=${entry} onClick=${this.handleClick}/>
-                        `
-                    })}
-                    <li class="subject-list-link">
-                        <a href=${'#'}>See all</a>
-                    </li>
-                </ul>
+                ${entriesMap.map((entry) => {
+                    return html`
+                        <${SubjectListEntry} entry=${entry} onClick=${this.handleClick}/>
+                    `
+                })}
             `)
         }
     }
 }
 
-const SubjectListEntry = ({entry, onClick}) => {
+export const SubjectListEntry = ({entry, onClick}) => {
     const standardURL = 'https://standardebooks.org/'
     return (html`
         <li class="subject-list-image" onClick=${onClick}>
@@ -290,11 +314,11 @@ export class DetailView extends Component {
             title,
             summary,
             authorArray,
-            epubLink,
+            ebookLink,
             cover,
             categories,
         } = entry;
-        const readLink = `/ebook.html?book=${epubLink.slice(0, -5)}`
+        const readLink = `/ebook.html?book=${ebookLink}`
         console.log(entry)
         return (html`
             <div class="modal ${!show ? 'hide' : ''}">
