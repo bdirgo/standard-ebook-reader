@@ -82,7 +82,7 @@ export class HelloName extends Component {
 **/
 export const Subject = ({ subject, id, isBrowse, seeAll, url, onClick, onClickBook }) => {
     return (html`
-        <${Heading} text=${subject} />
+        <${Heading} text=${subject} id=${id} seeAll=${seeAll} onClick=${onClick} />
         ${!seeAll ? html`<a href='#' onClick=${onClick}>Back</a>` : html``}
         <ul class="subject-list ${isBrowse && 'browse'} ${seeAll ? '' : 'block'}">
             <${SubjectList} id=${id} isBrowse=${isBrowse} seeAll=${seeAll} url=${url} onClick=${onClickBook} />
@@ -93,10 +93,11 @@ export const Subject = ({ subject, id, isBrowse, seeAll, url, onClick, onClickBo
     `);
 }
 
-const Heading = ({text}) => {
+const Heading = ({text, seeAll, id, onClick}) => {
     return (html`
-        <h2>
+        <h2 class="subject-heading">
             ${text}
+            ${seeAll ? html`<a class="subject-heading-link" href="#" id=${id} onClick=${onClick}>></a>` : ''}
         </h2>
     `)
 }
@@ -269,7 +270,7 @@ export class SubjectList extends Component {
             return (html`
                 ${entriesMap.map((entry) => {
                     return html`
-                        <${SubjectListEntry} entry=${entry} onClick=${this.handleClick}/>
+                        <${SubjectListEntry} seeAll=${seeAll} entry=${entry} onClick=${this.handleClick}/>
                     `
                 })}
             `)
@@ -277,11 +278,19 @@ export class SubjectList extends Component {
     }
 }
 
-export const SubjectListEntry = ({entry, onClick}) => {
+export const SubjectListEntry = ({entry, seeAll, onClick}) => {
     const standardURL = 'https://standardebooks.org/'
     return (html`
-        <li class="subject-list-image" onClick=${onClick}>
+        <li class="${seeAll ? 'subject-list-image' :  'card'}" onClick=${onClick}>
             <img class="book-cover" id=${entry.id} width=${'350'} height=${'525'} src=${standardURL + entry.thumbnail} alt=${entry.title}/>
+            ${!seeAll
+                ? html`
+                <div class="card-body">
+                    <b id=${entry.id}>${entry.title}</b>
+                    <${Content} id=${entry.id} text=${entry.summary} />
+                </div>
+                `
+                : ''}
         </li>
     `)
 }
@@ -317,6 +326,11 @@ export class DetailView extends Component {
             ebookLink,
             cover,
             categories,
+            id,
+            language,
+            issuedDate,
+            updatedDate,
+            sources,
         } = entry;
         const readLink = `/ebook.html?book=${ebookLink}`
         console.log(entry)
@@ -330,11 +344,27 @@ export class DetailView extends Component {
                     <h2><a href=${readLink}>${title}</a></h2>
                     <${AuthorDetails} authors=${authorArray} />
                     <p>${summary}</p>
-                    <a href=${readLink}>Read now</a>
+                    ${categories.length ? html`<${Categories} items=${categories} />` : ''}
+                    <a href=${readLink}>Add to Library</a>
                 </div>
             </div>
         `);
     }
+}
+
+const Categories = ({
+    items,
+}) => {
+    return html`
+        <b>Categories</b>
+        <ul>
+            ${items.reverse().map(item => {
+                return html`
+                    <li>${item}</li>
+                `
+            })}
+        </ul>
+    `
 }
 
 const AuthorDetails = ({

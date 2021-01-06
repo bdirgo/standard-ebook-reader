@@ -1,12 +1,10 @@
 body {
     display: grid;
     grid-template: auto 1fr auto / minmax(15px, 4%) minmax(200px, 92%) minmax(15px, 4%);;
-    /* grid-template-columns: minmax(15px, 4%) minmax(200px, 92%) minmax(15px, 4%); */
     padding: 0;
     margin: 0;
     overflow: hidden;
 }
-
 
 /*
   <div class="parent">
@@ -16,13 +14,11 @@ body {
     <div class="right-side yellow section" contenteditable>Right Sidebar</div>
     <footer class="green section">Footer</footer>
   </div> */
-
 .header-wrapper {
     max-width: fit-content;
 }
   
 header {
-	/* text-align: center; */
     grid-column: 1 / 4;
 }
 
@@ -42,7 +38,7 @@ footer {
     margin-top:0;
     grid-column: 1 / 4;
     color: grey;
-    font-size: small;
+    font-size: smaller;
 }
 
 .loading-cover {
@@ -91,6 +87,10 @@ img {
   box-sizing: border-box;
 }
 
+.select {
+    border: solid gray 1px;
+}
+
 select {
     appearance: none;
     background-color: transparent;
@@ -101,7 +101,7 @@ select {
     font-size: inherit;
     line-height: inherit;
     margin: 0;
-    padding: 0 4%;
+    padding: 0 10%;
     width: 100%;
 }
 

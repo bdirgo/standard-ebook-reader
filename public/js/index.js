@@ -1,4 +1,4 @@
-const version = 'v0.8.9';
+const version = 'v0.9.0';
 const cacheVersion = `cache-${version}`;
 const bookCache = `offline-book-${cacheVersion}`
 const opds = '/opds';
@@ -443,40 +443,3 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('install-prompt').style = 'display:none;'
     }
 });
-
-class OPDSFeedEntry {
-    constructor(entry) {
-        // parse if Guetenburg or Standard?
-    }
-
-    get title() {
-        const titleObject = this.title || {}
-        return titleObject['#text'] || ''
-    }
-
-    get qlink() {
-        const linkArrayOrObject = this.link || {}
-        const linkObject = Array.isArray(linkArrayOrObject) ?
-            // Array implys it is an "ebook" link
-            this.filterEpubLink(linkArrayOrObject)[0] :
-            // Object means it is a single "subject" link
-            // Either way an object is returned
-            linkArrayOrObject || {}
-        const linkAttributes = linkObject['@attributes'] || {}
-        return dice(linkAttributes.href) || ''
-    }
-
-    static filterEpubLink(linkArray) {
-        const linkorArray = linkArray || []
-        return linkorArray.filter(val => {
-            const attrObj = val ? val["@attributes"] || {} : {}
-            return attrObj.title === "Recommended compatible epub"
-        })
-    }
-    static dice(link) {
-        const pIndex = -5
-        const isEbookLink = link.indexOf('.',link.length + pIndex) === link.length + pIndex
-        return isEbookLink ? link.slice(0, pIndex) : link
-    }
-    
-}

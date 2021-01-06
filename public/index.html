@@ -31,10 +31,95 @@
       </div>
     </nav>
     <div id="root" class="root loading"></div>
+    <div id="added-books"></div>
+    <form id="fileTest">
+      <input type="file"  accept="application/epub+zip" >
+      <button>Upload</button>
+    </form>
     <p id="install-prompt"><b>Add this website to your home screen to get to the newsest books quicker.</b></p>
     <p id="explainer">Click on a book to start reading right away in your browser.</p>
     <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p> 
     <script src="./js/index.js"></script>
     <script type="module" src="./darkMode/darkMode.js"></script>
+    <script>
+			let db;
+			let dbVersion = 1;
+      let dbReady = false;
+      
+      let uploadedArea = document.querySelector('#added-books')
+
+			document.addEventListener('DOMContentLoaded', () => {
+				console.log('dom content loaded');
+
+				document.querySelector('#fileTest').addEventListener('submit', doFile);
+
+				initDb();
+			});
+
+			function initDb() {
+				let request = indexedDB.open('testFiles', dbVersion);
+
+				request.onerror = function(e) {
+					console.error('Unable to open database.');
+				}
+
+				request.onsuccess = function(e) {
+					db = e.target.result;
+          console.log('db opened');
+          // TODO: Show previous items uploaded
+				}
+
+				request.onupgradeneeded = function(e) {
+					let db = e.target.result;
+					db.createObjectStore('cachedForms', {keyPath:'id', autoIncrement: true});
+					dbReady = true;
+				}
+			}
+
+			function doFile(e) {
+        e.preventDefault();
+        const input = e.target[0]
+        console.log(e)
+        console.log(input)
+				console.log('change event fired for input field');
+				let file = input.files[0];
+				var reader = new FileReader();
+				// reader.readAsDataURL(file);
+				reader.readAsArrayBuffer(file);
+        console.log(file);
+				reader.onload = function(e) {
+					// console.log(e.target.result);
+					let bits = e.target.result;
+					let ob = {
+						created:new Date(),
+            data:bits,
+            size:file.size,
+					};
+
+					let trans = db.transaction(['cachedForms'], 'readwrite');
+					let addReq = trans.objectStore('cachedForms').add(ob);
+
+					addReq.onerror = function(e) {
+						console.log('error storing data');
+						console.error(e);
+          }
+          
+          addReq.onsuccess = function(e){
+            console.log('addreq completes')
+            console.log(addReq.result)
+            uploadedArea.innerHTML = `
+            <div>
+              <a href="/ebook.html?uploadedBook=${addReq.result}">${addReq.result}</a>
+            </div>
+            `
+          }
+
+					trans.oncomplete = function(e) {
+            console.log(e.target)
+						console.log('data stored');
+					}
+				}
+			}
+		</script>
   </body>
 </html>

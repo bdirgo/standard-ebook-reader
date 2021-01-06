@@ -1,11 +1,13 @@
-const cacheName = 'cache-v0.8.9';
+const cacheName = 'cache-v0.9.0';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,
     `/index.html`,
     '/ebook.html',
+    '/browse.html',
     '/js/ebook.js',
     '/js/index.js',
+    '/js/components/subject.js',
     '/lib/jszip.3.5.0',
     '/lib/epub.0.3.88.js',
     '/lib/swiped-events.js',

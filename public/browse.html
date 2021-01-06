@@ -220,54 +220,15 @@
 
   }
 
-  class RecentBooks extends Component {
-    constructor(props) {
-      super(props);
-      this.all_url = 'https://standardebooks.org/opds/all'
-      this.state = {
-        error: null,
-        isLoaded: false,
-        allBooks: [],
-        currentEntry: null,
-        showDetailsView: false,
-      }
-      this.handleClick = this.handleClick.bind(this)
-      this.showDetailsFor = this.showDetailsFor.bind(this)
-      this.toggleDetails = this.toggleDetails.bind(this)
-    }
-    showDetailsFor(entry) {
-      console.log(entry)
-      this.setState({ currentEntry: entry });
-      this.toggleDetails()
-    }
-    toggleDetails() {
-      this.setState({ showDetailsView: !this.state.showDetailsView })
-    }
-    handleClick(ev) {
-        ev.preventDefault();
-        const { onClick } = this.props
-        const target = ev.target
-        const clickedEntry = this.state.entries.filter(entry => entry.id === target.id)[0]
-        onClick(clickedEntry)
-    }
-    render() {
-      return (html`
-        <h2 class="index">Recent Books</h2>
-        <ol class="parent list">
-          <${SubjectList}
-            id=${this.all_url}
-            isBrowse=${false}
-            url=${this.all_url}
-            onClick=${this.showDetailsFor}
-          />
-        </ol>
-      `)
-    }
-  }
-
   render(html`
     <${AllSubjects} />
     `, document.body);
+
+
+window.addEventListener('unhandledrejection', event => {
+    alert("Error: " + event.reason.message);
+});
+  
 </script>
 <script type="module" src="./darkMode/darkMode.js"></script>
 

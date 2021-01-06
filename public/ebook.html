@@ -39,37 +39,39 @@
         const bookParam = params.get('book')
         const standardUrl = `https://standardebooks.org`
         const loadingCover = document.getElementById('loading-cover')
-        const coverThumbnailUrl = new URL(standardUrl + bookParam + '/../' + 'cover-thumbnail.jpg')
-        const coverUrl = new URL(standardUrl + bookParam + '/../' + 'cover.jpg')
-        console.log(coverThumbnailUrl.href)
-        const img = document.createElement('img')
-        img.src = coverThumbnailUrl.href
-        img.width = 350
-        console.log(img)
-        loadingCover.appendChild(img)
-        var thumbnailLink = document.createElement('link');
-        thumbnailLink.rel = 'apple-touch-icon';
-        thumbnailLink.href = coverThumbnailUrl.href;
-        var coverLink = document.createElement('link');
-        coverLink.rel = 'apple-touch-icon';
-        coverLink.href = coverUrl.href;
-        document.getElementsByTagName('head')[0].appendChild(thumbnailLink);
-        document.getElementsByTagName('head')[0].appendChild(coverLink);
-        function toTitleCase(str) {
-            return str.replace(
-                /\w\S*/g,
-                function(txt) {
-                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-                }
-            );
+        if (bookParam !== null) {
+            const coverThumbnailUrl = new URL(standardUrl + bookParam + '/../' + 'cover-thumbnail.jpg')
+            const coverUrl = new URL(standardUrl + bookParam + '/../' + 'cover.jpg')
+            console.log(coverThumbnailUrl.href)
+            const img = document.createElement('img')
+            img.src = coverThumbnailUrl.href
+            img.width = 350
+            console.log(img)
+            loadingCover.appendChild(img)
+            var thumbnailLink = document.createElement('link');
+            thumbnailLink.rel = 'apple-touch-icon';
+            thumbnailLink.href = coverThumbnailUrl.href;
+            var coverLink = document.createElement('link');
+            coverLink.rel = 'apple-touch-icon';
+            coverLink.href = coverUrl.href;
+            document.getElementsByTagName('head')[0].appendChild(thumbnailLink);
+            document.getElementsByTagName('head')[0].appendChild(coverLink);
+            function toTitleCase(str) {
+                return str.replace(
+                    /\w\S*/g,
+                    function(txt) {
+                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+                    }
+                );
+            }
+            var title = document.querySelector("title");
+            if (!title) {
+                title = document.createElement('title');
+                document.getElementsByTagName('head')[0].appendChild(title);
+            }
+            var urlTitle = toTitleCase(bookParam.slice(bookParam.indexOf("_")+1).replaceAll('-',' '))
+            title.innerText = urlTitle;
         }
-        var title = document.querySelector("title");
-        if (!title) {
-            title = document.createElement('title');
-            document.getElementsByTagName('head')[0].appendChild(title);
-        }
-        var urlTitle = toTitleCase(bookParam.slice(bookParam.indexOf("_")+1).replaceAll('-',' '))
-        title.innerText = urlTitle;
     </script>
 </body>
 <script src="./js/ebook.js"></script>
