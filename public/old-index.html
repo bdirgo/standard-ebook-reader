@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#1271e6">
+    <meta property="og:title" content="Standard Ebook Reader" />
+    <meta property="og:image" content="https://standardebooks.org/images/logo.png" />
+    <meta name="Description" content="Read books from Standard Ebooks">
+
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" type="text/css" href="./css/index.css" media="screen"/>
+
+    <title>Standard Ebook Reader</title>
+  </head>
+  <body>
+    <b><a id="update-button" href="/">Standard Ebook Reader</a></b>
+    <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
+    <nav>
+      <form>
+        <input type="search" id="site-search" name="q" aria-label="Search through site content">
+        <button>Search</button>
+      </form>
+      <div class="parent">
+        <a href="?q=new_release" class="box button">New</a>
+        <a href="./browse.html" class="box button">Browse</a>
+      </div>
+    </nav>
+    <div id="root" class="root loading"></div>
+    <div id="added-books"></div>
+    <p id="install-prompt"><b>Add this website to your home screen to get to the newsest books quicker.</b></p>
+    <p id="explainer">Click on a book to start reading right away in your browser.</p>
+    <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p> 
+    <script src="./js/index.js"></script>
+    <script type="module" src="./darkMode/darkMode.js"></script>
+    <script>
+			let db;
+			let dbVersion = 1;
+      let dbReady = false;
+      
+      let uploadedArea = document.querySelector('#added-books')
+
+			document.addEventListener('DOMContentLoaded', () => {
+				console.log('dom content loaded');
+
+				// document.querySelector('#fileTest').addEventListener('submit', doFile);
+
+				// initDb();
+			});
+
+			function initDb() {
+				let request = indexedDB.open('testFiles', dbVersion);
+
+				request.onerror = function(e) {
+					console.error('Unable to open database.');
+				}
+
+				request.onsuccess = function(e) {
+					db = e.target.result;
+          console.log('db opened');
+          // TODO: Show previous items uploaded
+				}
+
+				request.onupgradeneeded = function(e) {
+					let db = e.target.result;
+					db.createObjectStore('cachedForms', {keyPath:'id', autoIncrement: true});
+					dbReady = true;
+				}
+			}
+
+			function doFile(e) {
+        e.preventDefault();
+        const input = e.target[0]
+        console.log(e)
+        console.log(input)
+				console.log('change event fired for input field');
+				let file = input.files[0];
+				var reader = new FileReader();
+				// reader.readAsDataURL(file);
+				reader.readAsArrayBuffer(file);
+        console.log(file);
+				reader.onload = function(e) {
+					// console.log(e.target.result);
+					let bits = e.target.result;
+					let ob = {
+						created:new Date(),
+            data:bits,
+            size:file.size,
+					};
+
+					let trans = db.transaction(['cachedForms'], 'readwrite');
+					let addReq = trans.objectStore('cachedForms').add(ob);
+
+					addReq.onerror = function(e) {
+						console.log('error storing data');
+						console.error(e);
+          }
+          
+          addReq.onsuccess = function(e){
+            console.log('addreq completes')
+            console.log(addReq.result)
+            uploadedArea.innerHTML = `
+            <div>
+              <a href="/ebook.html?uploadedBook=${addReq.result}">${addReq.result}</a>
+            </div>
+            `
+          }
+
+					trans.oncomplete = function(e) {
+            console.log(e.target)
+						console.log('data stored');
+					}
+				}
+			}
+		</script>
+  </body>
+</html>

@@ -1,435 +1,31 @@
-const version = 'v0.9.0a';
-const cacheVersion = `cache-${version}`;
-const bookCache = `offline-book-${cacheVersion}`
-const opds = '/opds';
-const all = '_all';
-const new_release = 'new_release'
-const subjects = '_subjects'
-const CURRENTLYREADING = 'currentlyReading'
-const URLLocation = new URL(document.location)
-const params = URLLocation.searchParams;
-const myHash = URLLocation.hash;
-const q = params.get('q')
-const updateButton = document.getElementById('update-button')
-
-const standardUrl = `https://standardebooks.org`
-const all_url = 'https://standardebooks.org/opds/all';
-const new_url = 'https://standardebooks.org/opds/new-releases';
-const subjects_url = 'https://standardebooks.org/opds/subjects';
-const one_subject_url = `${standardUrl}${q}`
-const query_url = `https://standardebooks.org/opds/all?query=${q}`
+import {html, render} from 'https://unpkg.com/lit-html?module';
+const w = new Worker("./js/appState.js");
 
 /**
  * Service Worker
  */
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => {
-                console.log("Registered!", reg)
-                // registration worked
-                updateButton.onclick = function() {
-                  registration.update();
-                }
-            }).catch(err => {
-                console.log('Registration failed with ' + err);
-            })
-    })
+  window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+              console.log("Registered!", reg)
+              // registration worked
+          }).catch(err => {
+              console.log('Registration failed with ' + err);
+          })
+  })
 }
 function unregister() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready
-            .then((registration) => {
-                registration.unregister();
-            })
-            .catch((error) => {
-                console.error(error.message);
-            });
-    }
+  if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+          .then((registration) => {
+              registration.unregister();
+          })
+          .catch((error) => {
+              console.error(error.message);
+          });
+  }
 }
-// https://davidwalsh.name/convert-xml-json
-function xmlToJson(xml) {
-	
-	// Create the return object
-	var obj = {};
-
-	if (xml.nodeType == 1) { // element
-		// do attributes
-		if (xml.attributes.length > 0) {
-		obj["@attributes"] = {};
-			for (var j = 0; j < xml.attributes.length; j++) {
-				var attribute = xml.attributes.item(j);
-				obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
-			}
-		}
-	} else if (xml.nodeType == 3) { // text
-		obj = xml.nodeValue;
-	}
-
-	// do children
-	if (xml.hasChildNodes()) {
-		for(var i = 0; i < xml.childNodes.length; i++) {
-			var item = xml.childNodes.item(i);
-			var nodeName = item.nodeName;
-			if (typeof(obj[nodeName]) == "undefined") {
-				obj[nodeName] = xmlToJson(item);
-			} else {
-				if (typeof(obj[nodeName].push) == "undefined") {
-					var old = obj[nodeName];
-					obj[nodeName] = [];
-					obj[nodeName].push(old);
-				}
-				obj[nodeName].push(xmlToJson(item));
-			}
-		}
-	}
-	return obj;
-};
-const populateStorage = (id, value) => {
-  window.localStorage.setItem(id, value);
-  
-}
-const getStorage = (id) => {
-  return window.localStorage.getItem(id);
-}
-
-if(!getStorage(CURRENTLYREADING)) {
-    populateStorage(CURRENTLYREADING, JSON.stringify([]))
-}
-
-const render = (response) => document
-        .getElementById('root')
-        .innerHTML = renderApp(response);
-
-const renderError = async (err = 'Error processing request') => document
-    .getElementById('root').innerHTML = await renderCachedApp(err);
-
-const finishedLoading = (response) => document
-    .getElementById('root')
-    .classList.remove('loading')
-/**
- * fetch OPDS
- */
-function fetchBooks(url) {
-    fetch(url).then(res => {
-        if(!res.ok) {
-            throw Error(res.statusText);
-        }
-        return res.text()
-    })
-    .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")))
-    .then(render)
-    .catch(renderError)
-    .finally(finishedLoading)
-}
-const que = q || ''
-const isSubjectSearch = que.startsWith(opds)
-switch (q) {
-    case null: // Home
-        // needs all URL for entries in render
-        fetchBooks(all_url);
-        break;
-    case all: // All
-        fetchBooks(all_url);
-        break;
-    case new_release: // New 30
-        fetchBooks(new_url);
-        break;
-    case subjects: // Subjects menu
-        fetchBooks(subjects_url);
-        break;
-    default: // Query OPDS
-        isSubjectSearch ?
-            fetchBooks(one_subject_url) :
-            fetchBooks(query_url)
-        break;
-}
-// ---------------------------------------------------------------------------------
-
-const renderCachedApp = async (err) => {
-    const cacheList = await CacheList()
-    return (`
-        ${cacheList.length === 0 ? `
-            <div>${err}</div>
-        `:`
-            <h3>Cached Books</h3>
-            <p>There was an error and we are showing books cached on your device</p>
-            ${List(cacheList)}
-            <div>${err}</div>
-            `
-        }
-    `)
-}
-
-const renderApp = (response) => {
-    console.log(response.feed)
-    const feed = response.feed;
-    const feedtitle = feed.title || {}
-    const feedtitleText = feedtitle['#text'] || ''
-    const entries = feed.entry
-    let entriesArray
-    if (!Array.isArray(entries)) {
-        entriesArray = [entries]
-    } else {
-        entriesArray = entries
-    }
-    const recentBook = filterRecentBook(entries)
-    console.log(recentBook)
-    console.log('entries')
-    console.log(entries)
-    return (`
-        ${
-        q === subjects ? (`
-            <h2 class="index">${feedtitleText}</h2>
-            ${ListNav(entriesArray)}
-        `) :
-        q === null ? (
-            recentBook.length > 0 ? (`
-                <h2 class="index">Recent Books</h2>
-                ${List(recentBook)}
-            `) : ''
-        ) :
-        q === all ? (`
-            <h2 class="index">${feedtitleText}</h2>
-            ${List(entriesArray)}
-        `) :
-        q === new_release ? (`
-            <h2 class="index">${feedtitleText}</h2>
-            ${List(entriesArray)}
-        `) :
-        // Else its a Query
-        (`
-            <h2 class="index">${feedtitleText}</h2>
-            ${List(entriesArray)}
-        `)}
-    `)
-}
-
-const filterRecentBook = (entries) => {
-    const currentBookUrls = JSON.parse(getStorage(CURRENTLYREADING))
-    if(currentBookUrls.length === 0) {
-        return []
-    }
-    const recentBooks = currentBookUrls.slice(0,8)
-    const bumpyArray = recentBooks.map((bookUrl) => {
-        return entries.filter((entry) => {
-            const ebookLink = filterEpubLink(entry.link)[0]
-            return bookUrl === dice(ebookLink)
-        })
-    })
-    if (!Array.prototype.flat) {
-        return bumpyArray.reduce((acc, val) => acc.concat(val), [])
-    }
-    return bumpyArray.flat()   
-}
-
-function toTitleCase(str) {
-    return str.replace(
-        /\w\S*/g,
-        function(txt) {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-        }
-    );
-}
-
-const filterEpubLink = (linkArray) => {
-    const linkorArray = Array.isArray(linkArray) ? linkArray : []
-    return linkorArray.filter(val => {
-        const attrObj = val ? val["@attributes"] || {} : {}
-        return attrObj.title === "Recommended compatible epub"
-    })
-}
-
-const filterThumbnail = (linkArray) => {
-    const linkorArray = Array.isArray(linkArray) ? linkArray : []
-    return linkorArray.filter(val => {
-        const attrObj = val ? val["@attributes"] || {} : {}
-        return attrObj.rel === "http://opds-spec.org/image/thumbnail"
-    })
-}
-
-const filterCover = (linkArray) => {
-    const linkorArray = linkArray || []
-    return linkorArray.filter(val => {
-        const attrObj = val ? val["@attributes"] || {} : {}
-        return attrObj.rel === "http://opds-spec.org/image"
-    })
-}
-
-const filterSinglePage = (linkArray) => {
-    const linkorArray = linkArray || []
-    return linkorArray.filter(val => {
-        const attrObj = val ? val["@attributes"] || {} : {}
-        return attrObj.title === "XHTML"
-    })
-}
-
-const filterForCollection = (entry) => {
-    let hrefArray = []
-    const content = entry.content || {}
-    const p = content.p || []
-    if (Array.isArray(p)) {
-        p.map(tag => {
-            const a = tag.a || {}
-            const attributes = a['@attributes'] || {}
-            const href = attributes.href || ''
-            if (href.includes('/collection')) {
-                hrefArray.push(href)
-            }
-        })
-    }
-    return hrefArray
-}
-
-const getCachedArticleData = async () => {
-    if (!('caches' in self)) return [];
-    return (await caches.keys())
-      .filter(cacheName => cacheName.startsWith(bookCache))
-}
-
-const CacheList = async () => {
-    const cachedBooks = await getCachedArticleData()
-    console.log(cachedBooks)
-    let filteredItems = []
-    cachedBooks.forEach(book => {
-        const cacheLength = bookCache.length
-        const bookUrl = book.slice(cacheLength+1)
-        console.log(bookUrl)
-        const item = {
-            title: {
-                '#text': diceUrl(bookUrl)[1].slice(0, -5),
-            },
-            summary: {
-                '#text': 'Cached book'
-            },
-            link: [
-                {
-                    "@attributes": {
-                        title: "Recommended compatible epub",
-                        href: bookUrl,
-                    }
-                },
-                {
-                    "@attributes": {
-                        rel: "http://opds-spec.org/image/thumbnail",
-                        href: `${diceUrl(bookUrl)[0]}/cover-thumbnail.jpg`,
-                    }
-                }
-            ]
-        }
-        filteredItems.push(item)
-    })
-    return filteredItems
-}
-    
-const List = (items) => `
-<ol class="parent list">
-    ${items.map(v => {
-        return (`
-        <li class="box list-item">
-            ${AptCard(v)}
-        </li>
-        `)
-    }).join("")}
-</ol>
-`
-
-const ListNav = (items) => `
-<ol class="parent list">
-    ${items.map(v => {
-        return (`
-        <li class="box list-item">
-            ${NavCard(v)}
-        </li>
-        `)
-    }).join("")}
-</ol>
-`
-
-const dice = (link) => {
-    const linkAttributes = link ? link['@attributes'] || {} : {}
-    const linkHref = linkAttributes.href || ''
-    return linkHref.slice(0, -5)
-}
-
-const diceUrl = (url) => {
-    let first, second
-    second = url.substring(url.lastIndexOf('/') + 1)
-    first = url.substring(0, url.lastIndexOf('/') + 1)
-    return [first, second]
-}
-
-const NavCard = (nav) => {
-    const navTitle = nav.title || {}
-    const navTitleText = navTitle['#text'] || ''
-    const navLink = nav.link || {}
-    const navLinkAttributes = navLink['@attributes'] || {}
-    const subjectLink = navLinkAttributes.href || ''
-    return (`
-        <div class="card">
-            <div class="card-body">
-                <a class="nav-link" href="?q=${subjectLink}">
-                    <b class="card-title">${navTitleText}</b>
-                </a>
-            </div>
-        </div>
-    `)
-
-}
-
-const AptCard = (apt) => {
-    const title = apt.title || {}
-    const titleText = title['#text'] || ''
-    const summary = apt.summary || {}
-    const summaryText = summary['#text'] || ''
-    const aptLink = apt.link || []
-    const filteredThumbnail = filterThumbnail(aptLink)
-    const image_url = Array.isArray(filteredThumbnail) ? filteredThumbnail[0] : {}
-    const imageAttributes = image_url['@attributes'] || {}
-    const imageHref = imageAttributes.href || ''
-    const filteredEpubLink = filterEpubLink(aptLink)
-    const ebookLink = Array.isArray(filteredEpubLink) ? filteredEpubLink[0] : {}
-    const dicedEbook = dice(ebookLink)
-    const navLink = apt.link || {}
-    const navLinkAttributes = navLink['@attributes'] || {}
-    const subjectLink = navLinkAttributes.href || ''
-    return (`
-        <div class="card">
-            ${imageHref && `<a class="book-link" href="/ebook.html?book=${dicedEbook}">
-                <img
-                    width="120"
-                    height="180"
-                    loading="lazy"
-                    src="${standardUrl}${imageHref}"
-                    style="object-fit:cover;max-height:180px"
-                    class="card-img-top img-fluid"
-                    alt="${titleText}">
-            </a>`}
-            <div class="card-body">
-                <a class="book-link" href=${q === subjects ? `?q=${subjectLink}` : `/ebook.html?book=${dicedEbook}`}>
-                    <b class="card-title">${titleText}</b>
-                </a>
-                ${summaryText && `<p class="card-text">${summaryText}</p>`}
-            </div>
-        </div>
-    `)
-}
-
-
-window.addEventListener('unhandledrejection', event => {
-    alert("Error: " + event.reason.message);
-});
-  
-window.addEventListener('appinstalled', (evt) => {
-    console.log('a2hs installed');
-    document.getElementById('install-prompt').classList.add('hide')
-    updateButton.classList.remove('hide')
-    const versionP = document.createElement('p')
-    versionP.innerText = version
-    document.getElementById('update-button').parentElement.append(versionP)
-
-});
-
 window.addEventListener('DOMContentLoaded', () => {
     let displayMode = 'browser tab';
     if (navigator.standalone) {
@@ -443,3 +39,309 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('install-prompt').style = 'display:none;'
     }
 });
+
+let elem = document.body
+
+w.onmessage = function(event) {
+  const {
+    data,
+  } = event
+  const {
+    type,
+    payload,
+  } = data
+  if (type === 'state') {
+    const state = payload
+    elem.dispatchEvent(new CustomEvent('re-render', {
+      detail: state,
+    }))
+  } else {
+    const details = data
+    console.log(details)
+  }
+};
+
+// TODO: call state mgmt
+w.postMessage({type:"init"});
+
+const SearchBar = () => html`
+<input type="search" id="site-search" name="q" aria-label="Search through site content">
+<button>Search</button>
+`
+const LibraryNavigation = () => {
+  const clickHandler = clickHandlerCreator({
+          type: 'library-tab',
+          tab: 'LIBRARY'
+        })
+  return html`<a @click=${clickHandler} class="box button">My Library</a>`
+}
+const NewNavigation = () => {
+  const clickHandler = clickHandlerCreator({
+          type: 'new-tab',
+          tab: 'NEW'
+        })
+  return html`<a @click=${clickHandler} class="box button">New Books</a>`
+}
+const BrowseNavigation = () => {
+  const clickHandler = clickHandlerCreator({
+    type: 'browse-tab',
+    tab: 'BROWSE'
+  })
+  return html`<a @click=${clickHandler} class="box button">Browse Categories</a>`
+}
+const SearchNavigation = () => {
+  const clickHandler = clickHandlerCreator({
+    type: 'search-tab',
+    tab: 'SEARCH'
+  })
+  return html`<a @click=${clickHandler} class="box button">Search</a>`
+}
+const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a few books.</p>`
+
+const ItemView = (entry) => {
+  const {
+    ebookLink,
+    cover,
+    title,
+    summary,
+    categories,
+  } = entry
+  const readLink = `/ebook.html?book=${ebookLink.href}`
+  const standardURL = 'https://standardebooks.org/'
+  return html`<li class="library-list-image">
+  <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
+  <div class="card-body">
+    <b id=${entry.id}>${entry.title}</b>
+  </div>
+</li>`}
+const LibraryList = (items = []) => {
+  return html`
+  ${items.length === 0
+    ? html`${EmptyLibrary()}`
+    : html`<ul class="library-list">${items.map(item => ItemView(item))}</ul>`
+  }`}
+
+const Library = (userLibrary) => {
+  return html`
+    <h2>${userLibrary.title}</h2>
+    ${LibraryList(userLibrary.entries)}
+  `
+}
+
+const SubjectEntry = (entry, isCoverOnly = false) => {
+  const clickHandler = clickHandlerCreator({
+    type: 'click-title',
+    entryId: entry.id,
+    tab:'DETAIL_VIEW',
+  })
+  const standardURL = 'https://standardebooks.org/'
+  return html`
+  <li class="subject-list-image" @click=${clickHandler}>
+    <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
+    ${isCoverOnly
+      ? html`
+      <div class="card-body">
+        <b id=${entry.id}>${entry.title}</b>
+        <p id=${entry.id}>${entry.summary}</p>
+      </div>`
+      : ''}
+  </li>
+  `
+}
+
+const New = (subject) => {
+  const {
+    title,
+    entries,
+  } = subject;
+  const clickHandler = clickHandlerCreator({
+    type: 'click-new',
+    categoryTerm: title,
+    tab: 'SUBJECT',
+  })
+  return html`
+  <h2 @click=${clickHandler}>${title} > </h2>
+  <ul class="subject-list">
+    ${entries.map(entry => {
+      return SubjectEntry(entry)
+    })}
+  </ul>
+  `
+}
+
+const Subjects = (subject) => {
+  const {
+    title,
+    entries,
+  } = subject;
+  const clickHandler = clickHandlerCreator({
+    type: 'click-subject',
+    categoryTerm: title,
+    tab: 'SUBJECT',
+  })
+  return html`
+  <h2 @click=${clickHandler}>${title} > </h2>
+  <ul class="subject-list">
+    ${entries.map(entry => {
+      return SubjectEntry(entry)
+    })}
+  </ul>
+  `
+}
+
+const Browse = (items = []) => {
+  return html`
+  ${items.length === 0
+    ? html`${EmptyLibrary()}`
+    : html`${items.map(subject => {
+                    return html`${Subjects(subject)}`
+                    })
+            }`
+  }`}
+
+const Category = (category) => {
+  const {
+    title,
+    entries,
+  } = category;
+  const isCoverOnly = true;
+  return html`
+  <h2>${title}</h2>
+  <ul class="category-list">
+    ${entries.map(entry => {
+      return SubjectEntry(entry, isCoverOnly)
+    })}
+  </ul>`
+}
+
+const emptyState = {
+  userLibrary:[],
+  bookLibrary:[],
+  activeTab:'LIBRARY',
+}
+
+const DetailView = (entry) => {
+  const {
+    ebookLink,
+    cover,
+    title,
+    summary,
+    categories,
+  } = entry
+  const readLink = `/ebook.html?book=${ebookLink.href}`
+  const standardURL = 'https://standardebooks.org/'
+  const clickHandler = clickHandlerCreator({
+    type: 'click-add-to-library',
+    entryId: entry.id,
+    tab: 'LIBRARY',
+  })
+  // Display whole content here?
+  return html`
+    <div class="modal-content">
+      <a href=${readLink}>
+          <img class="img-fluid detail-book-cover " src=${standardURL + cover?.href} />
+      </a>
+      <h2><a href=${readLink}>${title}</a></h2>
+      <a @click=${clickHandler}>Add to Library</a>
+      <p>${summary}</p>
+      ${categories.length ? CategoryList(categories) : ''}
+      
+    </div>
+  `
+}
+const clickHandlerCreator = (action) => {
+  return {
+    // handleEvent method is required.
+    handleEvent(e) {
+      const payload = {
+        action,
+      }
+      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+    },
+    // event listener objects can also define zero or more of the event 
+    // listener options: capture, passive, and once.
+    capture: true,
+  }
+}
+
+const CategoryList = (categories) => {
+  return html`
+  <ul class="list-style-none">
+  ${categories.map(cat => {
+    const clickHandler = clickHandlerCreator({
+      type: 'click-category',
+      categoryTerm: cat.term,
+      tab: 'CATEGORY',
+    })
+    return html`<li class="category-list-item" @click=${clickHandler}><a >${cat.term}</a></li>`
+  })}
+  </ul>
+  `
+}
+
+function rerender(props) {
+  const {
+    ev = {},
+    isLoading = true,
+  } = props
+  const state = JSON.parse(ev.detail ?? '{}')
+
+  const app = (state = emptyState) => {
+    const {
+      userLibrary,
+      bookLibrary,
+      activeTab,
+      activeCategory,
+      activeEntry,
+    } = state
+    const TabContent = (activeTab) => {
+      switch(activeTab) {
+        case('LIBRARY'): {
+          return Library(userLibrary);
+        }
+        case('BROWSE'): {
+          return Browse(bookLibrary);
+        }
+        case('NEW'): {
+          return New(bookLibrary);
+        }
+        case('SUBJECT'): {
+          window.scrollTo({top:212})
+          return Category(activeCategory);
+        }
+        case('CATEGORY'): {
+          window.scrollTo({top:212})
+          return Category(activeCategory);
+        }
+        case('DETAIL_VIEW'): {
+          window.scrollTo({top:212})
+          return DetailView(activeEntry);
+        }
+        default:
+          return html`Default View. Not yet implemented.`;
+      }
+      
+    }
+    if (!isLoading) {
+      return html`
+        <h1>Ebook Reader</h1>
+        <nav>
+          <div class="parent">
+            ${LibraryNavigation()}
+            ${BrowseNavigation()}
+            ${NewNavigation()}
+            ${SearchNavigation()}
+          </div>
+        </nav>
+        ${TabContent(activeTab)}
+        <footer id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</footer> 
+      `
+    }
+    return html`<span>Loading...</span>`
+  }
+  console.log(state)
+  render(app(state), document.querySelector('#result'))
+}
+rerender({})
+
+elem.addEventListener('re-render', (e) => rerender({ev:e, isLoading:false}))

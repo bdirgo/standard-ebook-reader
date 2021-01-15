@@ -22,6 +22,14 @@
 	flex: 1 1 200px; /*  Stretching: */
 	margin: 5px;
 }
+.category-list-item {
+    padding-bottom: 12px
+}
+
+.list-style-none {
+    list-style-type: none;
+
+}
 
 .subject-list {
     list-style-type: none;

@@ -288,7 +288,7 @@ class BookFeedEntry extends SubjectFeedEntry {
 class BookFeed extends SubjectFeed {
     constructor(json) {
         super(json)
-        // TODO: fill this out
+        // TODO: fill this out...content???
         this.entries = this.filterEntry(this.feed)
     }
 
@@ -585,7 +585,7 @@ self.onmessage = async function(event) {
       type,
       payload,
   } = event.data;
-
+// TODO: add back function, save previous action?
   switch (type) {
     case "init": {
         state = await setInitialState()

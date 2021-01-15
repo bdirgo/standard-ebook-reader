@@ -1,4 +1,4 @@
-import { openDB, deleteDB, wrap, unwrap } from '../lib/idb.js'
+import { openDB, deleteDB, wrap, unwrap } from '../../lib/idb.js'
 let db;
 let objectStore;
 
