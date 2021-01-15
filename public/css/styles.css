@@ -16,13 +16,11 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
 }
 
 .category-list>.subject-list-image {
-	flex: 1 1 250px; /*  Stretching: */
+	flex: 1 1 200px; /*  Stretching: */
 	margin: 5px;
-    max-width: 47%;
 }
 
 .subject-list {

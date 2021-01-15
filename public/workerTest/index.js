@@ -30,75 +30,31 @@ const SearchBar = () => html`
 <button>Search</button>
 `
 const LibraryNavigation = () => {
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
+  const clickHandler = clickHandlerCreator({
           type: 'library-tab',
           tab: 'LIBRARY'
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+        })
   return html`<a @click=${clickHandler} class="box button">My Library</a>`
 }
 const NewNavigation = () => {
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
+  const clickHandler = clickHandlerCreator({
           type: 'new-tab',
           tab: 'NEW'
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+        })
   return html`<a @click=${clickHandler} class="box button">New Books</a>`
 }
 const BrowseNavigation = () => {
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
-          type: 'browse-tab',
-          tab: 'BROWSE'
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+  const clickHandler = clickHandlerCreator({
+    type: 'browse-tab',
+    tab: 'BROWSE'
+  })
   return html`<a @click=${clickHandler} class="box button">Browse Categories</a>`
 }
 const SearchNavigation = () => {
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
-          type: 'search-tab',
-          tab: 'SEARCH'
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+  const clickHandler = clickHandlerCreator({
+    type: 'search-tab',
+    tab: 'SEARCH'
+  })
   return html`<a @click=${clickHandler} class="box button">Search</a>`
 }
 const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a few books.</p>`
@@ -134,22 +90,11 @@ const Library = (userLibrary) => {
 }
 
 const SubjectEntry = (entry, isCoverOnly = false) => {
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
-          type: 'click-title',
-          entryId: entry.id,
-          tab:'DETAIL_VIEW',
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+  const clickHandler = clickHandlerCreator({
+    type: 'click-title',
+    entryId: entry.id,
+    tab:'DETAIL_VIEW',
+  })
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="subject-list-image" @click=${clickHandler}>
@@ -170,22 +115,11 @@ const New = (subject) => {
     title,
     entries,
   } = subject;
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
-          type: 'click-new',
-          categoryTerm: title,
-          tab: 'SUBJECT',
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+  const clickHandler = clickHandlerCreator({
+    type: 'click-new',
+    categoryTerm: title,
+    tab: 'SUBJECT',
+  })
   return html`
   <h2 @click=${clickHandler}>${title} > </h2>
   <ul class="subject-list">
@@ -201,22 +135,11 @@ const Subjects = (subject) => {
     title,
     entries,
   } = subject;
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
-          type: 'click-subject',
-          categoryTerm: title,
-          tab: 'SUBJECT',
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+  const clickHandler = clickHandlerCreator({
+    type: 'click-subject',
+    categoryTerm: title,
+    tab: 'SUBJECT',
+  })
   return html`
   <h2 @click=${clickHandler}>${title} > </h2>
   <ul class="subject-list">
@@ -268,22 +191,11 @@ const DetailView = (entry) => {
   } = entry
   const readLink = `/ebook.html?book=${ebookLink.href}`
   const standardURL = 'https://standardebooks.org/'
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action: {
-          type: 'click-add-to-library',
-          entryId: entry.id,
-          tab: 'LIBRARY',
-        }
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+  const clickHandler = clickHandlerCreator({
+    type: 'click-add-to-library',
+    entryId: entry.id,
+    tab: 'LIBRARY',
+  })
   return html`
     <div class="modal-content">
       <a href=${readLink}>
@@ -296,27 +208,30 @@ const DetailView = (entry) => {
     </div>
   `
 }
+const clickHandlerCreator = (action) => {
+  return {
+    // handleEvent method is required.
+    handleEvent(e) {
+      const payload = {
+        action,
+      }
+      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+    },
+    // event listener objects can also define zero or more of the event 
+    // listener options: capture, passive, and once.
+    capture: true,
+  }
+}
 
 const CategoryList = (categories) => {
   return html`
   <ul>
   ${categories.map(cat => {
-    const clickHandler = {
-      // handleEvent method is required.
-      handleEvent(e) {
-        const payload = {
-          action: {
-            type: 'click-category',
-            categoryTerm: cat.term,
-            tab: 'CATEGORY',
-          }
-        }
-        w.postMessage({type:'click', payload:JSON.stringify(payload)})
-      },
-      // event listener objects can also define zero or more of the event 
-      // listener options: capture, passive, and once.
-      capture: true,
-    }
+    const clickHandler = clickHandlerCreator({
+      type: 'click-category',
+      categoryTerm: cat.term,
+      tab: 'CATEGORY',
+    })
     return html`<li @click=${clickHandler}>${cat.term}</li>`
   })}
   </ul>
