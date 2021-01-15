@@ -7,7 +7,6 @@
 }
 
 .subject-list-image {
-    display: inline;
     padding: 0 1em 0 0;
 }
 
@@ -31,7 +30,7 @@
 
 .detail-book-cover {
     max-width: 83%;
-    height: auto;
+    max-height: 600px;
 }
 
 .hide {
@@ -59,14 +58,10 @@
     margin: auto;
     padding: 1em;
     border: 1px solid #888;
-    height: 100%;
-    height: -moz-available;          /* WebKit-based browsers will ignore this. */
-    height: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
-    height: fill-available;
+    min-height: 604px;
 }
 
 .modal-content a {
-    display: flex;
 }
 
 .dark .modal-content {

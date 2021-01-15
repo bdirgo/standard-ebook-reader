@@ -30,6 +30,11 @@
   import xmlToJson from './lib/xmlToJson.js';
   import shuffle from './lib/shuffle.js';
 
+
+  // TODO:
+  // Populate a "database" of Entry's
+  // Create categories based on the categories provided, only create a category if there is more then one
+
   // Initialize htm with Preact
   const html = htm.bind(h);
 
@@ -47,23 +52,19 @@
   class AllSubjects extends Component {
     constructor() {
         super();
-        if (getStorage(ALLSUBJECTSID)) {
-          this.state = getStorage(ALLSUBJECTSID)
-        } else {
-          this.state = {
-            error: null,
-            isLoaded: false,
-            shouldLoad: true,
-            subjects: [],
-            numberOfSubjects: 4,
-            oneSubjectId: null,
-            currentEntry: null,
-            showOneSubject: false,
-            showDetailsView: false,
-            showRecent: false,
-            showNavigation: false,
-          }
-          populateStorage(ALLSUBJECTSID, this.state)
+        this.state = {
+          error: null,
+          isLoaded: false,
+          shouldLoad: true,
+          subjects: [],
+          allEntries: [],
+          numberOfSubjects: 32,
+          oneSubjectId: null,
+          currentEntry: null,
+          showOneSubject: false,
+          showDetailsView: false,
+          showRecent: false,
+          showNavigation: false,
         }
         this.all_url = 'https://standardebooks.org/opds/all'
         this.showDetailsFor = this.showDetailsFor.bind(this);
@@ -74,14 +75,7 @@
         this.subjects_url = 'https://standardebooks.org/opds/subjects';
     }
     componentDidMount() {
-
       window.addEventListener('scroll', this.loadMore);
-      // if (getStorage(CURRENTLYREADING)) {
-      //   this.setState({showRecent: true, showNavigation: true})
-      // }
-      // if (q !== '') {
-      //   this.setState({showQuery: true})
-      // }
       if (this.state.shouldLoad) {
         fetch(this.subjects_url).then(res => res.text())
               .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")), 

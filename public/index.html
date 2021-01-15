@@ -27,15 +27,10 @@
       <div class="parent">
         <a href="?q=new_release" class="box button">New</a>
         <a href="./browse.html" class="box button">Browse</a>
-        <!-- <a href="?q=_all" class="box button">All</a> -->
       </div>
     </nav>
     <div id="root" class="root loading"></div>
     <div id="added-books"></div>
-    <!-- <form id="fileTest">
-      <input type="file"  accept="application/epub+zip" >
-      <button>Upload</button>
-    </form> -->
     <p id="install-prompt"><b>Add this website to your home screen to get to the newsest books quicker.</b></p>
     <p id="explainer">Click on a book to start reading right away in your browser.</p>
     <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p> 
@@ -51,7 +46,7 @@
 			document.addEventListener('DOMContentLoaded', () => {
 				console.log('dom content loaded');
 
-				document.querySelector('#fileTest').addEventListener('submit', doFile);
+				// document.querySelector('#fileTest').addEventListener('submit', doFile);
 
 				// initDb();
 			});

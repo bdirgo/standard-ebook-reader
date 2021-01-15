@@ -1,4 +1,4 @@
-const version = 'v0.9.0';
+const version = 'v0.9.0a';
 const cacheVersion = `cache-${version}`;
 const bookCache = `offline-book-${cacheVersion}`
 const opds = '/opds';

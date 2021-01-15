@@ -339,7 +339,7 @@ export class DetailView extends Component {
                 <div class="modal-content">
                     <span onClick=${toggleDetails} class="close">X</span>
                     <a href=${readLink}>
-                        <img class="img-fluid detail-book-cover " width=1400 height=2100 src=${this.standardURL + cover} />
+                        <img class="img-fluid detail-book-cover " src=${this.standardURL + cover} />
                     </a>
                     <h2><a href=${readLink}>${title}</a></h2>
                     <${AuthorDetails} authors=${authorArray} />
