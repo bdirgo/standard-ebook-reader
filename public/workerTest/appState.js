@@ -299,6 +299,12 @@ class BookFeed extends SubjectFeed {
     }
 }
 
+class MyLibrary extends MyCategory {
+    constructor(props) {
+        super(props)
+    }
+}
+
 async function fetchSubjects(subjects_url) {
     const response = await fetch(subjects_url)
     const text = await response.text()
@@ -313,7 +319,7 @@ async function fetchNewReleases(new_url) {
     const text = await response.text()
     const rawJSON = xmlConverter.parse(text)
     const entry = new BookFeed(rawJSON)
-    localforage.setItem('entriesBySubject', entry)
+    localforage.setItem('entriesNew', entry)
     return entry
 }
 
@@ -359,6 +365,14 @@ function createCategroiesFrom(entriesBySubject) {
     return categoriesFound
 }
 
+async function createUserLibrary(entryId) {
+    const firstEntry = await localforage.getItem(entryId);
+    const userLibrary = new MyLibrary({term: "My Library"})
+    userLibrary.addEntry(firstEntry)
+    localforage.setItem('userLibrary', userLibrary)
+    return userLibrary
+}
+
 const all_url = 'https://standardebooks.org/opds/all';
 const new_url = 'https://standardebooks.org/opds/new-releases';
 const subjects_url = 'https://standardebooks.org/opds/subjects';
@@ -371,14 +385,25 @@ async function userLibraryReducer(state = [], action) {
     } = action;
     switch (type) {
         case('library-tab'): {
-            return []
-        }
-        case('click-add-to-library'): {
             const userLibrary = await localforage.getItem('userLibrary')
             if (!userLibrary) {
-                
+                return []
+            } else {
+                return userLibrary
             }
-            return state;
+        }
+        case('click-add-to-library'): {
+            let userLibrary = await localforage.getItem('userLibrary')
+            console.log(userLibrary)
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary(entryId)
+            } else {
+                const newEntry = await localforage.getItem(entryId);
+                userLibrary.entries.push(newEntry)
+                localforage.setItem('userLibrary', userLibrary)
+            }
+            return userLibrary;
         }
         case('browse-tab'):
         case('new-tab'):
@@ -413,8 +438,18 @@ async function bookLibraryReducer(state = [], action) {
             // TODO: Assuming Fetch is successful...
             return bookLibrary;
         }
+        case('new-tab'): {
+            let entriesNew = await localforage.getItem('entriesNew')
+            if (!entriesNew) {
+                entriesNew = await fetchNewReleases(new_url)
+            } 
+            entriesNew = {
+                title: entriesNew.title,
+                entries: entriesNew.entries.slice(0, 4)
+            }
+            return entriesNew
+        }
         case('library-tab'):
-        case('new-tab'):
         case('search-tab'): {
             return null;
         }
@@ -429,27 +464,15 @@ function activeTabReducer(state = 'LIBRARY', action) {
         tab,
     } = action;
     switch (type) {
-        case('browse-tab'): {
-            return tab;
-        }
-        case('click-subject'): {
-            return tab;
-        }
-        case('click-category'): {
-            return tab;
-        }
-        case('click-title'): {
-            return tab;
-        }
-        case('click-add-to-library'): {
-            return tab;
-        }
-        case('library-tab'): {
-            return tab;
-        }
-        case('new-tab'): {
-            return tab;
-        }
+        case('browse-tab'): 
+        case('click-new'): 
+        case('click-author'): 
+        case('click-subject'): 
+        case('click-category'): 
+        case('click-title'): 
+        case('click-add-to-library'): 
+        case('library-tab'): 
+        case('new-tab'): 
         case('search-tab'): {
             return tab;
         }
@@ -471,6 +494,14 @@ async function activeCategoryReducer(state = null, action) {
         case('click-subject'): {
             const subjects = await localforage.getItem('entriesBySubject')
             return subjects.filter(val => val.title === categoryTerm)[0];
+        }
+        case('click-new'): {
+            const newEntries = await localforage.getItem('entriesNew')
+            entriesNew = {
+                title: newEntries.title,
+                entries: newEntries.entries
+            }
+            return entriesNew
         }
         case('click-category-close'):
         case('browse-tab'):
@@ -518,9 +549,14 @@ async function setInitialState(
 const initialLoadTime = Date.now();
 
 async function initApp(state) {
-    const rv = app(state, "");
+    const rv = app(state, {
+        type: 'library-tab',
+        tab: 'LIBRARY'
+      });
     // populate database if it doesnt exist
-    await app(state, "browse-tab");
+    await app(state, {
+        type: 'browse-tab',
+      });
     return rv
 }
 

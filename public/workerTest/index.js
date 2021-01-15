@@ -1,4 +1,4 @@
-import {html, render} from 'https://unpkg.com/lit-html'
+import {html, render} from 'https://unpkg.com/lit-html?module';
 const w = new Worker("./appState.js");
 
 let elem = document.body
@@ -45,7 +45,7 @@ const LibraryNavigation = () => {
     // listener options: capture, passive, and once.
     capture: true,
   }
-  return html`<a @click=${clickHandler} href="#" class="box button">My Library</a>`
+  return html`<a @click=${clickHandler} class="box button">My Library</a>`
 }
 const NewNavigation = () => {
   const clickHandler = {
@@ -63,7 +63,7 @@ const NewNavigation = () => {
     // listener options: capture, passive, and once.
     capture: true,
   }
-  return html`<a @click=${clickHandler} href="#" class="box button">New Books</a>`
+  return html`<a @click=${clickHandler} class="box button">New Books</a>`
 }
 const BrowseNavigation = () => {
   const clickHandler = {
@@ -81,7 +81,7 @@ const BrowseNavigation = () => {
     // listener options: capture, passive, and once.
     capture: true,
   }
-  return html`<a @click=${clickHandler} href="#" class="box button">Browse Categories</a>`
+  return html`<a @click=${clickHandler} class="box button">Browse Categories</a>`
 }
 const SearchNavigation = () => {
   const clickHandler = {
@@ -99,23 +99,37 @@ const SearchNavigation = () => {
     // listener options: capture, passive, and once.
     capture: true,
   }
-  return html`<a @click=${clickHandler} href="#" class="box button">Search</a>`
+  return html`<a @click=${clickHandler} class="box button">Search</a>`
 }
-const EmptyLibrary = () => html`<p>Library is empty.</p>`
-const ItemView = ({title}) => html`<li>
-  <h2>${title}</h2>
-</li>`
+const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a few books.</p>`
+
+const ItemView = (entry) => {
+  const {
+    ebookLink,
+    cover,
+    title,
+    summary,
+    categories,
+  } = entry
+  const readLink = `/ebook.html?book=${ebookLink.href}`
+  const standardURL = 'https://standardebooks.org/'
+  return html`<li class="library-list-image">
+  <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
+  <div class="card-body">
+    <b id=${entry.id}>${entry.title}</b>
+  </div>
+</li>`}
 const LibraryList = (items = []) => {
-  console.log(items)
   return html`
   ${items.length === 0
     ? html`${EmptyLibrary()}`
-    : html`<ul>${items.map(item => ItemView(item))}</ul>`
+    : html`<ul class="library-list">${items.map(item => ItemView(item))}</ul>`
   }`}
 
 const Library = (userLibrary) => {
   return html`
-    ${LibraryList(userLibrary)}
+    <h2>${userLibrary.title}</h2>
+    ${LibraryList(userLibrary.entries)}
   `
 }
 
@@ -151,6 +165,37 @@ const SubjectEntry = (entry, isCoverOnly = false) => {
   `
 }
 
+const New = (subject) => {
+  const {
+    title,
+    entries,
+  } = subject;
+  const clickHandler = {
+    // handleEvent method is required.
+    handleEvent(e) {
+      const payload = {
+        action: {
+          type: 'click-new',
+          categoryTerm: title,
+          tab: 'SUBJECT',
+        }
+      }
+      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+    },
+    // event listener objects can also define zero or more of the event 
+    // listener options: capture, passive, and once.
+    capture: true,
+  }
+  return html`
+  <h2 @click=${clickHandler}>${title} > </h2>
+  <ul class="subject-list">
+    ${entries.map(entry => {
+      return SubjectEntry(entry)
+    })}
+  </ul>
+  `
+}
+
 const Subjects = (subject) => {
   const {
     title,
@@ -173,7 +218,7 @@ const Subjects = (subject) => {
     capture: true,
   }
   return html`
-  <h2 @click=${clickHandler}>${title}</h2>
+  <h2 @click=${clickHandler}>${title} > </h2>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -200,7 +245,7 @@ const Category = (category) => {
   const isCoverOnly = true;
   return html`
   <h2>${title}</h2>
-  <ul class="subject-list block">
+  <ul class="category-list">
     ${entries.map(entry => {
       return SubjectEntry(entry, isCoverOnly)
     })}
@@ -230,7 +275,7 @@ const DetailView = (entry) => {
         action: {
           type: 'click-add-to-library',
           entryId: entry.id,
-          tab: '',
+          tab: 'LIBRARY',
         }
       }
       w.postMessage({type:'click', payload:JSON.stringify(payload)})
@@ -301,20 +346,23 @@ function rerender(props) {
         case('BROWSE'): {
           return Browse(bookLibrary);
         }
+        case('NEW'): {
+          return New(bookLibrary);
+        }
         case('SUBJECT'): {
-          window.scrollTo({top:0})
+          window.scrollTo({top:212})
           return Category(activeCategory);
         }
         case('CATEGORY'): {
-          window.scrollTo({top:0})
+          window.scrollTo({top:212})
           return Category(activeCategory);
         }
         case('DETAIL_VIEW'): {
-          window.scrollTo({top:0})
+          window.scrollTo({top:212})
           return DetailView(activeEntry);
         }
         default:
-          return html`Default`;
+          return html`Default View`;
       }
       
     }
