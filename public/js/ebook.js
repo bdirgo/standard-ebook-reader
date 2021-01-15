@@ -3,7 +3,7 @@ let dbVersion = 1;
 let dbReady = false;
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('dom content loaded');
-    await initDb();
+    // await initDb();
     await initBook();
 });
 

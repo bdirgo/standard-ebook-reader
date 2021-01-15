@@ -32,10 +32,10 @@
     </nav>
     <div id="root" class="root loading"></div>
     <div id="added-books"></div>
-    <form id="fileTest">
+    <!-- <form id="fileTest">
       <input type="file"  accept="application/epub+zip" >
       <button>Upload</button>
-    </form>
+    </form> -->
     <p id="install-prompt"><b>Add this website to your home screen to get to the newsest books quicker.</b></p>
     <p id="explainer">Click on a book to start reading right away in your browser.</p>
     <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p> 
@@ -53,7 +53,7 @@
 
 				document.querySelector('#fileTest').addEventListener('submit', doFile);
 
-				initDb();
+				// initDb();
 			});
 
 			function initDb() {
