@@ -233,6 +233,7 @@ class BookFeedEntry extends SubjectFeedEntry {
         this.ebookLink = new EbookLink(this.epubLink)
         this.thumbnail = this.findThumbnailLink(this.linkArray);
         this.cover = this.findCoverLink(this.linkArray);
+        this.inUserLibrary = false;
     }
 
     filterIssued(json) {
@@ -365,11 +366,9 @@ function createCategroiesFrom(entriesBySubject) {
     return categoriesFound
 }
 
-async function createUserLibrary(entryId) {
-    const firstEntry = await localforage.getItem(entryId);
+async function createUserLibrary() {
     const userLibrary = new MyLibrary({term: "My Library"})
-    userLibrary.addEntry(firstEntry)
-    localforage.setItem('userLibrary', userLibrary)
+    await localforage.setItem('userLibrary', userLibrary)
     return userLibrary
 }
 
@@ -398,11 +397,23 @@ async function userLibraryReducer(state = [], action) {
             if (!userLibrary) {
                 console.log('creating Library')
                 userLibrary = await createUserLibrary(entryId)
-            } else {
-                const newEntry = await localforage.getItem(entryId);
-                userLibrary.entries.push(newEntry)
-                localforage.setItem('userLibrary', userLibrary)
             }
+            let newEntry = await localforage.getItem(entryId);
+            newEntry.inUserLibrary = true;
+            userLibrary.entries.push(newEntry)
+            await localforage.setItem(entryId, newEntry)
+            localforage.setItem('userLibrary', userLibrary)
+            return userLibrary;
+        }
+        case('click-remove-from-library'): {
+            let userLibrary = await localforage.getItem('userLibrary')
+            const index = userLibrary.entries.findIndex(val => val.id === entryId)
+            userLibrary.entries.splice(index, 1)
+            console.log(userLibrary)
+            let oldEntry = await localforage.getItem(entryId);
+            oldEntry.inUserLibrary = false;
+            await localforage.setItem(entryId, oldEntry)
+            localforage.setItem('userLibrary', userLibrary)
             return userLibrary;
         }
         case('browse-tab'):
@@ -504,6 +515,7 @@ async function activeCategoryReducer(state = null, action) {
             return entriesNew
         }
         case('click-category-close'):
+        case('click-add-to-library'):
         case('browse-tab'):
             return null;
         default:
@@ -517,6 +529,7 @@ async function activeEntryReducer(state = null, action) {
         entryId,
     } = action
     switch (type) {
+        case('click-remove-from-library'): 
         case('click-title'): {
             return await localforage.getItem(entryId);
         }

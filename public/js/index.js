@@ -35,9 +35,6 @@ window.addEventListener('DOMContentLoaded', () => {
       displayMode = 'standalone';
     }
     console.log('DISPLAY_MODE_LAUNCH:', displayMode);
-    if (displayMode !== 'browser tab') {
-        document.getElementById('install-prompt').style = 'display:none;'
-    }
 });
 
 let elem = document.body
@@ -100,20 +97,20 @@ const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a 
 
 const ItemView = (entry) => {
   const {
-    ebookLink,
-    cover,
+    id,
+    thumbnail,
     title,
-    summary,
-    categories,
-  } = entry
-  const readLink = `/ebook.html?book=${ebookLink.href}`
+  } = entry;
+  const clickHandler = clickHandlerCreator({
+    type: 'click-title',
+    entryId: entry.id,
+    tab:'DETAIL_VIEW',
+  });
   const standardURL = 'https://standardebooks.org/'
-  return html`<li class="library-list-image">
-  <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
-  <div class="card-body">
-    <b id=${entry.id}>${entry.title}</b>
-  </div>
-</li>`}
+  return html`
+  <li class="library-list-image" @click=${clickHandler}>
+    <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
+  </li>`}
 const LibraryList = (items = []) => {
   return html`
   ${items.length === 0
@@ -223,26 +220,35 @@ const emptyState = {
 const DetailView = (entry) => {
   const {
     ebookLink,
-    cover,
+    thumbnail,
     title,
     summary,
     categories,
+    inUserLibrary,
   } = entry
   const readLink = `/ebook.html?book=${ebookLink.href}`
   const standardURL = 'https://standardebooks.org/'
-  const clickHandler = clickHandlerCreator({
+  const clickAdd = clickHandlerCreator({
     type: 'click-add-to-library',
     entryId: entry.id,
     tab: 'LIBRARY',
+  })
+  const clickRemove = clickHandlerCreator({
+    type: 'click-remove-from-library',
+    entryId: entry.id,
+    tab: 'DETAIL_VIEW',
   })
   // Display whole content here?
   return html`
     <div class="modal-content">
       <a href=${readLink}>
-          <img class="img-fluid detail-book-cover " src=${standardURL + cover?.href} />
+          <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
       </a>
       <h2><a href=${readLink}>${title}</a></h2>
-      <a @click=${clickHandler}>Add to Library</a>
+      ${inUserLibrary 
+        ? html`<a class="remove-from-library" @click=${clickRemove}>Remove from Library</a>`
+        : html`<a class="add-to-library" @click=${clickAdd}>Add to Library</a>`
+      }
       <p>${summary}</p>
       ${categories.length ? CategoryList(categories) : ''}
       
@@ -306,15 +312,15 @@ function rerender(props) {
           return New(bookLibrary);
         }
         case('SUBJECT'): {
-          window.scrollTo({top:212})
+          window.scrollTo({top:215})
           return Category(activeCategory);
         }
         case('CATEGORY'): {
-          window.scrollTo({top:212})
+          window.scrollTo({top:215})
           return Category(activeCategory);
         }
         case('DETAIL_VIEW'): {
-          window.scrollTo({top:212})
+          window.scrollTo({top:215})
           return DetailView(activeEntry);
         }
         default:
@@ -330,7 +336,6 @@ function rerender(props) {
             ${LibraryNavigation()}
             ${BrowseNavigation()}
             ${NewNavigation()}
-            ${SearchNavigation()}
           </div>
         </nav>
         ${TabContent(activeTab)}
