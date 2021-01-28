@@ -1,16 +1,37 @@
 {
   "name": "standard-ebook-reader",
   "version": "0.8.8",
-  "description": "",
-  "main": "server.js",
+  "description": "Browse and Read books from Standard Ebooks",
+  "main": "main.js",
+  "build": {
+    "appId": "app.web.standard-ebook-reader",
+    "mac": {
+      "category": "public.app-category.entertainment"
+    },
+    "linux": {
+      "category": "AudioVideo",
+      "target": [
+        "AppImage",
+        "deb",
+        "snap"
+      ]
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "npm install && electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
-  "author": "Benjamin Dirgo",
-  "license": "ISC",
-  "dependencies": {
-    "express": "^4.17.1",
-    "request": "^2.88.2"
+  "author": "Benjamin Dirgo <bdirgo@gmail.com>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^11.2.1",
+    "electron-builder": "^22.9.1",
+    "electron-serve": "^1.1.0",
+    "path": "^0.12.7"
   }
 }
