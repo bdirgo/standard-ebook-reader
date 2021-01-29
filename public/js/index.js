@@ -81,6 +81,13 @@ const NewNavigation = () => {
         })
   return html`<a @click=${clickHandler} class="box button">New Books</a>`
 }
+const CollectionsNavigation = () => {
+  const clickHandler = clickHandlerCreator({
+          type: 'collection-tab',
+          tab: 'COLLECTIONS'
+        })
+  return html`<a @click=${clickHandler} class="box button">Collections</a>`
+}
 const BrowseNavigation = () => {
   const clickHandler = clickHandlerCreator({
     type: 'browse-tab',
@@ -127,23 +134,19 @@ const Library = (userLibrary) => {
   `
 }
 
-const parseOPFData = async (epubLink) => {
-  const standardURL = 'https://standardebooks.org'
-  const entry_url = standardURL + epubLink;
-  const ebook = new ePub(entry_url)
-  await ebook.opened
-  console.log(ebook)
-  const opf = ebook.packaging;
-  console.log(opf)
-  return opf
+function collectionID(entry, subjectTitle) {
+  // TODO: fix this
+  entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
 }
 
-const SubjectEntry = (entry, isCoverOnly = false) => {
+const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
   let clickHandler = clickHandlerCreator({
     type: 'click-title',
     entryId: entry.id,
     tab:'DETAIL_VIEW',
   })
+  const collectionNum = collectionID(entry, subjectTitle)
+  console.log(collectionNum)
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="subject-list-image" @click=${clickHandler}>
@@ -153,6 +156,7 @@ const SubjectEntry = (entry, isCoverOnly = false) => {
       <div class="card-body">
         <b id=${entry.id}>${entry.title}</b>
         <p id=${entry.id}>${entry.summary}</p>
+        <div class="collectionId">${collectionNum}</div>
       </div>`
       : ''}
   </li>
@@ -178,6 +182,35 @@ const New = (subject) => {
   </ul>
   `
 }
+const Collection = (subject) => {
+  const {
+    title,
+    entries,
+  } = subject;
+  const clickHandler = clickHandlerCreator({
+    type: 'click-collection',
+    categoryTerm: title,
+    tab: 'COLLECTION',
+  })
+  return html`
+  <h2 @click=${clickHandler}>${title} > </h2>
+  <ul class="subject-list">
+    ${entries.map(entry => {
+      return SubjectEntry(entry)
+    })}
+  </ul>
+  `
+}
+
+const Collections = (items = []) => {
+  return html`
+  ${items.length === 0
+    ? html`${EmptyLibrary()}`
+    : html`${items.map(subject => {
+                    return html`${Collection(subject)}`
+                    })
+            }`
+  }`}
 
 const Subjects = (subject) => {
   const {
@@ -223,6 +256,20 @@ const Category = (category) => {
     })}
   </ul>`
 }
+const CollectionCategory = (category) => {
+  const {
+    title,
+    entries,
+  } = category;
+  const isCoverOnly = true;
+  return html`
+  <h2>${title}</h2>
+  <ul class="category-list">
+    ${entries.map(entry => {
+      return SubjectEntry(entry, isCoverOnly, title)
+    })}
+  </ul>`
+}
 
 const emptyState = {
   userLibrary:[],
@@ -238,6 +285,7 @@ const DetailView = (entry) => {
     summary,
     categories,
     inUserLibrary,
+    collection = [],
   } = entry
   const readLink = `/ebook.html?book=${ebookLink.href}`
   const standardURL = 'https://standardebooks.org/'
@@ -263,7 +311,14 @@ const DetailView = (entry) => {
         : html`<a class="add-to-library" @click=${clickAdd}>Add to Library</a>`
       }
       <p>${summary}</p>
-      ${categories.length ? CategoryList(categories) : ''}
+      ${collection.length ? (
+        html`<b>Collections</b>
+        ${CollectionList(collection)}`
+      ) : ''}
+      ${categories.length ? (
+        html`<b>Categories</b>
+        ${CategoryList(categories)}`
+      ) : ''}
       
     </div>
   `
@@ -283,6 +338,21 @@ const clickHandlerCreator = (action) => {
   }
 }
 
+const CollectionList = (collection) => {
+  return html`
+  <ul class="list-style-none">
+  ${collection.map(cat => {
+    const clickHandler = clickHandlerCreator({
+      type: 'click-collection',
+      categoryTerm: cat.term,
+      tab: 'COLLECTION',
+    })
+    return html`<li class="category-list-item" @click=${clickHandler}><a >${cat.term}</a></li>`
+  })}
+  </ul>
+  `
+}
+
 const CategoryList = (categories) => {
   return html`
   <ul class="list-style-none">
@@ -297,14 +367,33 @@ const CategoryList = (categories) => {
   </ul>
   `
 }
-
+const LoadingMessages = (index = 0) => {
+  const msgs = [
+    html`Loading...`,
+    html`Still Loading...`,
+    html`Organizing Libraries...`,
+    html`Reticulating Splines...`,
+    html`Ordering LLamas...`,
+    html`Or was it Alpacas?`,
+    html`Generating witty dialog...`,
+    html`Swapping time and space...`,
+    html`Spinning violently around the y-axis...`,
+    html`Tokenizing real life...`,
+    html`Bending the spoon...`,
+    html`Filtering morale...`,
+    html`Don't think of purple hippos...`,
+    html`We need a new fuse...`,
+    html`Have a good day.`,
+    html`640K ought to be enough for anybody`,
+    html`The architects are still drafting`,
+  ]  
+  return msgs[index]
+}
 function rerender(props) {
   const {
     ev = {},
-    isLoading = true,
   } = props
   const state = JSON.parse(ev.detail ?? '{}')
-
   const app = (state = emptyState) => {
     const {
       userLibrary,
@@ -312,6 +401,8 @@ function rerender(props) {
       activeTab,
       activeCategory,
       activeEntry,
+      isLoading,
+      loadingMessageindex,
     } = state
     const TabContent = (activeTab) => {
       switch(activeTab) {
@@ -320,6 +411,9 @@ function rerender(props) {
         }
         case('BROWSE'): {
           return Browse(bookLibrary);
+        }
+        case('COLLECTIONS'): {
+          return Collections(bookLibrary);
         }
         case('NEW'): {
           return New(bookLibrary);
@@ -331,6 +425,10 @@ function rerender(props) {
         case('CATEGORY'): {
           window.scrollTo({top:215})
           return Category(activeCategory);
+        }
+        case('COLLECTION'): {
+          window.scrollTo({top:215})
+          return CollectionCategory(activeCategory);
         }
         case('DETAIL_VIEW'): {
           window.scrollTo({top:215})
@@ -348,9 +446,10 @@ function rerender(props) {
           ${LibraryNavigation()}
           ${BrowseNavigation()}
           ${NewNavigation()}
+          ${CollectionsNavigation()}
         </div>
       </nav>
-      ${!isLoading ? TabContent(activeTab) : html`<span>Loading...</span>`}
+      ${!isLoading ? TabContent(activeTab) : LoadingMessages(loadingMessageindex)}
       <footer id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</footer> 
     `
   }
@@ -360,4 +459,4 @@ function rerender(props) {
 document.querySelector('.first-content').hidden = true
 rerender({})
 
-elem.addEventListener('re-render', (e) => rerender({ev:e, isLoading:false}))
+elem.addEventListener('re-render', (e) => rerender({ev:e}))

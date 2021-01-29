@@ -306,11 +306,35 @@ class MyLibrary extends MyCategory {
     }
 }
 
+class SECollection extends MyCategory {
+    constructor(given) {
+        super(given)
+    }
+}
+
 class BelongsToCollection {
-    constructor(json) {
-        this.title = json.title
-        this.type = json.type
-        this.position = json.position
+    constructor(text) {
+        const textArray = text.match(/>[\S ]*?</gm)
+
+        this.title = this.filterTitle(textArray)
+        this.term = this.title
+        this.type = this.filterType(textArray)
+        this.position = this.filterPosition(textArray)
+    }
+
+    filterTitle(textArray) {
+        const textWithBrackets = textArray[0]
+        return textWithBrackets.substr(1 , textWithBrackets.length - 2)
+    }
+
+    filterType(textArray) {
+        const textWithBrackets = textArray[1]
+        return textWithBrackets.substr(1 , textWithBrackets.length - 2)
+    }
+
+    filterPosition(textArray) {
+        const textWithBrackets = textArray[2]
+        return textWithBrackets.substr(1 , textWithBrackets.length - 2)
     }
 }
 
@@ -337,31 +361,61 @@ async function findHomepageUrl(url) {
 }
 
 function findWordCount(text) {
-    return text.search(/<meta property="se:word-count">[\s\S]*?<\/meta>/g)
+    return text.match(/<meta property="se:word-count">[\s\S]*?<\/meta>/g)[0]
 }
 function findReadingEase(text) {
-    return text.search(/<meta property="se:reading-ease.flesch">[\s\S]*?<\/meta>/g)
+    return text.match(/<meta property="se:reading-ease.flesch">[\s\S]*?<\/meta>/g)[0]
 }
 function findCollectionTitles(text) {
-    return text.search(/property="belongs-to-collection">[\s\S]*?<\/meta>/g)
+    return text.match(/<meta id="collection-[\s\S]*? property="belongs-to-collection">[\s\S]*?<\/meta>[\s\S]*?<\/meta>[\s\S]*?<\/meta>/gm)
 }
 
 async function fetchCollections() {
+    // Super hacky, I wish they gave this info on the OPDS fead
     const url = `https://api.github.com/search/code?q=belongs-to-collection+in:file+org:standardebooks&per_page=100`
     const response = await fetch(url);
     const json = await response.json();
+    let collections = [];
     if (json?.total_count > 0) {
-        await Promise.all(json.items.map(async (item) => {
-            const entryId = await findHomepageUrl(item.repository.url)
-            const entry = await localforage.get(entryId)
-            const opfUrl = RawGithubURL(item.html_url)
-            const res = await fetch(opfUrl)
-            const text = await res.text();
-            const wordCount = findWordCount(text)
-
+        await Promise.all(json.items.map(async (item, index) => {
+            if(index < 5) {
+                const entryId = await findHomepageUrl(item.repository.url);
+                const entry = await localforage.getItem(entryId);
+                const opfUrl = RawGithubURL(item.html_url);
+                const res = await fetch(opfUrl);
+                const text = await res.text();
+                const wordCountText = findWordCount(text);
+                const readingEaseText = findReadingEase(text);
+                const collectionTextArray = findCollectionTitles(text);
+                console.log(wordCountText)
+                console.log(readingEaseText)
+                collectionTextArray.forEach(async collectionText => {
+                    console.log(collectionText)
+                    const collection = new BelongsToCollection(collectionText);
+                    let foundIndex = collections.findIndex(val => val?.term === collection.term)
+                    if (foundIndex === -1) {
+                        collections.push(new SECollection(collection))
+                        foundIndex = collections.findIndex(val => val?.term === collection.term)
+                    }
+                    const foundCollection = collections[foundIndex]
+                    const entryInCollection = foundCollection.entries.findIndex(val => val.id === entryId)
+                    if (entryInCollection === -1) {
+                        foundCollection.addEntry(entry)
+                    }
+                    console.log(entryId)
+                    console.log(entry)
+                    console.log(collection)
+                    const arr = entry.collection || []
+                    arr.push(collection)
+                    entry.collection = arr
+                })
+                await localforage.setItem(entryId, entry);
+            }
         }))
     
     }
+    localforage.setItem('entriesByCollection', collections)
+    return collections;
 }
 
 async function fetchNewReleases(new_url) {
@@ -387,12 +441,12 @@ async function fetchEntries(subjects) {
     return entries
 }
 
-function createCategroiesFrom(entriesBySubject) {
+async function createCategroiesFrom(entriesBySubject) {
     let categoriesFound = []
-    entriesBySubject.forEach(bookFeed => {
-        bookFeed.entries.forEach(entry => {
+    entriesBySubject.forEach(async bookFeed => {
+        bookFeed.entries.forEach(async entry => {
             const catArray = entry.categories
-            localforage.setItem(entry.id, entry)
+            await localforage.setItem(entry.id, entry)
             for (let index = 0; index < catArray.length; index++) {
                 const cat = catArray[index];
                 let foundIndex = categoriesFound.findIndex(val => val?.term === cat.term)
@@ -407,11 +461,11 @@ function createCategroiesFrom(entriesBySubject) {
                 } else {
                     foundCategory.addEntry(entry)
                 }
+                console.log(categoriesFound)
             }
         })
     })
     categoriesFound.sort((a, b) => b.entries.length - a.entries.length)
-    localforage.setItem('entriesByCategory', categoriesFound)
     return categoriesFound
 }
 
@@ -515,6 +569,18 @@ async function bookLibraryReducer(state = [], action) {
             }
             return entriesNew
         }
+        case('collection-tab'): {
+            const entriesByCollection = await localforage.getItem('entriesByCollection')
+            console.log('collections in storage')
+            bookLibrary = entriesByCollection
+                .map(val => {
+                    return {
+                        title: val.title,
+                        entries: val.entries.slice(0, 4)
+                    }
+                })
+            return bookLibrary;
+        }
         case('library-tab'):
         case('search-tab'): {
             return null;
@@ -536,7 +602,9 @@ function activeTabReducer(state = 'LIBRARY', action) {
         case('click-subject'): 
         case('click-category'): 
         case('click-title'): 
+        case('click-collection'): 
         case('click-add-to-library'): 
+        case('collection-tab'): 
         case('library-tab'): 
         case('new-tab'): 
         case('search-tab'): {
@@ -553,6 +621,10 @@ async function activeCategoryReducer(state = null, action) {
         categoryTerm,
     } = action
     switch (type) {
+        case('click-collection'): {
+            const colls = await localforage.getItem('entriesByCollection')
+            return colls.filter(val => val.term === categoryTerm)[0];
+        }
         case('click-category'): {
             const cats = await localforage.getItem('entriesByCategory')
             return cats.filter(val => val.term === categoryTerm)[0];
@@ -620,7 +692,7 @@ async function setInitialState(
 const initialLoadTime = Date.now();
 
 async function initApp(state) {
-    const rv = app(state, {
+    const rv = await app(state, {
         type: 'library-tab',
         tab: 'LIBRARY'
       });
@@ -638,6 +710,7 @@ async function app(state = {}, action) {
         activeTab: activeTabReducer(state.activeTab, action),
         activeEntry: await activeEntryReducer(state.activeEntry, action),
         activeCategory: await activeCategoryReducer(state.activeCategory, action),
+        isLoading: false,
     }
 }
 
@@ -645,13 +718,13 @@ async function fetchStandardBooks() {
     const subjects = await fetchSubjects(subjects_url)
     const newReleases = await fetchNewReleases(new_url)
     const entriesBySubject = await fetchEntries(subjects)
-    // const collections = await fetchCollections()
-    const entriesByCategory = createCategroiesFrom(entriesBySubject)
+    const entriesByCategory = await createCategroiesFrom(entriesBySubject)
+    await localforage.setItem('entriesByCategory', entriesByCategory)
+    const collections = await fetchCollections()
     return entriesBySubject
 }
 
 let state;
-
 self.onmessage = async function(event) {
   const {
       type,
@@ -660,8 +733,22 @@ self.onmessage = async function(event) {
 // TODO: add back function, save previous action?
   switch (type) {
     case "init": {
+        console.log('init')
+        let i = 0
+        let loadingInterval = setInterval(() => {
+            console.log('interval', i)
+            self.postMessage({
+                type:'state',
+                payload: JSON.stringify({
+                    isLoading: true,
+                    loadingMessageindex: i++ % 17
+                })
+            })
+        }, 1000);
         state = await setInitialState()
         state = await initApp(state)
+        console.log('clear Interval', i)
+        clearInterval(loadingInterval)
         self.postMessage({type:"state", payload:JSON.stringify(state)});
         break;
     }
