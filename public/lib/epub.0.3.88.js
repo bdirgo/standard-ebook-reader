@@ -17227,7 +17227,7 @@ class packaging_Packaging {
       "navPath": this.navPath,
       "ncxPath": this.ncxPath,
       "coverPath": this.coverPath,
-      "spineNodeIndex": this.spineNodeIndex
+      "spineNodeIndex": this.spineNodeIndex,
     };
   }
   /**
@@ -17256,6 +17256,11 @@ class packaging_Packaging {
     metadata.media_active_class = this.getPropertyText(xml, "media:active-class");
     metadata.spread = this.getPropertyText(xml, "rendition:spread"); // metadata.page_prog_dir = packageXml.querySelector("spine").getAttribute("page-progression-direction");
 
+    metadata.wordCount = this.getPropertyText(xml, "se:word-count");
+    metadata.readingEase = this.getPropertyText(xml, "se:reading-ease");
+    metadata.readingEaseFlesch = this.getPropertyText(xml, "se:reading-ease.flesch");
+    metadata.subject = this.getPropertyText(xml, "se:subject");
+    metadata.collection = this.getPropertyText(xml, "belongs-to-collection");
     return metadata;
   }
   /**
@@ -17448,6 +17453,17 @@ class packaging_Packaging {
 
     if (el.childNodes.length) {
       return el.childNodes[0].nodeValue;
+    }
+
+    return "";
+  }
+  getPropertyNodesArray(xml, property) {
+    var el = Object(core["qsp"])(xml, "meta", {
+      "property": property
+    });
+
+    if (el && el.childNodes.length) {
+      return el;
     }
 
     return "";

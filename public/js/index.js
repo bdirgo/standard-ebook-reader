@@ -1,4 +1,5 @@
 import {html, render} from 'https://unpkg.com/lit-html?module';
+
 const w = new Worker("./js/appState.js");
 
 /**
@@ -27,6 +28,7 @@ function unregister() {
   }
 }
 window.addEventListener('DOMContentLoaded', () => {
+  // TODO: Electron
     let displayMode = 'browser tab';
     if (navigator.standalone) {
       displayMode = 'standalone-ios';
@@ -125,8 +127,19 @@ const Library = (userLibrary) => {
   `
 }
 
+const parseOPFData = async (epubLink) => {
+  const standardURL = 'https://standardebooks.org'
+  const entry_url = standardURL + epubLink;
+  const ebook = new ePub(entry_url)
+  await ebook.opened
+  console.log(ebook)
+  const opf = ebook.packaging;
+  console.log(opf)
+  return opf
+}
+
 const SubjectEntry = (entry, isCoverOnly = false) => {
-  const clickHandler = clickHandlerCreator({
+  let clickHandler = clickHandlerCreator({
     type: 'click-title',
     entryId: entry.id,
     tab:'DETAIL_VIEW',
@@ -328,25 +341,23 @@ function rerender(props) {
       }
       
     }
-    if (!isLoading) {
-      return html`
-        <h1>Ebook Reader</h1>
-        <nav>
-          <div class="parent">
-            ${LibraryNavigation()}
-            ${BrowseNavigation()}
-            ${NewNavigation()}
-          </div>
-        </nav>
-        ${TabContent(activeTab)}
-        <footer id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</footer> 
-      `
-    }
-    return html`<span>Loading...</span>`
+    return html`
+      <h1>Ebook Reader</h1>
+      <nav>
+        <div class="parent">
+          ${LibraryNavigation()}
+          ${BrowseNavigation()}
+          ${NewNavigation()}
+        </div>
+      </nav>
+      ${!isLoading ? TabContent(activeTab) : html`<span>Loading...</span>`}
+      <footer id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</footer> 
+    `
   }
   console.log(state)
   render(app(state), document.querySelector('#result'))
 }
+document.querySelector('.first-content').hidden = true
 rerender({})
 
 elem.addEventListener('re-render', (e) => rerender({ev:e, isLoading:false}))

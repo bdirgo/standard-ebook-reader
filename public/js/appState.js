@@ -306,20 +306,69 @@ class MyLibrary extends MyCategory {
     }
 }
 
+class BelongsToCollection {
+    constructor(json) {
+        this.title = json.title
+        this.type = json.type
+        this.position = json.position
+    }
+}
+
 async function fetchSubjects(subjects_url) {
     const response = await fetch(subjects_url)
     const text = await response.text()
-    const rawJSON = xmlConverter.parse(text)
-    const subjects = new SubjectFeed(rawJSON)
+    const json = xmlConverter.parse(text)
+    const subjects = new SubjectFeed(json)
     localforage.setItem('subjects', subjects)
     return subjects
+}
+
+function RawGithubURL(url) {
+    const newUrl = new URL(url)
+    newUrl.host = `raw.githubusercontent.com`
+    newUrl.pathname = newUrl.pathname.replace('/blob', '') 
+    return newUrl
+}
+
+async function findHomepageUrl(url) {
+    const res = await fetch(url)
+    const json = await res.json()
+    return json.homepage
+}
+
+function findWordCount(text) {
+    return text.search(/<meta property="se:word-count">[\s\S]*?<\/meta>/g)
+}
+function findReadingEase(text) {
+    return text.search(/<meta property="se:reading-ease.flesch">[\s\S]*?<\/meta>/g)
+}
+function findCollectionTitles(text) {
+    return text.search(/property="belongs-to-collection">[\s\S]*?<\/meta>/g)
+}
+
+async function fetchCollections() {
+    const url = `https://api.github.com/search/code?q=belongs-to-collection+in:file+org:standardebooks&per_page=100`
+    const response = await fetch(url);
+    const json = await response.json();
+    if (json?.total_count > 0) {
+        await Promise.all(json.items.map(async (item) => {
+            const entryId = await findHomepageUrl(item.repository.url)
+            const entry = await localforage.get(entryId)
+            const opfUrl = RawGithubURL(item.html_url)
+            const res = await fetch(opfUrl)
+            const text = await res.text();
+            const wordCount = findWordCount(text)
+
+        }))
+    
+    }
 }
 
 async function fetchNewReleases(new_url) {
     const response = await fetch(new_url)
     const text = await response.text()
-    const rawJSON = xmlConverter.parse(text)
-    const entry = new BookFeed(rawJSON)
+    const json = xmlConverter.parse(text)
+    const entry = new BookFeed(json)
     localforage.setItem('entriesNew', entry)
     return entry
 }
@@ -330,8 +379,8 @@ async function fetchEntries(subjects) {
         const url = subject.id
         const res = await fetch(url)
         const text = await res.text()
-        const rawJSON = xmlConverter.parse(text)
-        const entry = new BookFeed(rawJSON)
+        const json = xmlConverter.parse(text)
+        const entry = new BookFeed(json)
         entries.push(entry)
     }));
     localforage.setItem('entriesBySubject', entries)
@@ -372,6 +421,7 @@ async function createUserLibrary() {
     return userLibrary
 }
 
+const standard_url = 'https://standardebooks.org';
 const all_url = 'https://standardebooks.org/opds/all';
 const new_url = 'https://standardebooks.org/opds/new-releases';
 const subjects_url = 'https://standardebooks.org/opds/subjects';
@@ -451,7 +501,12 @@ async function bookLibraryReducer(state = [], action) {
         }
         case('new-tab'): {
             let entriesNew = await localforage.getItem('entriesNew')
-            if (!entriesNew) {
+            const now = new Date();
+            const lastUpdated = new Date(`${entriesNew.updated}`);
+            let h = 4; // hours
+            const isOld = now - lastUpdated > (h*60*60*1000)
+            if (isOld || !entriesNew) {
+                console.log('checking for new realeases...')
                 entriesNew = await fetchNewReleases(new_url)
             } 
             entriesNew = {
@@ -527,11 +582,14 @@ async function activeEntryReducer(state = null, action) {
     const {
         type,
         entryId,
+        data,
     } = action
     switch (type) {
         case('click-remove-from-library'): 
         case('click-title'): {
-            return await localforage.getItem(entryId);
+            const entry = await localforage.getItem(entryId);
+            console.log(data)
+            return entry;
         }
         case('click-title-close'):
         case('browse-tab'):
@@ -587,6 +645,7 @@ async function fetchStandardBooks() {
     const subjects = await fetchSubjects(subjects_url)
     const newReleases = await fetchNewReleases(new_url)
     const entriesBySubject = await fetchEntries(subjects)
+    // const collections = await fetchCollections()
     const entriesByCategory = createCategroiesFrom(entriesBySubject)
     return entriesBySubject
 }
