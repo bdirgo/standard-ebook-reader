@@ -5,17 +5,17 @@ const w = new Worker("./js/appState.js");
 /**
  * Service Worker
  */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-          .then(reg => {
-              console.log("Registered!", reg)
-              // registration worked
-          }).catch(err => {
-              console.log('Registration failed with ' + err);
-          })
-  })
-}
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//       navigator.serviceWorker.register('./sw.js')
+//           .then(reg => {
+//               console.log("Registered!", reg)
+//               // registration worked
+//           }).catch(err => {
+//               console.log('Registration failed with ' + err);
+//           })
+//   })
+// }
 function unregister() {
   if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready
@@ -27,6 +27,7 @@ function unregister() {
           });
   }
 }
+unregister()
 window.addEventListener('DOMContentLoaded', () => {
   // TODO: Electron
     let displayMode = 'browser tab';
@@ -135,8 +136,7 @@ const Library = (userLibrary) => {
 }
 
 function collectionID(entry, subjectTitle) {
-  // TODO: fix this
-  entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
+  return entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
 }
 
 const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
@@ -146,7 +146,6 @@ const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
     tab:'DETAIL_VIEW',
   })
   const collectionNum = collectionID(entry, subjectTitle)
-  console.log(collectionNum)
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="subject-list-image" @click=${clickHandler}>
@@ -192,10 +191,12 @@ const Collection = (subject) => {
     categoryTerm: title,
     tab: 'COLLECTION',
   })
+  console.log(entries)
+  const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2 @click=${clickHandler}>${title} > </h2>
   <ul class="subject-list">
-    ${entries.map(entry => {
+    ${list.map(entry => {
       return SubjectEntry(entry)
     })}
   </ul>
@@ -262,10 +263,11 @@ const CollectionCategory = (category) => {
     entries,
   } = category;
   const isCoverOnly = true;
+  const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
   <ul class="category-list">
-    ${entries.map(entry => {
+    ${list.map(entry => {
       return SubjectEntry(entry, isCoverOnly, title)
     })}
   </ul>`
@@ -457,6 +459,6 @@ function rerender(props) {
   render(app(state), document.querySelector('#result'))
 }
 document.querySelector('.first-content').hidden = true
-rerender({})
+rerender({isLoading:true})
 
 elem.addEventListener('re-render', (e) => rerender({ev:e}))
