@@ -1,6 +1,7 @@
 importScripts(
     '../lib/localforage.js',
     '../lib/tXml.js',
+    '../lib/rate-limit-util.js',
 )
 class XMLObject {
     constructor() {
@@ -378,39 +379,32 @@ async function fetchCollections() {
     let collections = [];
     if (json?.total_count > 0) {
         await Promise.all(json.items.map(async (item, index) => {
-            if(index < 5) {
-                const entryId = await findHomepageUrl(item.repository.url);
-                const entry = await localforage.getItem(entryId);
-                const opfUrl = RawGithubURL(item.html_url);
-                const res = await fetch(opfUrl);
-                const text = await res.text();
-                const wordCountText = findWordCount(text);
-                const readingEaseText = findReadingEase(text);
-                const collectionTextArray = findCollectionTitles(text);
-                console.log(wordCountText)
-                console.log(readingEaseText)
-                collectionTextArray.forEach(async collectionText => {
-                    console.log(collectionText)
-                    const collection = new BelongsToCollection(collectionText);
-                    let foundIndex = collections.findIndex(val => val?.term === collection.term)
-                    if (foundIndex === -1) {
-                        collections.push(new SECollection(collection))
-                        foundIndex = collections.findIndex(val => val?.term === collection.term)
-                    }
-                    const foundCollection = collections[foundIndex]
-                    const entryInCollection = foundCollection.entries.findIndex(val => val.id === entryId)
-                    if (entryInCollection === -1) {
-                        foundCollection.addEntry(entry)
-                    }
-                    console.log(entryId)
-                    console.log(entry)
-                    console.log(collection)
-                    const arr = entry.collection || []
-                    arr.push(collection)
-                    entry.collection = arr
-                })
-                await localforage.setItem(entryId, entry);
-            }
+            const entryId = await findHomepageUrl(item.repository.url);
+            const entry = await localforage.getItem(entryId);
+            const opfUrl = RawGithubURL(item.html_url);
+            // TODO: fix limiter... not limiting gihub repo requests
+            const res = await rateLimitHandler(() => fetch(opfUrl));
+            const text = await res.text();
+            const wordCountText = findWordCount(text);
+            const readingEaseText = findReadingEase(text);
+            const collectionTextArray = findCollectionTitles(text);
+            collectionTextArray.forEach(async collectionText => {
+                const collection = new BelongsToCollection(collectionText);
+                let foundIndex = collections.findIndex(val => val?.term === collection.term)
+                if (foundIndex === -1) {
+                    collections.push(new SECollection(collection))
+                    foundIndex = collections.findIndex(val => val?.term === collection.term)
+                }
+                const foundCollection = collections[foundIndex]
+                const entryInCollection = foundCollection.entries.findIndex(val => val.id === entryId)
+                if (entryInCollection === -1) {
+                    foundCollection.addEntry(entry)
+                }
+                const arr = entry.collection || []
+                arr.push(collection)
+                entry.collection = arr
+            })
+            await localforage.setItem(entryId, entry);
         }))
     
     }
@@ -461,10 +455,10 @@ async function createCategroiesFrom(entriesBySubject) {
                 } else {
                     foundCategory.addEntry(entry)
                 }
-                console.log(categoriesFound)
             }
         })
     })
+    console.log(categoriesFound)
     categoriesFound.sort((a, b) => b.entries.length - a.entries.length)
     return categoriesFound
 }
