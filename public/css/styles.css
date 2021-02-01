@@ -31,6 +31,10 @@
 
 }
 
+.pointer {
+    cursor: pointer;
+}
+
 .subject-list {
     list-style-type: none;
     padding: 0;
@@ -40,6 +44,7 @@
 
 .subject-list-image {
     padding: 0 1em 0 0;
+	cursor: pointer;
 }
 
 .subject-list-image a {
@@ -69,6 +74,10 @@
     display: none; /* Hidden by default */
 }
 
+.show {
+    display: initial;
+}
+
 /* The Modal (background) */
 .modal {
     /* display: none; Hidden by default */
@@ -94,6 +103,7 @@
 }
 
 .modal-content a {
+    display: flex;
 }
 
 .dark .modal-content {
@@ -117,4 +127,7 @@
     color: #000;
     text-decoration: none;
     cursor: pointer;
+}
+
+@media only screen and (max-width: 768px) {
 }
