@@ -88,20 +88,25 @@ img {
 }
 
 .select {
-    border: solid gray 1px;
+    border: solid 1px;
+}
+
+.dark select {
+    color: white;
+    background-color: rgb(70, 80, 89);
 }
 
 select {
     appearance: none;
     background-color: transparent;
     border: none;
-    color: rgba(99, 99, 99, 0.406);
+    /* color: rgba(99, 99, 99, 0.406); */
     cursor: inherit;
     font-family: inherit;
     font-size: inherit;
     line-height: inherit;
     margin: 0;
-    padding: 0 11%;
+    padding: 0 5%;
     width: 100%;
 }
 

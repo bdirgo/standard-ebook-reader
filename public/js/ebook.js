@@ -168,6 +168,8 @@
     } = currentLocation.start.displayed
     footer.textContent = `${page} / ${total}`
     tocSelect.selectedIndex = currentLocation.start.index
+    console.log(tocSelect.options[currentLocation.start.index])
+    openbtn.innerHTML = `&#9776; ${tocSelect.options[currentLocation.start.index].label}`
   }
 
   // Navigation loaded
