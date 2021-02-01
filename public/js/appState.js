@@ -1,7 +1,19 @@
 importScripts(
     '../lib/localforage.js',
     '../lib/tXml.js',
+    '../lib/fuse.js',
 )
+
+const LOAD_TIME = 2000
+
+var myDB = localforage.createInstance({
+    name: "myDB"
+});
+
+var bookEntires = localforage.createInstance({
+    name: "bookEntires"
+});
+
 class XMLObject {
     constructor() {
     }
@@ -306,21 +318,139 @@ class MyLibrary extends MyCategory {
     }
 }
 
+class SECollection extends MyCategory {
+    constructor(given) {
+        super(given)
+    }
+}
+
+class BelongsToCollection {
+    constructor(text) {
+        const textArray = text.match(/>[\S ]*?</gm)
+
+        this.title = this.filterTitle(textArray)
+        this.term = this.title
+        this.type = this.filterType(textArray)
+        this.position = parseInt(this.filterPosition(textArray))
+    }
+
+    filterTitle(textArray) {
+        const textWithBrackets = textArray[0]
+        return textWithBrackets.substr(1 , textWithBrackets.length - 2)
+    }
+
+    filterType(textArray) {
+        const textWithBrackets = textArray[1]
+        return textWithBrackets.substr(1 , textWithBrackets.length - 2)
+    }
+
+    filterPosition(textArray) {
+        const textWithBrackets = textArray[2]
+        return textWithBrackets.substr(1 , textWithBrackets.length - 2)
+    }
+}
+
 async function fetchSubjects(subjects_url) {
     const response = await fetch(subjects_url)
     const text = await response.text()
-    const rawJSON = xmlConverter.parse(text)
-    const subjects = new SubjectFeed(rawJSON)
-    localforage.setItem('subjects', subjects)
+    const json = xmlConverter.parse(text)
+    const subjects = new SubjectFeed(json)
+    myDB.setItem('subjects', subjects)
     return subjects
+}
+
+function RawGithubURL(url) {
+    const newUrl = new URL(url)
+    newUrl.host = `raw.githubusercontent.com`
+    newUrl.pathname = newUrl.pathname.replace('/blob', '') 
+    return newUrl
+}
+
+function createEntryId(url) {
+    const newUrl = new URL(url)
+    newUrl.host = `standardebooks.org`
+    newUrl.pathname = newUrl.pathname.replace('/repos', '/ebooks').replace('/standardebooks', '').replaceAll('_', '/')
+    return `${newUrl}`
+}
+
+function findWordCount(text) {
+    return text.match(/<meta property="se:word-count">[\s\S]*?<\/meta>/g)[0]
+}
+function findReadingEase(text) {
+    return text.match(/<meta property="se:reading-ease.flesch">[\s\S]*?<\/meta>/g)[0]
+}
+function findCollectionTitles(text) {
+    return text.match(/<meta id="collection[\s\S]*? property="belongs-to-collection">[\s\S]*?<\/meta>([\s\S]*?<\/meta>){1,2}/gm)
+}
+
+async function fetchCollections() {
+    const fetchGithubSearchResults = async (page = 1) => {
+        // Super hacky, I wish they gave this info on the OPDS fead
+        // Rate limit
+        // The Search API has a custom rate limit. For requests using Basic Authentication, OAuth, or client ID and secret,
+        // you can make up to 30 requests per minute. For unauthenticated requests, the rate limit allows you to make up
+        // to 10 requests per minute.
+        // See the rate limit documentation for details on determining your current rate limit status.
+
+        const result_limit = 100
+        const github_search_url = `https://api.github.com/search/code?q=belongs-to-collection+in:file+filename:content+org:standardebooks&per_page=${result_limit}&page=${page}`
+        const response = await fetch(github_search_url);
+        const json = await response.json();
+
+        if (json.total_count - (result_limit * page) >= 1) {
+            return json.items.concat(await fetchGithubSearchResults(page+1))
+        } else {
+            return json.items
+        }
+    }
+
+    const items = await fetchGithubSearchResults();
+    let collections = [];
+    await Promise.all(items.map(async (item) => {
+        // url: "https://api.github.com/repos/standardebooks/ford-madox-ford_no-more-parades"
+        const entryId = createEntryId(item.repository.url);
+        // "https://standardebooks.org/ebooks/ford-madox-ford/no-more-parades"
+        const entry = await bookEntires.getItem(entryId);
+        const opfUrl = RawGithubURL(item.html_url);
+        const res = await fetch(opfUrl);
+        const text = await res.text();
+        // TODO: books out of a collection have an ease score
+        // const readingEaseText = findReadingEase(text);
+        // entry.readingEase = readingEaseText;
+        const collectionTextArray = findCollectionTitles(text);
+        if (collectionTextArray === null) {
+            console.warn(text)
+        }
+        collectionTextArray.forEach(async collectionText => {
+            const collection = new BelongsToCollection(collectionText);
+            let foundIndex = collections.findIndex(val => val?.term === collection.term)
+            if (foundIndex === -1) {
+                collections.push(new SECollection(collection))
+                foundIndex = collections.findIndex(val => val?.term === collection.term)
+            }
+            const foundCollection = collections[foundIndex]
+            const entryInCollection = foundCollection.entries.findIndex(val => val.id === entryId)
+            if (entryInCollection === -1) {
+                foundCollection.addEntry(entry)
+            }
+            const arr = entry.collection || []
+            arr.push(collection)
+            entry.collection = arr
+        })
+        await bookEntires.setItem(entryId, entry);
+    }))
+    const updated = new Date()
+    const rv =  {collections, updated}
+    await myDB.setItem('entriesByCollection', rv)
+    return rv
 }
 
 async function fetchNewReleases(new_url) {
     const response = await fetch(new_url)
     const text = await response.text()
-    const rawJSON = xmlConverter.parse(text)
-    const entry = new BookFeed(rawJSON)
-    localforage.setItem('entriesNew', entry)
+    const json = xmlConverter.parse(text)
+    const entry = new BookFeed(json)
+    myDB.setItem('entriesNew', entry)
     return entry
 }
 
@@ -330,20 +460,25 @@ async function fetchEntries(subjects) {
         const url = subject.id
         const res = await fetch(url)
         const text = await res.text()
-        const rawJSON = xmlConverter.parse(text)
-        const entry = new BookFeed(rawJSON)
+        const json = xmlConverter.parse(text)
+        const entry = new BookFeed(json)
         entries.push(entry)
     }));
-    localforage.setItem('entriesBySubject', entries)
-    return entries
+    const updated = new Date()
+    const rv = {subjects:entries, updated}
+    myDB.setItem('entriesBySubject', rv)
+    return rv
 }
 
-function createCategroiesFrom(entriesBySubject) {
+async function createCategroiesFrom(entriesBySubject) {
+    // TODO: fix this... localforage has an empty array???
+    console.log('finding categories')
     let categoriesFound = []
-    entriesBySubject.forEach(bookFeed => {
-        bookFeed.entries.forEach(entry => {
+    await Promise.all(entriesBySubject.subjects.map(async bookFeed => {
+        await Promise.all(bookFeed.entries.map(async entry => {
             const catArray = entry.categories
-            localforage.setItem(entry.id, entry)
+            // IS this where we are populating the `bookEntires` db???
+            await bookEntires.setItem(entry.id, entry)
             for (let index = 0; index < catArray.length; index++) {
                 const cat = catArray[index];
                 let foundIndex = categoriesFound.findIndex(val => val?.term === cat.term)
@@ -359,22 +494,28 @@ function createCategroiesFrom(entriesBySubject) {
                     foundCategory.addEntry(entry)
                 }
             }
-        })
-    })
+        }))
+    }))
     categoriesFound.sort((a, b) => b.entries.length - a.entries.length)
-    localforage.setItem('entriesByCategory', categoriesFound)
-    return categoriesFound
+    console.log('categoriesFound')
+    console.log(categoriesFound)
+    const updated = new Date()
+    const rv = {categories: categoriesFound, updated}
+    await myDB.setItem('entriesByCategory', rv)
+    return rv
 }
 
 async function createUserLibrary() {
     const userLibrary = new MyLibrary({term: "My Library"})
-    await localforage.setItem('userLibrary', userLibrary)
+    await myDB.setItem('userLibrary', userLibrary)
     return userLibrary
 }
 
+const standard_url = 'https://standardebooks.org';
 const all_url = 'https://standardebooks.org/opds/all';
 const new_url = 'https://standardebooks.org/opds/new-releases';
 const subjects_url = 'https://standardebooks.org/opds/subjects';
+// TODO: query the local database... use theirs if all else fails.
 // const query_url = `https://standardebooks.org/opds/all?query=${q}`
 
 async function userLibraryReducer(state = [], action) {
@@ -384,7 +525,7 @@ async function userLibraryReducer(state = [], action) {
     } = action;
     switch (type) {
         case('library-tab'): {
-            const userLibrary = await localforage.getItem('userLibrary')
+            const userLibrary = await myDB.getItem('userLibrary')
             if (!userLibrary) {
                 return []
             } else {
@@ -392,28 +533,28 @@ async function userLibraryReducer(state = [], action) {
             }
         }
         case('click-add-to-library'): {
-            let userLibrary = await localforage.getItem('userLibrary')
+            let userLibrary = await myDB.getItem('userLibrary')
             console.log(userLibrary)
             if (!userLibrary) {
                 console.log('creating Library')
                 userLibrary = await createUserLibrary(entryId)
             }
-            let newEntry = await localforage.getItem(entryId);
+            let newEntry = await bookEntires.getItem(entryId);
             newEntry.inUserLibrary = true;
             userLibrary.entries.push(newEntry)
-            await localforage.setItem(entryId, newEntry)
-            localforage.setItem('userLibrary', userLibrary)
+            await bookEntires.setItem(entryId, newEntry)
+            myDB.setItem('userLibrary', userLibrary)
             return userLibrary;
         }
         case('click-remove-from-library'): {
-            let userLibrary = await localforage.getItem('userLibrary')
+            let userLibrary = await myDB.getItem('userLibrary')
             const index = userLibrary.entries.findIndex(val => val.id === entryId)
             userLibrary.entries.splice(index, 1)
             console.log(userLibrary)
-            let oldEntry = await localforage.getItem(entryId);
+            let oldEntry = await bookEntires.getItem(entryId);
             oldEntry.inUserLibrary = false;
-            await localforage.setItem(entryId, oldEntry)
-            localforage.setItem('userLibrary', userLibrary)
+            await bookEntires.setItem(entryId, oldEntry)
+            myDB.setItem('userLibrary', userLibrary)
             return userLibrary;
         }
         case('browse-tab'):
@@ -426,32 +567,47 @@ async function userLibraryReducer(state = [], action) {
     }
 }
 
+const lastUpdated = (db, h = 24) => {
+    if (!db) {
+        return true
+    }
+    if (!db.updated) {
+        return true
+    }
+    // New entries should be checked more often then the others
+    const now = new Date();
+    const lastUpdated = new Date(`${db.updated}`);
+    const isOld = now - lastUpdated > (h*60*60*1000)
+    return isOld
+}
+
 async function bookLibraryReducer(state = [], action) {
     switch (action.type) {
         case('browse-tab'): {
-            // TODO: add date to "my" database
-            //       don't chek when "they" update
-            const entriesBySubject = await localforage.getItem('entriesBySubject')
-            if (!entriesBySubject) {
-                console.log('no subjects')
+            const entriesBySubject = await myDB.getItem('entriesBySubject')
+            const isOld = lastUpdated(entriesBySubject)
+            if (isOld) {
+                console.log('fetching new subjects')
                 bookLibrary = await fetchStandardBooks();
+                await createCategroiesFrom(bookLibrary)
             } else {
                 console.log('subjects in storage')
                 bookLibrary = entriesBySubject
             }
-            bookLibrary = bookLibrary
+            bookLibrary = bookLibrary.subjects
                 .map(val => {
                     return {
                         title: val.title,
                         entries: val.entries.slice(0, 4)
                     }
                 })
-            // TODO: Assuming Fetch is successful...
             return bookLibrary;
         }
         case('new-tab'): {
-            let entriesNew = await localforage.getItem('entriesNew')
-            if (!entriesNew) {
+            let entriesNew = await myDB.getItem('entriesNew')
+            const isOld = lastUpdated(entriesNew, 1.5)
+            if (isOld) {
+                console.log('checking for new realeases...')
                 entriesNew = await fetchNewReleases(new_url)
             } 
             entriesNew = {
@@ -460,11 +616,47 @@ async function bookLibraryReducer(state = [], action) {
             }
             return entriesNew
         }
+        case('collection-tab'): {
+            const entriesByCollection = await myDB.getItem('entriesByCollection')
+            const isOld = lastUpdated(entriesByCollection)
+            if (isOld) {
+                console.log('repopulating collections')
+                bookLibrary = await fetchCollections()
+            } else {
+                console.log('collections in storage')
+                bookLibrary = entriesByCollection
+            }
+            bookLibrary = bookLibrary.collections
+                .map(val => {
+                    return {
+                        title: val.title,
+                        entries: val.entries.slice(0, 4),
+                        length: val.entries.length,
+                    }
+                })
+            return bookLibrary;
+        }
         case('library-tab'):
         case('search-tab'): {
             return null;
         }
         default:
+            return state
+    }
+}
+
+function sideBarReducer(state = 'show',action) {
+    const {
+        type,
+    } = action;
+    switch(type) {
+        case('click-close-main-menu'):{
+            return 'show'
+        }
+        case('click-open-main-menu'):{
+            return 'hide'
+        }
+        default: 
             return state
     }
 }
@@ -480,8 +672,8 @@ function activeTabReducer(state = 'LIBRARY', action) {
         case('click-author'): 
         case('click-subject'): 
         case('click-category'): 
-        case('click-title'): 
-        case('click-add-to-library'): 
+        case('click-collection'): 
+        case('collection-tab'): 
         case('library-tab'): 
         case('new-tab'): 
         case('search-tab'): {
@@ -498,16 +690,20 @@ async function activeCategoryReducer(state = null, action) {
         categoryTerm,
     } = action
     switch (type) {
+        case('click-collection'): {
+            const colls = await myDB.getItem('entriesByCollection')
+            return colls.collections.filter(val => val.term === categoryTerm)[0];
+        }
         case('click-category'): {
-            const cats = await localforage.getItem('entriesByCategory')
-            return cats.filter(val => val.term === categoryTerm)[0];
+            const cats = await myDB.getItem('entriesByCategory')
+            return cats.categories.filter(val => val.term === categoryTerm)[0];
         }
         case('click-subject'): {
-            const subjects = await localforage.getItem('entriesBySubject')
-            return subjects.filter(val => val.title === categoryTerm)[0];
+            const subs = await myDB.getItem('entriesBySubject')
+            return subs.subjects.filter(val => val.title === categoryTerm)[0];
         }
         case('click-new'): {
-            const newEntries = await localforage.getItem('entriesNew')
+            const newEntries = await myDB.getItem('entriesNew')
             entriesNew = {
                 title: newEntries.title,
                 entries: newEntries.entries
@@ -531,7 +727,8 @@ async function activeEntryReducer(state = null, action) {
     switch (type) {
         case('click-remove-from-library'): 
         case('click-title'): {
-            return await localforage.getItem(entryId);
+            const entry = await bookEntires.getItem(entryId);
+            return entry;
         }
         case('click-title-close'):
         case('browse-tab'):
@@ -562,15 +759,31 @@ async function setInitialState(
 const initialLoadTime = Date.now();
 
 async function initApp(state) {
-    const rv = app(state, {
+    const rv = await app(state, {
         type: 'library-tab',
         tab: 'LIBRARY'
       });
-    // populate database if it doesnt exist
+    // populate database if it doesnt exist ?? Maybe only whent he user clicks browse?? if they first click search then, fallback on SE search and not myDB
     await app(state, {
         type: 'browse-tab',
       });
     return rv
+}
+
+function showDetailModalReducer(state = false, action) {
+    const {
+        type,
+    } = action;
+    switch(type) {
+        case('click-close-details-modal'): {
+            return false
+        }
+        case('click-title'):{
+            return true
+        }
+        default: 
+        return false
+    }
 }
 
 async function app(state = {}, action) {
@@ -580,14 +793,15 @@ async function app(state = {}, action) {
         activeTab: activeTabReducer(state.activeTab, action),
         activeEntry: await activeEntryReducer(state.activeEntry, action),
         activeCategory: await activeCategoryReducer(state.activeCategory, action),
+        isLoading: false,
+        showDetailModal: showDetailModalReducer(state.showDetailModal, action),
+        showSideBarMenu: sideBarReducer(state.showSideBarMenu, action),
     }
 }
 
 async function fetchStandardBooks() {
     const subjects = await fetchSubjects(subjects_url)
-    const newReleases = await fetchNewReleases(new_url)
     const entriesBySubject = await fetchEntries(subjects)
-    const entriesByCategory = createCategroiesFrom(entriesBySubject)
     return entriesBySubject
 }
 
@@ -598,23 +812,40 @@ self.onmessage = async function(event) {
       type,
       payload,
   } = event.data;
-// TODO: add back function, save previous action?
-  switch (type) {
-    case "init": {
-        state = await setInitialState()
-        state = await initApp(state)
-        self.postMessage({type:"state", payload:JSON.stringify(state)});
-        break;
+    let i = 0
+    const postLoading = () => {
+        self.postMessage({
+            type:'state',
+            payload: JSON.stringify({
+                isLoading: true,
+                showSideBarMenu: state.showSideBarMenu,
+                loadingMessageindex: i++ % 13
+            })
+        })
     }
-    case "click": {
-        const parsedPayload = JSON.parse(payload)
-        console.log(parsedPayload)
-        state = await app(state, parsedPayload.action)
-        self.postMessage({type:"state", payload:JSON.stringify(state)});
-        break;
+    let loadingInterval = setInterval(() => {
+        console.log('loading...')
+        postLoading()
+    }, LOAD_TIME);
+    switch (type) {
+        case "init": {
+            console.log('init')
+            state = await setInitialState()
+            state = await initApp(state)
+            clearInterval(loadingInterval)
+            self.postMessage({type:"state", payload:JSON.stringify(state)});
+            break;
+        }
+        case "click": {
+            const parsedPayload = JSON.parse(payload)
+            console.log(parsedPayload)
+            state = await app(state, parsedPayload.action)
+            clearInterval(loadingInterval)
+            self.postMessage({type:"state", payload:JSON.stringify(state)});
+            break;
+        }
+        default: {
+            break;
+        }
     }
-    default: {
-      break;
-    }
-  }
 }

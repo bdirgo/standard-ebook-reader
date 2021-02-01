@@ -9,10 +9,9 @@
 
     <meta property="og:title" content="Standard Ebook Reader" />
     <meta property="og:image" content="https://standardebooks.org/images/logo.png" />
-
-    <script defer type="module" src="../darkMode/darkMode.js"></script>
+    <script defer type="module" src="../js/darkMode.js"></script>
     <script defer type="module" src="./js/index.js"></script>
-    <script defer>
+    <script>
       window.addEventListener('unhandledrejection', event => {
           alert("Error: " + event.reason.message);
       });
@@ -36,6 +35,8 @@
         return false;
       };
     </script>
+    <script type="module" src="./lib/jszip.3.5.0.js"></script>
+    <script type="module" src="./lib/epub.0.3.88.js"></script>
     <link rel="manifest" href="./manifest.json" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
     <link rel="stylesheet" type="text/css" href="./css/index.css" media="screen"/>
@@ -46,6 +47,22 @@
   </head>
   <body>
     <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
-    <div id="result" class="results">Loading...</div>
+    <div class="first-content">
+      <h1>Ebook Reader</h1>
+      <div id="sidebar" class="sidebar">
+        <nav>
+          <div class="parent">
+            <a class="box button">My Library</a>
+            <a class="box button">Browse Categories</a>
+            <a class="box button">New Books</a>
+            <a class="box button">Collections</a>
+          </div>
+        </nav>
+      </div>
+      <div id="main">
+      Loading...
+      </div>
+    </div>
+    <div id="result" class="results"></div> 
   </body>
 </html>

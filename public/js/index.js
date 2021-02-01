@@ -1,20 +1,21 @@
 import {html, render} from 'https://unpkg.com/lit-html?module';
+
 const w = new Worker("./js/appState.js");
 
 /**
  * Service Worker
  */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-          .then(reg => {
-              console.log("Registered!", reg)
-              // registration worked
-          }).catch(err => {
-              console.log('Registration failed with ' + err);
-          })
-  })
-}
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//       navigator.serviceWorker.register('./sw.js')
+//           .then(reg => {
+//               console.log("Registered!", reg)
+//               // registration worked
+//           }).catch(err => {
+//               console.log('Registration failed with ' + err);
+//           })
+//   })
+// }
 function unregister() {
   if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready
@@ -26,7 +27,9 @@ function unregister() {
           });
   }
 }
+unregister()
 window.addEventListener('DOMContentLoaded', () => {
+  // TODO: Electron
     let displayMode = 'browser tab';
     if (navigator.standalone) {
       displayMode = 'standalone-ios';
@@ -79,6 +82,13 @@ const NewNavigation = () => {
         })
   return html`<a @click=${clickHandler} class="box button">New Books</a>`
 }
+const CollectionsNavigation = () => {
+  const clickHandler = clickHandlerCreator({
+          type: 'collection-tab',
+          tab: 'COLLECTIONS'
+        })
+  return html`<a @click=${clickHandler} class="box button">Collections</a>`
+}
 const BrowseNavigation = () => {
   const clickHandler = clickHandlerCreator({
     type: 'browse-tab',
@@ -93,7 +103,8 @@ const SearchNavigation = () => {
   })
   return html`<a @click=${clickHandler} class="box button">Search</a>`
 }
-const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a few books.</p>`
+const HowTo = () => html`<p>The app will remember your place. So, you can come back and pick up where you left off.</p>`
+const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a few books.</p>${HowTo()}`
 
 const ItemView = (entry) => {
   const {
@@ -104,7 +115,6 @@ const ItemView = (entry) => {
   const clickHandler = clickHandlerCreator({
     type: 'click-title',
     entryId: entry.id,
-    tab:'DETAIL_VIEW',
   });
   const standardURL = 'https://standardebooks.org/'
   return html`
@@ -125,15 +135,20 @@ const Library = (userLibrary) => {
   `
 }
 
-const SubjectEntry = (entry, isCoverOnly = false) => {
+function collectionID(entry, subjectTitle) {
+  return entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
+}
+
+const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
   const clickHandler = clickHandlerCreator({
     type: 'click-title',
     entryId: entry.id,
-    tab:'DETAIL_VIEW',
   })
+  const collectionNum = collectionID(entry, subjectTitle)
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="subject-list-image" @click=${clickHandler}>
+    <div class="collectionId">${collectionNum}</div>
     <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
     ${isCoverOnly
       ? html`
@@ -157,7 +172,7 @@ const New = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  <h2 @click=${clickHandler}>${title} > </h2>
+  <h2 class="pointer" @click=${clickHandler}>${title} > </h2>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -165,6 +180,38 @@ const New = (subject) => {
   </ul>
   `
 }
+const Collection = (subject) => {
+  const {
+    title,
+    entries,
+    length,
+  } = subject;
+  const clickHandler = clickHandlerCreator({
+    type: 'click-collection',
+    categoryTerm: title,
+    tab: 'COLLECTION',
+  })
+  const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
+  return html`
+  <h2 class="pointer" @click=${clickHandler}>${title} > (${length})</h2>
+  <ul class="subject-list">
+    ${list.map(entry => {
+      return SubjectEntry(entry)
+    })}
+  </ul>
+  `
+}
+
+const Collections = (items = []) => {
+  const list = items.sort((a,b) => parseInt(b.length) - parseInt(a.length))
+  return html`
+  ${items.length === 0
+    ? html`${EmptyLibrary()}`
+    : html`${list.map(subject => {
+                    return html`${Collection(subject)}`
+                    })
+            }`
+  }`}
 
 const Subjects = (subject) => {
   const {
@@ -177,7 +224,7 @@ const Subjects = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  <h2 @click=${clickHandler}>${title} > </h2>
+  <h2 class="pointer" @click=${clickHandler}>${title} > </h2>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -210,6 +257,22 @@ const Category = (category) => {
     })}
   </ul>`
 }
+const CollectionCategory = (category) => {
+  const {
+    title,
+    entries,
+  } = category;
+  const isCoverOnly = true;
+  const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
+  return html`
+  <h2>${title}</h2>
+  <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
+  <ul class="category-list">
+    ${list.map(entry => {
+      return SubjectEntry(entry, isCoverOnly, title)
+    })}
+  </ul>`
+}
 
 const emptyState = {
   userLibrary:[],
@@ -225,33 +288,45 @@ const DetailView = (entry) => {
     summary,
     categories,
     inUserLibrary,
+    collection = [],
   } = entry
   const readLink = `/ebook.html?book=${ebookLink.href}`
   const standardURL = 'https://standardebooks.org/'
   const clickAdd = clickHandlerCreator({
     type: 'click-add-to-library',
     entryId: entry.id,
-    tab: 'LIBRARY',
   })
   const clickRemove = clickHandlerCreator({
     type: 'click-remove-from-library',
     entryId: entry.id,
-    tab: 'DETAIL_VIEW',
   })
-  // Display whole content here?
+  const clickClose = clickHandlerCreator({
+    type: 'click-close-details-modal',
+  })
   return html`
-    <div class="modal-content">
-      <a href=${readLink}>
+    <div class="modal">
+      <div class="modal-content">
+        <span @click=${clickClose} class="close">X</span>
+        <a href=${readLink}>
           <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
-      </a>
-      <h2><a href=${readLink}>${title}</a></h2>
-      ${inUserLibrary 
-        ? html`<a class="remove-from-library" @click=${clickRemove}>Remove from Library</a>`
-        : html`<a class="add-to-library" @click=${clickAdd}>Add to Library</a>`
-      }
-      <p>${summary}</p>
-      ${categories.length ? CategoryList(categories) : ''}
-      
+        </a>
+        <div>
+          <h2 class="pointer"><a href=${readLink}>${title}</a></h2>
+          ${inUserLibrary 
+            ? html`<a class="remove-from-library pointer" @click=${clickRemove}>Remove from Library</a>`
+            : html`<a class="add-to-library pointer" @click=${clickAdd}>Add to Library</a>`
+          }
+          <p>${summary}</p>
+          ${collection.length ? (
+            html`<b>Collections</b>
+            ${CollectionList(collection)}`
+          ) : ''}
+          ${categories.length ? (
+            html`<b>Categories</b>
+            ${CategoryList(categories)}`
+          ) : ''}
+        </div>
+      </div>
     </div>
   `
 }
@@ -270,6 +345,21 @@ const clickHandlerCreator = (action) => {
   }
 }
 
+const CollectionList = (collection) => {
+  return html`
+  <ul class="list-style-none">
+  ${collection.map(cat => {
+    const clickHandler = clickHandlerCreator({
+      type: 'click-collection',
+      categoryTerm: cat.term,
+      tab: 'COLLECTION',
+    })
+    return html`<li class="category-list-item pointer" @click=${clickHandler}><a >${cat.term}</a></li>`
+  })}
+  </ul>
+  `
+}
+
 const CategoryList = (categories) => {
   return html`
   <ul class="list-style-none">
@@ -279,19 +369,34 @@ const CategoryList = (categories) => {
       categoryTerm: cat.term,
       tab: 'CATEGORY',
     })
-    return html`<li class="category-list-item" @click=${clickHandler}><a >${cat.term}</a></li>`
+    return html`<li class="category-list-item pointer" @click=${clickHandler}><a >${cat.term}</a></li>`
   })}
   </ul>
   `
 }
-
+const LoadingMessages = (index = 0) => {
+  const msgs = [
+    html`Loading...`,
+    html`Still Loading...`,
+    html`Organizing Libraries...`,
+    html`Collecting Collections...`,
+    html`Parsing New books...`,
+    html`Reticulating Splines...`,
+    html`Ordering LLamas...`,
+    html`Or was it Alpacas?`,
+    html`Generating witty dialog...`,
+    html`Swapping time and space...`,
+    html`The servers are having a slow day, today.`,
+    html`Tokenizing real life...`,
+    html`Don't think of purple hippos...`,
+  ]  
+  return msgs[index]
+}
 function rerender(props) {
   const {
-    ev = {},
-    isLoading = true,
+    detail = '{}',
   } = props
-  const state = JSON.parse(ev.detail ?? '{}')
-
+  const state = JSON.parse(detail ?? '{}')
   const app = (state = emptyState) => {
     const {
       userLibrary,
@@ -299,6 +404,10 @@ function rerender(props) {
       activeTab,
       activeCategory,
       activeEntry,
+      showDetailModal,
+      showSideBarMenu,
+      isLoading,
+      loadingMessageindex,
     } = state
     const TabContent = (activeTab) => {
       switch(activeTab) {
@@ -308,45 +417,52 @@ function rerender(props) {
         case('BROWSE'): {
           return Browse(bookLibrary);
         }
+        case('COLLECTIONS'): {
+          return Collections(bookLibrary);
+        }
         case('NEW'): {
           return New(bookLibrary);
         }
         case('SUBJECT'): {
-          window.scrollTo({top:215})
           return Category(activeCategory);
         }
         case('CATEGORY'): {
-          window.scrollTo({top:215})
           return Category(activeCategory);
         }
-        case('DETAIL_VIEW'): {
-          window.scrollTo({top:215})
-          return DetailView(activeEntry);
+        case('COLLECTION'): {
+          return CollectionCategory(activeCategory);
         }
         default:
           return html`Default View. Not yet implemented.`;
       }
       
     }
-    if (!isLoading) {
-      return html`
-        <h1>Ebook Reader</h1>
+    const toggleNav = clickHandlerCreator({
+      type: `${showSideBarMenu === 'show' ? 'click-open-main-menu': 'click-close-main-menu'}`
+    })
+    return html`
+      <h1 class="pointer" @click=${toggleNav}>Ebook Reader</h1>
+      <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
           <div class="parent">
             ${LibraryNavigation()}
             ${BrowseNavigation()}
             ${NewNavigation()}
+            ${CollectionsNavigation()}
           </div>
         </nav>
-        ${TabContent(activeTab)}
+      </div>
+      <div id="main">
+        ${!isLoading ? TabContent(activeTab) : LoadingMessages(loadingMessageindex)}
+        ${showDetailModal ? DetailView(activeEntry) : html``}
         <footer id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</footer> 
-      `
-    }
-    return html`<span>Loading...</span>`
+      </div>
+    `
   }
   console.log(state)
   render(app(state), document.querySelector('#result'))
 }
-rerender({})
+document.querySelector('.first-content').hidden = true
+rerender({detail: JSON.stringify({isLoading:true, showSideBarMenu:'show'})})
 
-elem.addEventListener('re-render', (e) => rerender({ev:e, isLoading:false}))
+elem.addEventListener('re-render', (e) => rerender({detail: e.detail}))

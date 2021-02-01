@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="./css/index.css" media="screen"/>
     <link rel="stylesheet" type="text/css" href="./css/ebook.css" media="screen"/>
     
-    <script type="module" src="./darkMode/darkMode.js"></script>
+    <script type="module" src="./js/darkMode.js"></script>
     <script src="./lib/jszip.3.5.0.js"></script>
     <script src="./lib/epub.0.3.88.js"></script>
 
@@ -22,9 +22,17 @@
   </head>
   <body>
     <header class="section">
-        <div class="select">
-            <select id="tocSelect"></select>
+        <div id="myTopBar" class="topbar">
+            <p>
+                <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times; Close</a>
+            </p>
+            <p><a href="/">Back to Library</a></p>
+            <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
+            <div class="select">
+                <select id="tocSelect"></select>
+            </div>
         </div>
+        <div id="openbtn" class="openbtn" onclick="openNav()">&#9776;</div>
     </header>
     <div id="prev" class="left-side">&nbsp;</div>
     <main>
@@ -34,6 +42,16 @@
     <div id="next" class="right-side">&nbsp;</div>
     <footer id="footer" class="section"></footer>
     <script>
+        function openNav() {
+            document.getElementById("myTopBar").style.display = "initial";
+            document.getElementById("openbtn").style.display = "none"
+        }
+
+        function closeNav() {
+            document.getElementById("myTopBar").style.display = "none";
+            document.getElementById("openbtn").style.display = "initial";
+        } 
+        closeNav()
         const params = (new URL(document.location)).searchParams;
         const bookParam = params.get('book')
         const standardUrl = `https://standardebooks.org`
