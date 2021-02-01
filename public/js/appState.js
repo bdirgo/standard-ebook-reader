@@ -1,6 +1,7 @@
 importScripts(
     '../lib/localforage.js',
     '../lib/tXml.js',
+    '../lib/rate-limit-util.js',
 )
 class XMLObject {
     constructor() {
@@ -319,7 +320,7 @@ class BelongsToCollection {
         this.title = this.filterTitle(textArray)
         this.term = this.title
         this.type = this.filterType(textArray)
-        this.position = this.filterPosition(textArray)
+        this.position = parseInt(this.filterPosition(textArray))
     }
 
     filterTitle(textArray) {
@@ -354,10 +355,11 @@ function RawGithubURL(url) {
     return newUrl
 }
 
-async function findHomepageUrl(url) {
-    const res = await fetch(url)
-    const json = await res.json()
-    return json.homepage
+function createEntryId(url) {
+    const newUrl = new URL(url)
+    newUrl.host = `standardebooks.org`
+    newUrl.pathname = newUrl.pathname.replace('/repos', '/ebooks').replace('/standardebooks', '').replaceAll('_', '/')
+    return `${newUrl}`
 }
 
 function findWordCount(text) {
@@ -367,7 +369,7 @@ function findReadingEase(text) {
     return text.match(/<meta property="se:reading-ease.flesch">[\s\S]*?<\/meta>/g)[0]
 }
 function findCollectionTitles(text) {
-    return text.match(/<meta id="collection-[\s\S]*? property="belongs-to-collection">[\s\S]*?<\/meta>[\s\S]*?<\/meta>[\s\S]*?<\/meta>/gm)
+    return text.match(/<meta id="collection[\s\S]*? property="belongs-to-collection">[\s\S]*?<\/meta>([\s\S]*?<\/meta>){1,2}/gm)
 }
 
 async function fetchCollections() {
@@ -375,19 +377,30 @@ async function fetchCollections() {
     // Rate limit
     // The Search API has a custom rate limit. For requests using Basic Authentication, OAuth, or client ID and secret, you can make up to 30 requests per minute. For unauthenticated requests, the rate limit allows you to make up to 10 requests per minute.
     // See the rate limit documentation for details on determining your current rate limit status.
-    const url = `https://api.github.com/search/code?q=belongs-to-collection+in:file+org:standardebooks&per_page=100`
-    const response = await fetch(url);
+   
+    const github_search_url = `https://api.github.com/search/code?q=belongs-to-collection+in:file+org:standardebooks&per_page=100`
+    const response = await fetch(github_search_url);
     const json = await response.json();
+    // TODO: post message that the collections are loading...
     let collections = [];
     if (json?.total_count > 0) {
         await Promise.all(json.items.map(async (item, index) => {
-            const entryId = await findHomepageUrl(item.repository.url);
+            // url: "https://api.github.com/repos/standardebooks/ford-madox-ford_no-more-parades"
+            const entryId = createEntryId(item.repository.url);
+            // "https://standardebooks.org/ebooks/ford-madox-ford/no-more-parades"
             const entry = await localforage.getItem(entryId);
+            console.log(entryId)
+            console.log(entry)
             const opfUrl = RawGithubURL(item.html_url);
             const res = await fetch(opfUrl);
             const text = await res.text();
-            const readingEaseText = findReadingEase(text);
+            // TODO: books out of a collection have an ease score
+            // const readingEaseText = findReadingEase(text);
+            // entry.readingEase = readingEaseText;
             const collectionTextArray = findCollectionTitles(text);
+            if (collectionTextArray === null) {
+                console.warn(text)
+            }
             collectionTextArray.forEach(async collectionText => {
                 const collection = new BelongsToCollection(collectionText);
                 let foundIndex = collections.findIndex(val => val?.term === collection.term)
@@ -406,9 +419,8 @@ async function fetchCollections() {
             })
             await localforage.setItem(entryId, entry);
         }))
-    
     }
-    localforage.setItem('entriesByCollection', collections)
+    await localforage.setItem('entriesByCollection', collections)
     return collections;
 }
 
@@ -532,6 +544,7 @@ async function bookLibraryReducer(state = [], action) {
             const entriesBySubject = await localforage.getItem('entriesBySubject')
             if (!entriesBySubject) {
                 console.log('no subjects')
+                // TODO: should fetch books ... every couple hours?? just like new releases, only update what has changed
                 bookLibrary = await fetchStandardBooks();
             } else {
                 console.log('subjects in storage')
@@ -565,12 +578,20 @@ async function bookLibraryReducer(state = [], action) {
         }
         case('collection-tab'): {
             const entriesByCollection = await localforage.getItem('entriesByCollection')
-            console.log('collections in storage')
-            bookLibrary = entriesByCollection
+            if (!entriesByCollection) {
+                console.log('no collections')
+                bookLibrary = await fetchCollections()
+            } else {
+                console.log('collections in storage')
+                bookLibrary = entriesByCollection
+            }
+            bookLibrary = bookLibrary
                 .map(val => {
+                    console.log(val)
                     return {
                         title: val.title,
-                        entries: val.entries.slice(0, 4)
+                        entries: val.entries.slice(0, 4),
+                        length: val.entries.length,
                     }
                 })
             return bookLibrary;
@@ -715,7 +736,6 @@ async function fetchStandardBooks() {
     const entriesBySubject = await fetchEntries(subjects)
     const entriesByCategory = await createCategroiesFrom(entriesBySubject)
     await localforage.setItem('entriesByCategory', entriesByCategory)
-    const collections = await fetchCollections()
     return entriesBySubject
 }
 
@@ -730,6 +750,7 @@ self.onmessage = async function(event) {
     case "init": {
         console.log('init')
         let i = 0
+        // TODO: loading on collections...
         let loadingInterval = setInterval(() => {
             self.postMessage({
                 type:'state',
@@ -738,7 +759,7 @@ self.onmessage = async function(event) {
                     loadingMessageindex: i++ % 17
                 })
             })
-        }, (Math.random() * 100) + 4500);
+        }, (Math.random() * 1000) + 4000);
         state = await setInitialState()
         state = await initApp(state)
         clearInterval(loadingInterval)

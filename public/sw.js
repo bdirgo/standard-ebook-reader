@@ -17,9 +17,9 @@ const resourcesToPrecache = [
     '/css/ebook.css',
     '/css/ebook-styles.css',
     '/css/dark-ebook-styles.css',
-    '/darkMode/darkMode.js',
-    '/darkMode/constats.js',
-    '/darkMode/utility.js',
+    '/js/darkMode.js',
+    '/js/constats.js',
+    '/js/utility.js',
 ]
 
 self.addEventListener('install', event => {

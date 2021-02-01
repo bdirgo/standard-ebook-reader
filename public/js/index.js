@@ -5,17 +5,17 @@ const w = new Worker("./js/appState.js");
 /**
  * Service Worker
  */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-          .then(reg => {
-              console.log("Registered!", reg)
-              // registration worked
-          }).catch(err => {
-              console.log('Registration failed with ' + err);
-          })
-  })
-}
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//       navigator.serviceWorker.register('./sw.js')
+//           .then(reg => {
+//               console.log("Registered!", reg)
+//               // registration worked
+//           }).catch(err => {
+//               console.log('Registration failed with ' + err);
+//           })
+//   })
+// }
 function unregister() {
   if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready
@@ -27,6 +27,7 @@ function unregister() {
           });
   }
 }
+unregister()
 window.addEventListener('DOMContentLoaded', () => {
   // TODO: Electron
     let displayMode = 'browser tab';
@@ -135,7 +136,6 @@ const Library = (userLibrary) => {
 }
 
 function collectionID(entry, subjectTitle) {
-  // TODO: fix this
   return entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
 }
 
@@ -146,17 +146,16 @@ const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
     tab:'DETAIL_VIEW',
   })
   const collectionNum = collectionID(entry, subjectTitle)
-  console.log(collectionNum)
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="subject-list-image" @click=${clickHandler}>
+    <div class="collectionId">${collectionNum}</div>
     <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
     ${isCoverOnly
       ? html`
       <div class="card-body">
         <b id=${entry.id}>${entry.title}</b>
         <p id=${entry.id}>${entry.summary}</p>
-        <div class="collectionId">${collectionNum}</div>
       </div>`
       : ''}
   </li>
@@ -186,16 +185,19 @@ const Collection = (subject) => {
   const {
     title,
     entries,
+    length,
   } = subject;
   const clickHandler = clickHandlerCreator({
     type: 'click-collection',
     categoryTerm: title,
     tab: 'COLLECTION',
   })
+  console.log(entries)
+  const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
-  <h2 @click=${clickHandler}>${title} > </h2>
+  <h2 @click=${clickHandler}>${title} > (${length})</h2>
   <ul class="subject-list">
-    ${entries.map(entry => {
+    ${list.map(entry => {
       return SubjectEntry(entry)
     })}
   </ul>
@@ -262,10 +264,12 @@ const CollectionCategory = (category) => {
     entries,
   } = category;
   const isCoverOnly = true;
+  const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
+  <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
-    ${entries.map(entry => {
+    ${list.map(entry => {
       return SubjectEntry(entry, isCoverOnly, title)
     })}
   </ul>`
@@ -301,9 +305,11 @@ const DetailView = (entry) => {
   })
   // Display whole content here?
   return html`
+    <div class="modal ${show ? 'hide' : ''}">
     <div class="modal-content">
+      <span onClick=${toggleDetails} class="close">X</span>
       <a href=${readLink}>
-          <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
+        <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
       </a>
       <h2><a href=${readLink}>${title}</a></h2>
       ${inUserLibrary 
@@ -320,6 +326,7 @@ const DetailView = (entry) => {
         ${CategoryList(categories)}`
       ) : ''}
       
+    </div>
     </div>
   `
 }
@@ -432,6 +439,7 @@ function rerender(props) {
         }
         case('DETAIL_VIEW'): {
           window.scrollTo({top:215})
+          // TODO: make this a modal...
           return DetailView(activeEntry);
         }
         default:
@@ -443,7 +451,9 @@ function rerender(props) {
       <h1>Ebook Reader</h1>
       <nav>
         <div class="parent">
-          ${LibraryNavigation()}
+          ${LibraryNavigation()
+          // TODO: make these tabbed nav like iOS, but stay same on desktop
+        }
           ${BrowseNavigation()}
           ${NewNavigation()}
           ${CollectionsNavigation()}
@@ -457,6 +467,6 @@ function rerender(props) {
   render(app(state), document.querySelector('#result'))
 }
 document.querySelector('.first-content').hidden = true
-rerender({})
+rerender({isLoading:true})
 
 elem.addEventListener('re-render', (e) => rerender({ev:e}))
