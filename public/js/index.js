@@ -149,13 +149,13 @@ const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="subject-list-image" @click=${clickHandler}>
+    <div class="collectionId">${collectionNum}</div>
     <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
     ${isCoverOnly
       ? html`
       <div class="card-body">
         <b id=${entry.id}>${entry.title}</b>
         <p id=${entry.id}>${entry.summary}</p>
-        <div class="collectionId">${collectionNum}</div>
       </div>`
       : ''}
   </li>
@@ -185,6 +185,7 @@ const Collection = (subject) => {
   const {
     title,
     entries,
+    length,
   } = subject;
   const clickHandler = clickHandlerCreator({
     type: 'click-collection',
@@ -194,7 +195,7 @@ const Collection = (subject) => {
   console.log(entries)
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
-  <h2 @click=${clickHandler}>${title} > </h2>
+  <h2 @click=${clickHandler}>${title} > (${length})</h2>
   <ul class="subject-list">
     ${list.map(entry => {
       return SubjectEntry(entry)
@@ -266,6 +267,7 @@ const CollectionCategory = (category) => {
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
+  <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
       return SubjectEntry(entry, isCoverOnly, title)
@@ -303,9 +305,11 @@ const DetailView = (entry) => {
   })
   // Display whole content here?
   return html`
+    <div class="modal ${show ? 'hide' : ''}">
     <div class="modal-content">
+      <span onClick=${toggleDetails} class="close">X</span>
       <a href=${readLink}>
-          <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
+        <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
       </a>
       <h2><a href=${readLink}>${title}</a></h2>
       ${inUserLibrary 
@@ -322,6 +326,7 @@ const DetailView = (entry) => {
         ${CategoryList(categories)}`
       ) : ''}
       
+    </div>
     </div>
   `
 }
@@ -434,6 +439,7 @@ function rerender(props) {
         }
         case('DETAIL_VIEW'): {
           window.scrollTo({top:215})
+          // TODO: make this a modal...
           return DetailView(activeEntry);
         }
         default:
@@ -445,7 +451,9 @@ function rerender(props) {
       <h1>Ebook Reader</h1>
       <nav>
         <div class="parent">
-          ${LibraryNavigation()}
+          ${LibraryNavigation()
+          // TODO: make these tabbed nav like iOS, but stay same on desktop
+        }
           ${BrowseNavigation()}
           ${NewNavigation()}
           ${CollectionsNavigation()}
