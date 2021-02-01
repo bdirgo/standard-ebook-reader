@@ -372,45 +372,39 @@ function findCollectionTitles(text) {
 
 async function fetchCollections() {
     // Super hacky, I wish they gave this info on the OPDS fead
+    // Rate limit
+    // The Search API has a custom rate limit. For requests using Basic Authentication, OAuth, or client ID and secret, you can make up to 30 requests per minute. For unauthenticated requests, the rate limit allows you to make up to 10 requests per minute.
+    // See the rate limit documentation for details on determining your current rate limit status.
     const url = `https://api.github.com/search/code?q=belongs-to-collection+in:file+org:standardebooks&per_page=100`
     const response = await fetch(url);
     const json = await response.json();
     let collections = [];
     if (json?.total_count > 0) {
         await Promise.all(json.items.map(async (item, index) => {
-            if(index < 5) {
-                const entryId = await findHomepageUrl(item.repository.url);
-                const entry = await localforage.getItem(entryId);
-                const opfUrl = RawGithubURL(item.html_url);
-                const res = await fetch(opfUrl);
-                const text = await res.text();
-                const wordCountText = findWordCount(text);
-                const readingEaseText = findReadingEase(text);
-                const collectionTextArray = findCollectionTitles(text);
-                console.log(wordCountText)
-                console.log(readingEaseText)
-                collectionTextArray.forEach(async collectionText => {
-                    console.log(collectionText)
-                    const collection = new BelongsToCollection(collectionText);
-                    let foundIndex = collections.findIndex(val => val?.term === collection.term)
-                    if (foundIndex === -1) {
-                        collections.push(new SECollection(collection))
-                        foundIndex = collections.findIndex(val => val?.term === collection.term)
-                    }
-                    const foundCollection = collections[foundIndex]
-                    const entryInCollection = foundCollection.entries.findIndex(val => val.id === entryId)
-                    if (entryInCollection === -1) {
-                        foundCollection.addEntry(entry)
-                    }
-                    console.log(entryId)
-                    console.log(entry)
-                    console.log(collection)
-                    const arr = entry.collection || []
-                    arr.push(collection)
-                    entry.collection = arr
-                })
-                await localforage.setItem(entryId, entry);
-            }
+            const entryId = await findHomepageUrl(item.repository.url);
+            const entry = await localforage.getItem(entryId);
+            const opfUrl = RawGithubURL(item.html_url);
+            const res = await fetch(opfUrl);
+            const text = await res.text();
+            const readingEaseText = findReadingEase(text);
+            const collectionTextArray = findCollectionTitles(text);
+            collectionTextArray.forEach(async collectionText => {
+                const collection = new BelongsToCollection(collectionText);
+                let foundIndex = collections.findIndex(val => val?.term === collection.term)
+                if (foundIndex === -1) {
+                    collections.push(new SECollection(collection))
+                    foundIndex = collections.findIndex(val => val?.term === collection.term)
+                }
+                const foundCollection = collections[foundIndex]
+                const entryInCollection = foundCollection.entries.findIndex(val => val.id === entryId)
+                if (entryInCollection === -1) {
+                    foundCollection.addEntry(entry)
+                }
+                const arr = entry.collection || []
+                arr.push(collection)
+                entry.collection = arr
+            })
+            await localforage.setItem(entryId, entry);
         }))
     
     }
@@ -461,10 +455,10 @@ async function createCategroiesFrom(entriesBySubject) {
                 } else {
                     foundCategory.addEntry(entry)
                 }
-                console.log(categoriesFound)
             }
         })
     })
+    console.log(categoriesFound)
     categoriesFound.sort((a, b) => b.entries.length - a.entries.length)
     return categoriesFound
 }
@@ -660,6 +654,7 @@ async function activeEntryReducer(state = null, action) {
         case('click-remove-from-library'): 
         case('click-title'): {
             const entry = await localforage.getItem(entryId);
+            // TODO
             console.log(data)
             return entry;
         }
@@ -736,7 +731,6 @@ self.onmessage = async function(event) {
         console.log('init')
         let i = 0
         let loadingInterval = setInterval(() => {
-            console.log('interval', i)
             self.postMessage({
                 type:'state',
                 payload: JSON.stringify({
@@ -744,10 +738,9 @@ self.onmessage = async function(event) {
                     loadingMessageindex: i++ % 17
                 })
             })
-        }, 1000);
+        }, (Math.random() * 100) + 4500);
         state = await setInitialState()
         state = await initApp(state)
-        console.log('clear Interval', i)
         clearInterval(loadingInterval)
         self.postMessage({type:"state", payload:JSON.stringify(state)});
         break;

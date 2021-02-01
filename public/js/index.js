@@ -136,7 +136,7 @@ const Library = (userLibrary) => {
 
 function collectionID(entry, subjectTitle) {
   // TODO: fix this
-  entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
+  return entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
 }
 
 const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
