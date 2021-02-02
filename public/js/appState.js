@@ -782,12 +782,16 @@ async function setInitialState(
 const initialLoadTime = Date.now();
 
 async function initApp(state) {
-    const rv = await app(state, {
+    await app(state, {
         type: 'browse-tab',
         tab: 'BROWSE'
-      });
+    });
+    return await app(state, {
+        tab: 'LIBRARY',
+        type: 'library-tab'
+    })
     // populate database if it doesnt exist ?? Maybe only whent he user clicks browse?? if they first click search then, fallback on SE search and not myDB
-    return rv
+    
 }
 
 function showDetailModalReducer(state = false, action) {

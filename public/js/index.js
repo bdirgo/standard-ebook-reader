@@ -105,7 +105,7 @@ const LibraryNavigation = () => {
           type: 'library-tab',
           tab: 'LIBRARY'
         })
-  return html`<a @click=${clickHandler} class="box button">My Library</a>`
+  return html`<a @click=${clickHandler} class="box button">Library</a>`
 }
 const NewNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -126,7 +126,7 @@ const BrowseNavigation = () => {
     type: 'browse-tab',
     tab: 'BROWSE'
   })
-  return html`<a @click=${clickHandler} class="box button">Browse Categories</a>`
+  return html`<a @click=${clickHandler} class="box button">Browse Subjects</a>`
 }
 const SearchNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -483,8 +483,8 @@ function rerender(props) {
         <nav>
           <div class="parent">
             ${LibraryNavigation()}
-            ${BrowseNavigation()}
             ${NewNavigation()}
+            ${BrowseNavigation()}
             ${CollectionsNavigation()}
             ${SearchNavigation()}
           </div>
