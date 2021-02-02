@@ -91,14 +91,16 @@ const SearchBar = (results = []) => {
   }
   let x = ''
   const updateQuery = (e) => {x = e.target.value}
-  return html` <input type="search" @change=${updateQuery}> <button @click=${clickHandler}>Search</button>
-  ${results.length === 0
-    ? html`${EmptySearch()}`
-    : html`${results.map(item => {
-              return html`${SubjectEntry(item.item)}`
-              })
-            }`
-  }`
+  return html` <input type="search" @change=${updateQuery}><button @click=${clickHandler}>Search</button>
+  <ul class="list-style-none">
+    ${results.length === 0
+      ? html`${EmptySearch()}`
+      : html`${results.map(item => {
+                return html`${SubjectEntry(item.item, true)}`
+                })
+              }`
+    }
+  </ul>`
 }
 const LibraryNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -327,11 +329,35 @@ const emptyState = {
   activeTab:'LIBRARY',
 }
 
+const AuthorList = (results = []) => {
+  return html`<ul class="list-style-none">
+    ${results.length === 0
+      ? html`${EmptySearch()}`
+      : html`${results.map(item => {
+                return html`${SubjectEntry(item.item, true)}`
+                })
+              }`
+    }
+  </ul>`
+}
+
+const ViewAuthorArray = (authorArray) => {
+  return authorArray.map(author => {
+    const clickAuthor = clickHandlerCreator({
+      type:'search-author',
+      tab:'AUTHOR',
+      query: author.name,
+    })
+    return html`<p><a class="pointer" @click=${clickAuthor}>${author.name}</a></p>`
+  })
+}
+
 const DetailView = (entry) => {
   const {
     ebookLink,
     thumbnail,
     title,
+    authorArray,
     summary,
     categories,
     inUserLibrary,
@@ -359,6 +385,7 @@ const DetailView = (entry) => {
         </a>
         <div>
           <h2 class="pointer"><a href=${readLink}>${title}</a></h2>
+          ${ViewAuthorArray(authorArray)}
           ${inUserLibrary 
             ? html`<a class="remove-from-library pointer" @click=${clickRemove}>Remove from Library</a>`
             : html`<a class="add-to-library pointer" @click=${clickAdd}>Add to Library</a>`
@@ -482,6 +509,9 @@ function rerender(props) {
         }
         case('SEARCH'): {
           return SearchBar(searchResults)
+        }
+        case('AUTHOR'):{
+          return AuthorList(searchResults)
         }
         case('HELP'): {
           return Help()

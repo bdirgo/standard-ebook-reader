@@ -677,6 +677,7 @@ function activeTabReducer(state = 'LIBRARY', action) {
         case('library-tab'): 
         case('new-tab'): 
         case('help-tab'):
+        case('search-author'):
         case('search-tab'): {
             return tab;
         }
@@ -746,18 +747,25 @@ async function searchReducer(state, action) {
         type,
         query,
     } = action;
+    const subjects = await myDB.getItem('entriesBySubject')
+    const dupBooks = subjects.subjects.flatMap(sub => {
+        return sub.entries
+    })
+    const books = Array.from(new Set(dupBooks.map(a => a.id)))
+        .map(id => dupBooks.find(a => a.id === id))
     switch(type) {
         case('search-query'):{
-            const subjects = await myDB.getItem('entriesBySubject')
-            const dupBooks = subjects.subjects.flatMap(sub => {
-                return sub.entries
-            })
-            const books = Array.from(new Set(dupBooks.map(a => a.id)))
-                .map(id => dupBooks.find(a => a.id === id))
             const fuse = new Fuse(books, {
                 keys: ['title', 'authorArray.name', 'content.children', 'categories.title', 'summary']
             })
             return fuse.search(query)
+        }
+        case('search-author'):{
+            const fuse = new Fuse(books, {
+                keys: ['authorArray.name']
+            })
+            return fuse.search(query)
+
         }
         default:
             return state
