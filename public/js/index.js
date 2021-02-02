@@ -66,7 +66,7 @@ const getCurrentlyReadingStorage = () => {
   if (!stor) {
     return []
   } else {
-    return stor
+    return JSON.stringify(stor)
   }
 }
 
