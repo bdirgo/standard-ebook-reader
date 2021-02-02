@@ -676,6 +676,7 @@ function activeTabReducer(state = 'LIBRARY', action) {
         case('collection-tab'): 
         case('library-tab'): 
         case('new-tab'): 
+        case('help-tab'):
         case('search-tab'): {
             return tab;
         }
@@ -831,12 +832,14 @@ async function fetchStandardBooks() {
 }
 
 let state;
+let loadingInterval = null;
 
 self.onmessage = async function(event) {
-  const {
-      type,
-      payload,
-  } = event.data;
+    const {
+        type,
+        payload,
+    } = event.data;
+
     let i = 0
     const postLoading = () => {
         self.postMessage({
@@ -848,7 +851,10 @@ self.onmessage = async function(event) {
             })
         })
     }
-    let loadingInterval = setInterval(() => {
+    if (loadingInterval !== null) {
+        clearInterval(loadingInterval)
+    }
+    loadingInterval = setInterval(() => {
         console.log('loading...')
         postLoading()
     }, LOAD_TIME);
