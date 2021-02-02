@@ -428,7 +428,7 @@ const CollectionList = (collection) => {
       categoryTerm: cat.term,
       tab: 'COLLECTION',
     })
-    return html`<li class="category-list-item pointer" @click=${clickHandler}><a >${cat.term}</a></li>`
+    return html`<li class="category-list-item pointer" @click=${clickHandler}><a>${cat.term}</a> #${cat.position}</li>`
   })}
   </ul>
   `
