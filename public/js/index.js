@@ -5,17 +5,17 @@ const w = new Worker("./js/appState.js");
 /**
  * Service Worker
  */
-// if ('serviceWorker' in navigator) {
-//   window.addEventListener('load', () => {
-//       navigator.serviceWorker.register('./sw.js')
-//           .then(reg => {
-//               console.log("Registered!", reg)
-//               // registration worked
-//           }).catch(err => {
-//               console.log('Registration failed with ' + err);
-//           })
-//   })
-// }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+              console.log("Registered!", reg)
+              // registration worked
+          }).catch(err => {
+              console.log('Registration failed with ' + err);
+          })
+  })
+}
 function unregister() {
   if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready
@@ -27,7 +27,7 @@ function unregister() {
           });
   }
 }
-unregister()
+// unregister()
 window.addEventListener('DOMContentLoaded', () => {
   // TODO: Electron
     let displayMode = 'browser tab';

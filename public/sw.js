@@ -1,4 +1,4 @@
-const cacheName = 'cache-v1.0.1b';
+const cacheName = 'cache-v1.2.0';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,
@@ -51,19 +51,11 @@ self.addEventListener('fetch', event => {
         .then(cachedResponse => {
             return cachedResponse || fetch(event.request).then(async function (response) {
                 const clonedRes = response.clone();
-                if (event.request.url.endsWith('.epub')) {
-                    console.log('caching book for next time', event.request.url)
-                    await caches.open(`${bookCache}-${new URL(event.request.url).pathname}`)
-                        .then(cache => {
-                            cache.put(event.request, clonedRes);
-                        })
-                } else {
-                    console.log('caching for next time', event.request.url)
-                    await caches.open(cacheName)
-                    .then(cache => {
-                        cache.put(event.request, clonedRes);
-                    })
-                }
+                console.log('caching for next time', event.request.url)
+                await caches.open(cacheName)
+                .then(cache => {
+                    cache.put(event.request, clonedRes);
+                })
                 return response;
               })
         })
