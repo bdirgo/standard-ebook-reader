@@ -64,6 +64,15 @@ w.onmessage = function(event) {
 // TODO: call state mgmt
 w.postMessage({type:"init"});
 
+function toTitleCase(str) {
+  return str.replace(
+      /\w\S*/g,
+      function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+      }
+  );
+}
+
 const SearchBar = (results = []) => {
   const clickHandler = {
     // handleEvent method is required.
@@ -425,7 +434,7 @@ function rerender(props) {
     const {
       userLibrary,
       bookLibrary,
-      activeTab,
+      activeTab = '',
       activeCategory,
       activeEntry,
       searchResults,
@@ -469,7 +478,7 @@ function rerender(props) {
       type: `${showSideBarMenu === 'show' ? 'click-open-main-menu': 'click-close-main-menu'}`
     })
     return html`
-      <h1 class="pointer" @click=${toggleNav}>Ebook Reader</h1>
+      <h1 class="pointer" @click=${toggleNav}>Ebook Reader - ${toTitleCase(activeTab)}</h1>
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
           <div class="parent">
