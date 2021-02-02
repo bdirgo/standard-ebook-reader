@@ -144,6 +144,15 @@ const HowTo = () => html`<h2>How to</h2>
 const EmptyLibrary = () => html`<p>Your Library is empty.</p>${HowTo()}`
 const EmptySearch = () => html`<p>Results are empty.</p>`
 
+const Help = () => html`${HowTo()}
+<b>Tips</b>
+<p>Clicking the 'Ebook Reader' title will toggle the navigation.</p>
+<p>Clicking the Moon/Sun button will toggle the site into dark mode</p>
+<p>When reading clicking the chapter title at the top of the screen will bring up a chapter selection menu</p>
+<p>If you toggle dark mode while reading a book, you may need to refresh the page for the colors to load correctly.</p>
+`
+
+
 const ItemView = (entry) => {
   const {
     id,
@@ -474,6 +483,9 @@ function rerender(props) {
         case('SEARCH'): {
           return SearchBar(searchResults)
         }
+        case('HELP'): {
+          return Help()
+        }
         default:
           return html`Default View. Not yet implemented.`;
       }
@@ -481,6 +493,10 @@ function rerender(props) {
     }
     const toggleNav = clickHandlerCreator({
       type: `${showSideBarMenu === 'show' ? 'click-open-main-menu': 'click-close-main-menu'}`
+    })
+    const helpHandler = clickHandlerCreator({
+      type:'help-tab',
+      tab: 'HELP'
     })
     return html`
       <h1 class="pointer" @click=${toggleNav}>Ebook Reader - ${toTitleCase(activeTab)}</h1>
@@ -498,7 +514,10 @@ function rerender(props) {
       <div id="main">
         ${!isLoading ? TabContent(activeTab) : LoadingMessages(loadingMessageindex)}
         ${showDetailModal ? DetailView(activeEntry) : html``}
-        <footer id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</footer> 
+        <footer>
+          <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p>
+          <a class="pointer" @click=${helpHandler}>Help</a>
+        </footer> 
       </div>
     `
   }
