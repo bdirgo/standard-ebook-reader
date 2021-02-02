@@ -740,6 +740,27 @@ async function activeEntryReducer(state = null, action) {
     }
 }
 
+async function searchReducer(state, action) {
+    const {
+        type,
+        query,
+    } = action;
+    switch(type) { 
+        case('search-query'):{
+            const subjects = await myDB.getItem('entriesBySubject')
+            const books = subjects.subjects.flatMap(sub => {
+                return sub.entries
+            })
+            const fuse = new Fuse(books, {
+                keys: ['title', 'authorArray.name', 'content.children', 'categories.title']
+            })
+            return fuse.search(query)
+        }
+        default:
+            return state
+    }
+}
+
 async function setInitialState(
     userLibrary = [],
     bookLibrary = [],
@@ -760,13 +781,10 @@ const initialLoadTime = Date.now();
 
 async function initApp(state) {
     const rv = await app(state, {
-        type: 'library-tab',
-        tab: 'LIBRARY'
+        type: 'browse-tab',
+        tab: 'BROWSE'
       });
     // populate database if it doesnt exist ?? Maybe only whent he user clicks browse?? if they first click search then, fallback on SE search and not myDB
-    await app(state, {
-        type: 'browse-tab',
-      });
     return rv
 }
 
@@ -796,6 +814,7 @@ async function app(state = {}, action) {
         isLoading: false,
         showDetailModal: showDetailModalReducer(state.showDetailModal, action),
         showSideBarMenu: sideBarReducer(state.showSideBarMenu, action),
+        searchResults: await searchReducer(state.searchResults, action)
     }
 }
 

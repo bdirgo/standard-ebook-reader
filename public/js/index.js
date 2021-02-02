@@ -64,10 +64,33 @@ w.onmessage = function(event) {
 // TODO: call state mgmt
 w.postMessage({type:"init"});
 
-const SearchBar = () => html`
-<input type="search" id="site-search" name="q" aria-label="Search through site content">
-<button>Search</button>
-`
+const SearchBar = (results = []) => {
+  const clickHandler = {
+    // handleEvent method is required.
+    handleEvent(e) {
+      const payload = {
+        action:{
+          type: 'search-query',
+          query: x
+        },
+      }
+      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+    },
+    // event listener objects can also define zero or more of the event 
+    // listener options: capture, passive, and once.
+    capture: true,
+  }
+  let x = ''
+  const updateQuery = (e) => {x = e.target.value}
+  return html` <input type="search" @change=${updateQuery}> <button @click=${clickHandler}>Search</button>
+  ${results.length === 0
+    ? html`${EmptySearch()}`
+    : html`${results.map(item => {
+              return html`${SubjectEntry(item.item)}`
+              })
+            }`
+  }`
+}
 const LibraryNavigation = () => {
   const clickHandler = clickHandlerCreator({
           type: 'library-tab',
@@ -105,6 +128,7 @@ const SearchNavigation = () => {
 }
 const HowTo = () => html`<p>The app will remember your place. So, you can come back and pick up where you left off.</p>`
 const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a few books.</p>${HowTo()}`
+const EmptySearch = () => html`<p>Results are empty.</p>`
 
 const ItemView = (entry) => {
   const {
@@ -404,6 +428,7 @@ function rerender(props) {
       activeTab,
       activeCategory,
       activeEntry,
+      searchResults,
       showDetailModal,
       showSideBarMenu,
       isLoading,
@@ -432,6 +457,9 @@ function rerender(props) {
         case('COLLECTION'): {
           return CollectionCategory(activeCategory);
         }
+        case('SEARCH'): {
+          return SearchBar(searchResults)
+        }
         default:
           return html`Default View. Not yet implemented.`;
       }
@@ -449,6 +477,7 @@ function rerender(props) {
             ${BrowseNavigation()}
             ${NewNavigation()}
             ${CollectionsNavigation()}
+            ${SearchNavigation()}
           </div>
         </nav>
       </div>
