@@ -135,8 +135,13 @@ const SearchNavigation = () => {
   })
   return html`<a @click=${clickHandler} class="box button">Search</a>`
 }
-const HowTo = () => html`<p>The app will remember your place. So, you can come back and pick up where you left off.</p>`
-const EmptyLibrary = () => html`<p>My Library is empty. Try and Browse to add a few books.</p>${HowTo()}`
+const HowTo = () => html`<h2>How to</h2>
+  <ol>
+  <li>Add this web page to your homescreen.</li>
+  <li>Browse to add a few books.</li>
+  <li>The app will remember your place. So, you can come back and pick up where you left off.</li>
+  </ol>`
+const EmptyLibrary = () => html`<p>Your Library is empty.</p>${HowTo()}`
 const EmptySearch = () => html`<p>Results are empty.</p>`
 
 const ItemView = (entry) => {
