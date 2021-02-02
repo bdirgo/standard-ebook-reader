@@ -64,9 +64,9 @@ w.onmessage = function(event) {
 const getCurrentlyReadingStorage = () => {
   const stor = localStorage.getItem('currentlyReading')
   if (!stor) {
-    return []
+    return JSON.stringify([])
   } else {
-    return JSON.stringify(stor)
+    return stor
   }
 }
 
