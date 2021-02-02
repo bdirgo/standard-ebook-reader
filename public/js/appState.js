@@ -248,6 +248,13 @@ class BookFeedEntry extends SubjectFeedEntry {
         this.inUserLibrary = false;
     }
 
+    static getIdFromEbookLink(href) {
+        const searchTerm = '/download';
+        const indexOfFirst = href.indexOf(searchTerm);
+        const str = href.substring(0,indexOfFirst)
+        return standard_url + str
+    }
+
     filterIssued(json) {
         return this.firstChild(this.filterByFirstChildrenTag("dc:issued", json))
     }
@@ -315,6 +322,7 @@ class BookFeed extends SubjectFeed {
 class MyLibrary extends MyCategory {
     constructor(props) {
         super(props)
+        this.currentlyReading = []
     }
 }
 
@@ -522,6 +530,7 @@ async function userLibraryReducer(state = [], action) {
     const {
         type,
         entryId,
+        currentlyReading,
     } = action;
     switch (type) {
         case('library-tab'): {
@@ -529,6 +538,15 @@ async function userLibraryReducer(state = [], action) {
             if (!userLibrary) {
                 return []
             } else {
+                const reading = JSON.parse(currentlyReading || '[]')
+                const currentlyReadingEntires = await Promise.all(reading.map(async curr => {
+                    if (curr?.length > 0) {
+                        const id = BookFeedEntry.getIdFromEbookLink(curr)
+                        return await bookEntires.getItem(id)
+                    }
+                }))
+                userLibrary.currentlyReading = currentlyReadingEntires
+                await myDB.setItem('userLibrary',userLibrary)
                 return userLibrary
             }
         }
@@ -557,11 +575,6 @@ async function userLibraryReducer(state = [], action) {
             myDB.setItem('userLibrary', userLibrary)
             return userLibrary;
         }
-        case('browse-tab'):
-        case('new-tab'):
-        case('search-tab'): {
-            return null;
-        }
         default:
             return state
     }
@@ -582,6 +595,7 @@ const lastUpdated = (db, h = 24) => {
 }
 
 async function bookLibraryReducer(state = [], action) {
+    const previewLength = 8;
     switch (action.type) {
         case('browse-tab'): {
             const entriesBySubject = await myDB.getItem('entriesBySubject')
@@ -598,7 +612,8 @@ async function bookLibraryReducer(state = [], action) {
                 .map(val => {
                     return {
                         title: val.title,
-                        entries: val.entries.slice(0, 4)
+                        entries: val.entries.slice(0, previewLength),
+                        length: val.entries.length,
                     }
                 })
             return bookLibrary;
@@ -612,7 +627,8 @@ async function bookLibraryReducer(state = [], action) {
             } 
             entriesNew = {
                 title: entriesNew.title,
-                entries: entriesNew.entries.slice(0, 4)
+                entries: entriesNew.entries.slice(0, previewLength),
+                length: 30,
             }
             return entriesNew
         }
@@ -630,15 +646,11 @@ async function bookLibraryReducer(state = [], action) {
                 .map(val => {
                     return {
                         title: val.title,
-                        entries: val.entries.slice(0, 4),
+                        entries: val.entries.slice(0, previewLength),
                         length: val.entries.length,
                     }
                 })
             return bookLibrary;
-        }
-        case('library-tab'):
-        case('search-tab'): {
-            return null;
         }
         default:
             return state
@@ -712,10 +724,6 @@ async function activeCategoryReducer(state = null, action) {
             }
             return entriesNew
         }
-        case('click-category-close'):
-        case('click-add-to-library'):
-        case('browse-tab'):
-            return null;
         default:
             return state
     }
@@ -732,11 +740,6 @@ async function activeEntryReducer(state = null, action) {
             const entry = await bookEntires.getItem(entryId);
             return entry;
         }
-        case('click-title-close'):
-        case('browse-tab'):
-        case('library-tab'):
-        case('click-category'):
-            return null;
         default:
             return state
     }
@@ -790,14 +793,18 @@ async function setInitialState(
 
 const initialLoadTime = Date.now();
 
-async function initApp(state) {
+async function initApp(state, action) {
+    const {
+        currentlyReading,
+    } = action
     await app(state, {
         type: 'browse-tab',
         tab: 'BROWSE'
     });
     return await app(state, {
         tab: 'LIBRARY',
-        type: 'library-tab'
+        type: 'library-tab',
+        currentlyReading,
     })
     // populate database if it doesnt exist ?? Maybe only whent he user clicks browse?? if they first click search then, fallback on SE search and not myDB
     
@@ -847,6 +854,8 @@ self.onmessage = async function(event) {
         type,
         payload,
     } = event.data;
+    const parsedPayload = JSON.parse(payload)
+    console.log(parsedPayload)
 
     let i = 0
     const postLoading = () => {
@@ -870,14 +879,12 @@ self.onmessage = async function(event) {
         case "init": {
             console.log('init')
             state = await setInitialState()
-            state = await initApp(state)
+            state = await initApp(state, parsedPayload.action)
             clearInterval(loadingInterval)
             self.postMessage({type:"state", payload:JSON.stringify(state)});
             break;
         }
         case "click": {
-            const parsedPayload = JSON.parse(payload)
-            console.log(parsedPayload)
             state = await app(state, parsedPayload.action)
             clearInterval(loadingInterval)
             self.postMessage({type:"state", payload:JSON.stringify(state)});

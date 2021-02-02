@@ -9,7 +9,7 @@
 .library-list-image {
 	flex: 1 1 180px; /*  Stretching: */
 	margin: 5px;
-    max-width: 47%;
+    max-width: 50%;
 }
 .category-list {
     list-style-type: none;

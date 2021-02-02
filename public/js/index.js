@@ -62,7 +62,15 @@ w.onmessage = function(event) {
 };
 
 // TODO: call state mgmt
-w.postMessage({type:"init"});
+w.postMessage({
+  type:"init",
+  payload:
+    JSON.stringify({
+      action: {
+        currentlyReading:localStorage.getItem('currentlyReading')
+      }
+    })
+});
 
 function toTitleCase(str) {
   return str.replace(
@@ -74,21 +82,10 @@ function toTitleCase(str) {
 }
 
 const SearchBar = (results = []) => {
-  const clickHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const payload = {
-        action:{
+  const clickHandler = clickHandlerCreator({
           type: 'search-query',
           query: x
-        },
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+        })
   let x = ''
   const updateQuery = (e) => {x = e.target.value}
   return html` <input type="search" @change=${updateQuery}><button @click=${clickHandler}>Search</button>
@@ -155,7 +152,7 @@ const Help = () => html`${HowTo()}
 `
 
 
-const ItemView = (entry) => {
+const ItemView = (entry, index) => {
   const {
     id,
     thumbnail,
@@ -168,19 +165,55 @@ const ItemView = (entry) => {
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="library-list-image" @click=${clickHandler}>
+    ${index === 0 ? html`<p><b>Currently Reading</b></p>` : html`<p>&nbsp;</p>` }
     <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
   </li>`}
 const LibraryList = (items = []) => {
   return html`
   ${items.length === 0
     ? html`${EmptyLibrary()}`
-    : html`<ul class="library-list">${items.map(item => ItemView(item))}</ul>`
+    : html`<ul class="library-list">${items.map((item, index) => ItemView(item, index))}</ul>`
   }`}
 
+
+/**
+ * Sort array of objects based on another array
+ */
+
+function mapOrder (array, order, key) {
+  
+  array.sort( function (a, b) {
+    var A = a[key], B = b[key];
+    if (order.indexOf(A) === -1) {
+      return -1;
+    }
+    if (order.indexOf(B) === -1) {
+      return -1;
+    }
+    if (order.indexOf(A) > order.indexOf(B)) {
+      return -1;
+    } else {
+      return 1;
+    }
+    
+  });
+  
+  return array.reverse();
+};
+
+
 const Library = (userLibrary) => {
+  const {
+    entries,
+    currentlyReading,
+    title,
+  } = userLibrary
+  const dupBooks = [...currentlyReading, ...entries]
+  const books = Array.from(new Set(dupBooks.map(a => a.id)))
+        .map(id => dupBooks.find(a => a.id === id))
   return html`
-    <h2>${userLibrary.title}</h2>
-    ${LibraryList(userLibrary.entries)}
+    <h2>${title}</h2>
+    ${LibraryList(books)}
   `
 }
 
@@ -214,6 +247,7 @@ const New = (subject) => {
   const {
     title,
     entries,
+    length,
   } = subject;
   const clickHandler = clickHandlerCreator({
     type: 'click-new',
@@ -221,7 +255,7 @@ const New = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  <h2 class="pointer" @click=${clickHandler}>${title} > </h2>
+  <h2 class="pointer" @click=${clickHandler}>${title} (${length})</h2>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -242,7 +276,7 @@ const Collection = (subject) => {
   })
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
-  <h2 class="pointer" @click=${clickHandler}>${title} > (${length})</h2>
+  <h2 class="pointer" @click=${clickHandler}>${title} (${length})</h2>
   <ul class="subject-list">
     ${list.map(entry => {
       return SubjectEntry(entry)
@@ -266,6 +300,7 @@ const Subjects = (subject) => {
   const {
     title,
     entries,
+    length,
   } = subject;
   const clickHandler = clickHandlerCreator({
     type: 'click-subject',
@@ -273,7 +308,7 @@ const Subjects = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  <h2 class="pointer" @click=${clickHandler}>${title} > </h2>
+  <h2 class="pointer" @click=${clickHandler}>${title} (${length})</h2>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -409,7 +444,10 @@ const clickHandlerCreator = (action) => {
     // handleEvent method is required.
     handleEvent(e) {
       const payload = {
-        action,
+        action: {
+          ...action,
+          currentlyReading:localStorage.getItem('currentlyReading')
+        },
       }
       w.postMessage({type:'click', payload:JSON.stringify(payload)})
     },
