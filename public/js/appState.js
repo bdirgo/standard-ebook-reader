@@ -536,7 +536,7 @@ async function userLibraryReducer(state = [], action) {
         case('library-tab'): {
             const userLibrary = await myDB.getItem('userLibrary')
             if (!userLibrary) {
-                return []
+                return {}
             } else {
                 const reading = JSON.parse(currentlyReading || '[]')
                 const currentlyReadingEntires = await Promise.all(reading.map(async curr => {
@@ -546,7 +546,7 @@ async function userLibraryReducer(state = [], action) {
                     }
                 }))
                 userLibrary.currentlyReading = currentlyReadingEntires
-                await myDB.setItem('userLibrary',userLibrary)
+                myDB.setItem('userLibrary',userLibrary)
                 return userLibrary
             }
         }
@@ -775,9 +775,9 @@ async function searchReducer(state, action) {
     }
 }
 
-async function setInitialState(
-    userLibrary = [],
-    bookLibrary = [],
+function setInitialState(
+    userLibrary = {},
+    bookLibrary = {},
     activeTab = 'LIBRARY',
     activeEntry = null,
     activeCategory = null,
@@ -863,7 +863,7 @@ self.onmessage = async function(event) {
             type:'state',
             payload: JSON.stringify({
                 isLoading: true,
-                showSideBarMenu: state.showSideBarMenu,
+                showSideBarMenu: !!state.showSideBarMenu,
                 loadingMessageindex: i++ % 13
             })
         })
@@ -878,7 +878,13 @@ self.onmessage = async function(event) {
     switch (type) {
         case "init": {
             console.log('init')
-            state = await setInitialState()
+            state = {
+                userLibrary: {},
+                bookLibrary: {},
+                activeTab: 'LIBRARY',
+                activeEntry: null,
+                activeCategory: null,
+            }
             state = await initApp(state, parsedPayload.action)
             clearInterval(loadingInterval)
             self.postMessage({type:"state", payload:JSON.stringify(state)});

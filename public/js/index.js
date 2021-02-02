@@ -61,13 +61,22 @@ w.onmessage = function(event) {
   }
 };
 
+const getCurrentlyReadingStorage = () => {
+  const stor = localStorage.getItem('currentlyReading')
+  if (!stor) {
+    return []
+  } else {
+    return stor
+  }
+}
+
 // TODO: call state mgmt
 w.postMessage({
   type:"init",
   payload:
     JSON.stringify({
       action: {
-        currentlyReading:localStorage.getItem('currentlyReading')
+        currentlyReading:getCurrentlyReadingStorage()
       }
     })
 });
@@ -82,11 +91,11 @@ function toTitleCase(str) {
 }
 
 const SearchBar = (results = []) => {
+  let x = ''
   const clickHandler = clickHandlerCreator({
           type: 'search-query',
           query: x
         })
-  let x = ''
   const updateQuery = (e) => {x = e.target.value}
   return html` <input type="search" @change=${updateQuery}><button @click=${clickHandler}>Search</button>
   <ul class="list-style-none">
@@ -204,8 +213,8 @@ function mapOrder (array, order, key) {
 
 const Library = (userLibrary) => {
   const {
-    entries,
-    currentlyReading,
+    entries = [],
+    currentlyReading = [],
     title,
   } = userLibrary
   const dupBooks = [...currentlyReading, ...entries]
@@ -359,8 +368,8 @@ const CollectionCategory = (category) => {
 }
 
 const emptyState = {
-  userLibrary:[],
-  bookLibrary:[],
+  userLibrary:{},
+  bookLibrary:{},
   activeTab:'LIBRARY',
 }
 
@@ -446,7 +455,7 @@ const clickHandlerCreator = (action) => {
       const payload = {
         action: {
           ...action,
-          currentlyReading:localStorage.getItem('currentlyReading')
+          currentlyReading:getCurrentlyReadingStorage()
         },
       }
       w.postMessage({type:'click', payload:JSON.stringify(payload)})
