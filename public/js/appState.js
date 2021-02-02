@@ -745,14 +745,16 @@ async function searchReducer(state, action) {
         type,
         query,
     } = action;
-    switch(type) { 
+    switch(type) {
         case('search-query'):{
             const subjects = await myDB.getItem('entriesBySubject')
-            const books = subjects.subjects.flatMap(sub => {
+            const dupBooks = subjects.subjects.flatMap(sub => {
                 return sub.entries
             })
+            const books = Array.from(new Set(dupBooks.map(a => a.id)))
+                .map(id => dupBooks.find(a => a.id === id))
             const fuse = new Fuse(books, {
-                keys: ['title', 'authorArray.name', 'content.children', 'categories.title']
+                keys: ['title', 'authorArray.name', 'content.children', 'categories.title', 'summary']
             })
             return fuse.search(query)
         }
