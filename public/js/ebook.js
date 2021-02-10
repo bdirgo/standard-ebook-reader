@@ -1,35 +1,4 @@
-// let db;
-// let dbVersion = 1;
-// let dbReady = false;
-// document.addEventListener('DOMContentLoaded', async () => {
-//     console.log('dom content loaded');
-//     // await initDb();
-//     await initBook();
-// });
 
-// async function initDb() {
-//   return new Promise(resolve => {
-//     let request = indexedDB.open('testFiles', dbVersion);
-
-//     request.onerror = function(e) {
-//         console.error('Unable to open database.');
-//     }
-
-//     request.onsuccess = function(e) {
-//         db = e.target.result;
-//         console.log('db opened');
-//         resolve()
-//     }
-
-//     request.onupgradeneeded = function(e) {
-//         let db = e.target.result;
-//         db.createObjectStore('cachedForms', {keyPath:'id', autoIncrement: true});
-//         dbReady = true;
-//     }
-//   })
-
-// }
-// async function initBook() {
   const bookUrl = `${bookParam}.epub`
   const uploadedBookParam = params.get('uploadedBook')
   const windowHeight = window.innerHeight
@@ -47,22 +16,6 @@
   const CURRENTLYREADING = 'currentlyReading'
   const isDarkMode = window.localStorage.getItem('darkMode') === 'dark'
   console.log(CURRENTPAGEID)
-  // async function loadUploadedBook(recordToLoad) {
-  //   return new Promise(resolve => {
-
-  //   console.log('loadUploadedBook');
-  //   let buffer
-
-  //   let trans = db.transaction(['cachedForms'], 'readonly');
-  //   let req = trans.objectStore('cachedForms').get(parseInt(recordToLoad));
-  //   trans.oncomplete = function(e) {
-  //     let record = req.result;
-  //     buffer = record.data
-  //     resolve(buffer);
-  //   }
-  // })
-
-  // }
 
   const populateStorage = (id, value) => {
     window.localStorage.setItem(id, value);
@@ -100,24 +53,9 @@
   }) => {
     populateStorage(CURRENTPAGEID, atStart ? start.href: start.cfi)
   }
-  // if (bookParam === null) {
-  //   // const buffer = await loadUploadedBook(uploadedBookParam)
-  //   console.log(uploadedBookParam)
-  //   var book = ePub(buffer);
-  //   console.log('book')
-  //   console.log(book)
-  // } else {
-    console.log(standardUrl)
-    console.log(bookUrl)
-    var book = ePub(standardUrl + bookUrl);
-    console.log('book')
-    console.log(book)
-  // }
-
-  // https://www.gutenberg.org/cache/epub/25717/pg25717.epub
-  // const response = await fetch(standardUrl + bookUrl)
-  // const buffer = await response.arrayBuffer()
-  // var book = ePub(buffer)
+  console.log(standardUrl)
+  console.log(bookUrl)
+  var book = ePub(standardUrl + bookUrl);
   console.log('book')
   console.log(book)
   var rendition = book.renderTo("viewer", {
@@ -234,4 +172,3 @@
   rendition.on("keyup", keyListener);
   document.addEventListener("keyup", keyListener, false);
 
-// }

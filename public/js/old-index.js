@@ -119,8 +119,8 @@ function fetchBooks(url) {
     })
     .then(str => xmlToJson(new window.DOMParser().parseFromString(str, "text/xml")))
     .then(render)
+    .then(finishedLoading)
     .catch(renderError)
-    .finally(finishedLoading)
 }
 const que = q || ''
 const isSubjectSearch = que.startsWith(opds)
