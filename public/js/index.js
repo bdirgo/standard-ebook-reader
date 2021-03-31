@@ -598,7 +598,7 @@ function rerender(props) {
       tab: 'HELP'
     })
     return html`
-      <h1 class="pointer" @click=${toggleNav}>Ebook Reader - ${toTitleCase(activeTab)}</h1>
+      <h1 class="pointer" @click=${toggleNav}>${toTitleCase(activeTab)}</h1>
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
           <div class="parent">
