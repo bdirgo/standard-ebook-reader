@@ -3,6 +3,7 @@ importScripts(
     '../lib/tXml.js',
     '../lib/fuse.js',
 )
+const log = console.log;
 
 const LOAD_TIME = 2000
 
@@ -551,6 +552,7 @@ async function userLibraryReducer(state = [], action) {
             }
         }
         case('click-add-to-library'): {
+            // Doesn't work , not sure why
             let userLibrary = await myDB.getItem('userLibrary')
             console.log(userLibrary)
             if (!userLibrary) {
@@ -778,7 +780,8 @@ async function searchReducer(state, action) {
         }
         case('search-author'):{
             const fuse = new Fuse(books, {
-                keys: ['authorArray.name']
+                keys: ['authorArray.name'],
+                threshold: 0.1,
             })
             return fuse.search(query)
 

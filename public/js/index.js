@@ -518,11 +518,6 @@ const DetailView = (entry) => {
         <div>
           <h2 class="pointer"><a href=${readLink}>${title}</a></h2>
           ${ViewAuthorArray(authorArray)}
-          ${//inUserLibrary 
-            //? html`<a class="remove-from-library pointer" @click=${clickRemove}>Remove from Library</a>`
-            //: html`<a class="add-to-library pointer" @click=${clickAdd}>Add to Library</a>`
-            ''
-          }
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase)} Reading Level</span></p>
           <p>${summary}</p>
           ${collection.length ? (
@@ -670,7 +665,10 @@ function rerender(props) {
       tab: 'HELP'
     })
     return html`
-      <h1 class="pointer" @click=${toggleNav}>${toTitleCase(activeTab)}</h1>
+      <h1 class="pointer" @click=${toggleNav}>${toTitleCase(activeTab)}
+      ${activeTab === 'AUTHOR'
+        ? toTitleCase(activeEntry?.authorArray[0].name)
+        : null}</h1>
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
           <div class="parent">
