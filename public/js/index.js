@@ -513,9 +513,10 @@ const DetailView = (entry) => {
         <div>
           <h2 class="pointer"><a href=${readLink}>${title}</a></h2>
           ${ViewAuthorArray(authorArray)}
-          ${inUserLibrary 
-            ? html`<a class="remove-from-library pointer" @click=${clickRemove}>Remove from Library</a>`
-            : html`<a class="add-to-library pointer" @click=${clickAdd}>Add to Library</a>`
+          ${//inUserLibrary 
+            //? html`<a class="remove-from-library pointer" @click=${clickRemove}>Remove from Library</a>`
+            //: html`<a class="add-to-library pointer" @click=${clickAdd}>Add to Library</a>`
+            ''
           }
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase)} Reading Level</span></p>
           <p>${summary}</p>
@@ -630,18 +631,22 @@ function rerender(props) {
           return New(bookLibrary);
         }
         case('SUBJECT'): {
+          window.scrollTo(0,0)
           return Category(activeCategory);
         }
         case('CATEGORY'): {
+          window.scrollTo(0,0)
           return Category(activeCategory);
         }
         case('COLLECTION'): {
+          window.scrollTo(0,0)
           return CollectionCategory(activeCategory);
         }
         case('SEARCH'): {
           return SearchBar(searchResults)
         }
         case('AUTHOR'):{
+          window.scrollTo(0,0)
           return AuthorList(searchResults)
         }
         case('HELP'): {
