@@ -2,6 +2,59 @@ import {html, render} from 'https://unpkg.com/lit-html?module';
 
 const w = new Worker("./js/appState.js");
 const log = console.log;
+const populateStorage = (id, value) => {
+  window.localStorage.setItem(id, value);
+}
+const getStorage = (id) => {
+  return window.localStorage.getItem(id);
+}
+
+/* 
+Reading Ease:
+90+   Grade 5 Very Easy
+80-90 Grade 6 Easy
+70-80 Grade 7 Fairly Easy
+60-70 8-9     Standard
+50-60 10-12   Fairly Difficult
+30-50 College Difficult
+0-30  Graduate Very Difficult
+*/
+const EaseToGrade = (ease) => {
+  if(ease >= 90) {
+    return "5th Grade";
+  } else if (ease >= 80 && ease < 90) {
+    return "6th Grade"
+  } else if (ease >=70 && ease < 80) {
+    return "7th Grade"
+  } else if (ease >=60 && ease < 70) {
+    return "9th Grade"
+  } else if (ease >=50 && ease < 60) {
+    return "12th Grade"
+  } else if (ease >= 30 && ease < 50) {
+    return "College"
+  } else if (ease >= 0 && ease < 30) {
+    return "Graduate"
+  }
+  return 'Galactic'
+}
+const EaseToString = (ease) => {
+  if(ease >= 90) {
+    return "Very Easy";
+  } else if (ease >= 80 && ease < 90) {
+    return "Easy"
+  } else if (ease >=70 && ease < 80) {
+    return "Fairly Easy"
+  } else if (ease >=60 && ease < 70) {
+    return "Standard"
+  } else if (ease >=50 && ease < 60) {
+    return "Fairly Difficult"
+  } else if (ease >= 30 && ease < 50) {
+    return "Difficult"
+  } else if (ease >= 0 && ease < 30) {
+    return "Very Difficult"
+  }
+  return 'Reading Level unknown, try opening the book first'
+}
 /**
  * Service Worker
  */
@@ -430,6 +483,8 @@ const DetailView = (entry) => {
     collection = [],
   } = entry
   const readLink = `/ebook.html?book=${ebookLink.href}`
+  const READINGEASEID = `${ebookLink.href}.epub-readingEase`
+  const readingEase = getStorage(READINGEASEID) ?? 'unknown'
   const standardURL = 'https://standardebooks.org/'
   const clickAdd = clickHandlerCreator({
     type: 'click-add-to-library',
@@ -456,6 +511,7 @@ const DetailView = (entry) => {
             ? html`<a class="remove-from-library pointer" @click=${clickRemove}>Remove from Library</a>`
             : html`<a class="add-to-library pointer" @click=${clickAdd}>Add to Library</a>`
           }
+          <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase)} Reading Level</span></p>
           <p>${summary}</p>
           ${collection.length ? (
             html`<b>Collections</b>

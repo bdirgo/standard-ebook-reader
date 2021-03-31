@@ -13,6 +13,7 @@
     }
   }
   const CURRENTPAGEID = bookTag`${bookUrl}-currentPage`
+  const READINGEASEID = bookTag`${bookUrl}-readingEase`
   const CURRENTLYREADING = 'currentlyReading'
   const isDarkMode = window.localStorage.getItem('darkMode') === 'dark'
   console.log(CURRENTPAGEID)
@@ -116,7 +117,7 @@
     const {
       tocByHref
     } = toc;
-    populateStorage(id,book.packaging.metadata.readingEaseFlesch)
+    populateStorage(READINGEASEID,book.packaging.metadata.readingEaseFlesch)
     document.querySelector("#topbar-book-title").textContent = book.packaging.metadata.title
     console.log(toc);
     console.log(tocByHref);
