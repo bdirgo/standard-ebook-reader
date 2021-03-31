@@ -177,7 +177,7 @@ const EmptySearch = () => html`<p>Results are empty.</p>`
 
 const Help = () => html`${HowTo()}
 <b>Tips</b>
-<p>Clicking the 'Ebook Reader' title will toggle the navigation.</p>
+<p>Clicking the H1 title at the top of the page will toggle the navigation.</p>
 <p>Clicking the Moon/Sun button will toggle the site into dark mode</p>
 <p>When reading clicking the chapter title at the top of the screen will bring up a chapter selection menu</p>
 <p>If you toggle dark mode while reading a book, you may need to refresh the page for the colors to load correctly.</p>
