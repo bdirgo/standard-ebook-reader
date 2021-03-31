@@ -1,7 +1,7 @@
 import {html, render} from 'https://unpkg.com/lit-html?module';
 
 const w = new Worker("./js/appState.js");
-
+const log = console.log;
 /**
  * Service Worker
  */
@@ -91,22 +91,45 @@ function toTitleCase(str) {
 }
 
 const SearchBar = (results = []) => {
-  let x = ''
-  const clickHandler = clickHandlerCreator({
+  let query = ''
+  const submitHandler = {
+    // handleEvent method is required.
+    handleEvent(e) {
+      e.preventDefault();
+      const payload = {
+        action: {
           type: 'search-query',
-          query: x
-        })
-  const updateQuery = (e) => {x = e.target.value}
-  return html` <input type="search" @change=${updateQuery}><button @click=${clickHandler}>Search</button>
-  <ul class="list-style-none">
-    ${results.length === 0
-      ? html`${EmptySearch()}`
-      : html`${results.map(item => {
-                return html`${SubjectEntry(item.item, true)}`
-                })
-              }`
-    }
-  </ul>`
+          query,
+          currentlyReading:getCurrentlyReadingStorage()
+        },
+      }
+      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+    },
+    // event listener objects can also define zero or more of the event 
+    // listener options: capture, passive, and once.
+    capture: true,
+  }
+  return html`
+    <form role="search" @submit=${submitHandler}>
+      <div>
+        <input type="search" id="mySearch" name="q"
+        placeholder="Search the site..."
+        .value=${query}
+        @change=${e => {query = e.target.value;}}
+        size="30"
+        aria-label="Search for a book, based on title, author, subject, or description">
+        <button>Search</button>
+      </div>
+    </form>
+    <ul class="list-style-none">
+      ${results.length === 0
+        ? html`${EmptySearch()}`
+        : html`${results.map(item => {
+                  return html`${SubjectEntry(item.item, true)}`
+                  })
+                }`
+      }
+    </ul>`
 }
 const LibraryNavigation = () => {
   const clickHandler = clickHandlerCreator({
