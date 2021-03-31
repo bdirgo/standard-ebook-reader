@@ -240,7 +240,7 @@ const Library = (userLibrary) => {
     title,
   } = userLibrary
   const dupBooks = [...currentlyReading, ...entries]
-  const books = Array.from(new Set(dupBooks.map(a => a.id)))
+  const books = Array.from(new Set(dupBooks.map(a => a?.id)))
         .map(id => dupBooks.find(a => a.id === id))
   return html`
     <h2>${title}</h2>
