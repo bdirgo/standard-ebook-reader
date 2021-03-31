@@ -26,9 +26,15 @@ const EaseToGrade = (ease) => {
     return "6th Grade"
   } else if (ease >=70 && ease < 80) {
     return "7th Grade"
-  } else if (ease >=60 && ease < 70) {
+  } else if (ease >=65 && ease < 70) {
+    return "8th Grade"
+  } else if (ease >=60 && ease < 65) {
     return "9th Grade"
-  } else if (ease >=50 && ease < 60) {
+  } else if (ease >=57 && ease < 60) {
+    return "10th Grade"
+  } else if (ease >=53 && ease < 57) {
+    return "11th Grade"
+  } else if (ease >=50 && ease < 53) {
     return "12th Grade"
   } else if (ease >= 30 && ease < 50) {
     return "College"
