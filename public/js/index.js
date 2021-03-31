@@ -197,7 +197,6 @@ const ItemView = (entry, index) => {
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="library-list-image" @click=${clickHandler}>
-    ${index === 0 ? html`<p><b>Currently Reading</b></p>` : html`<p>&nbsp;</p>` }
     <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
   </li>`}
 const LibraryList = (items = []) => {
