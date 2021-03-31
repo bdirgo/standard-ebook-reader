@@ -24,13 +24,16 @@
     <header class="section">
         <div id="myTopBar" class="topbar">
             <p>
-                <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times; Close</a>
+                &nbsp;<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
             </p>
-            <p><a href="/">Back to Library</a></p>
+            <p>&nbsp;<a href="/">Back to Library</a></p>
+            <p>&nbsp;<b id="topbar-book-title"></b></p>
             <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
+            <label for="tocSelect">Chapter:</label>
             <div class="select">
-                <select id="tocSelect"></select>
+                <select name="chapter" id="tocSelect"></select>
             </div>
+            <p>&nbsp;Page: <span id="topbar-book-page"></span></p>
         </div>
         <div id="openbtn" class="openbtn" onclick="openNav()">&#9776;</div>
     </header>

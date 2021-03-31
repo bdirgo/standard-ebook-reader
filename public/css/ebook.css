@@ -95,7 +95,11 @@ img {
     color: white;
     background-color: rgb(70, 80, 89);
 }
-
+.closebtn {
+    font-size: 40px;
+    line-height: .5;
+    text-decoration: none;
+}
 select {
     appearance: none;
     background-color: transparent;

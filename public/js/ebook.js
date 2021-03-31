@@ -104,6 +104,7 @@
       page,
       total
     } = currentLocation.start.displayed
+    document.querySelector("#topbar-book-page").textContent = `${page} / ${total}`
     footer.textContent = `${page} / ${total}`
     tocSelect.selectedIndex = currentLocation.start.index
     console.log(tocSelect.options[currentLocation.start.index])
@@ -115,6 +116,8 @@
     const {
       tocByHref
     } = toc;
+    populateStorage(id,book.packaging.metadata.readingEaseFlesch)
+    document.querySelector("#topbar-book-title").textContent = book.packaging.metadata.title
     console.log(toc);
     console.log(tocByHref);
     const docfrag = document.createDocumentFragment();
