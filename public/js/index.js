@@ -503,6 +503,11 @@ const DetailView = (entry) => {
   const clickClose = clickHandlerCreator({
     type: 'click-close-details-modal',
   })
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelector('.close').click()
+    }
+  }, {once: true})
   return html`
     <div class="modal">
       <div class="modal-content">
