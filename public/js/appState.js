@@ -89,7 +89,7 @@ class SubjectFeedEntry extends XMLObject {
         this.link = this.filterLink(json)
         this.updated = new Date(this.filterUpdated(json))
         this.id = this.filterId(json)
-        this.content = this.filterContent(json)
+        this.content = convertContentToString(this.filterContent(json))
         this.url = this.id
     }
 
@@ -356,6 +356,23 @@ class BelongsToCollection {
     filterPosition(textArray) {
         const textWithBrackets = textArray[2]
         return textWithBrackets.substr(1 , textWithBrackets.length - 2)
+    }
+}
+
+function convertContentToString(content) {
+    const createAttributes = (attributes) => {
+        if (attributes?.href ?? false) {
+            return `href=${attributes?.href}`
+        } else if (attributes?.lang ?? false) {
+            return `lang=${attributes?.lang}`
+        } else {
+            return ''
+        }
+    }
+    if (content?.tagName ?? false) {
+        return `<${content?.tagName}${content?.attributes ? createAttributes(content?.attributes) : ''}>${content?.children.map((child) => convertContentToString(child))}</${content?.tagName}>`
+    } else {
+        return `${content}`
     }
 }
 
