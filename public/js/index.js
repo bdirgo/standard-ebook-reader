@@ -169,61 +169,62 @@ const SearchBar = (results = []) => {
     capture: true,
   }
   return html`
-    <form role="search" @submit=${submitHandler}>
+    <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">Search for a book, based on title, author, subject, or description</label>
       <div>
-        <input type="search" id="mySearch" name="q"
-        placeholder="Search the site..."
-        .value=${query}
-        @change=${e => {query = e.target.value;}}
-        size="30"
-        aria-label="Search for a book, based on title, author, subject, or description">
+        <input
+          type="search"
+          id="mySearch"
+          name="q"
+          placeholder="Search for a book..."
+          .value=${query}
+          @change=${e => {query = e.target.value;}}
+          size="35">
         <button>Search</button>
       </div>
     </form>
-    <ul class="list-style-none">
+    
       ${results.length === 0
         ? html`${EmptySearch()}`
-        : html`${results.map(item => {
-                  return html`${SubjectEntry(item.item, true)}`
+        : html`<ul class="list-style-none library-list no-padding">${results.map(item => {
+                  return html`${ItemView(item.item, false)}`
                   })
-                }`
-      }
-    </ul>`
+                }</ul>`
+      }`
 }
 const LibraryNavigation = () => {
   const clickHandler = clickHandlerCreator({
           type: 'library-tab',
           tab: 'LIBRARY'
         })
-  return html`<a @click=${clickHandler} class="box button">Library</a>`
+  return html`<button @click=${clickHandler} class="box button">Library</button>`
 }
 const NewNavigation = () => {
   const clickHandler = clickHandlerCreator({
           type: 'new-tab',
           tab: 'NEW'
         })
-  return html`<a @click=${clickHandler} class="box button">New Books</a>`
-}
+        return html`<button @click=${clickHandler} class="box button">New Books</button>`
+      }
 const CollectionsNavigation = () => {
   const clickHandler = clickHandlerCreator({
           type: 'collection-tab',
           tab: 'COLLECTIONS'
         })
-  return html`<a @click=${clickHandler} class="box button">Collections</a>`
-}
+        return html`<button @click=${clickHandler} class="box button">Collections</button>`
+      }
 const BrowseNavigation = () => {
   const clickHandler = clickHandlerCreator({
     type: 'browse-tab',
     tab: 'BROWSE'
   })
-  return html`<a @click=${clickHandler} class="box button">Browse Subjects</a>`
+  return html`<button @click=${clickHandler} class="box button">Browse Subjects</button>`
 }
 const SearchNavigation = () => {
   const clickHandler = clickHandlerCreator({
     type: 'search-tab',
     tab: 'SEARCH'
   })
-  return html`<a @click=${clickHandler} class="box button">Search</a>`
+  return html`<button @click=${clickHandler} class="box button">Search</button>`
 }
 const HowTo = () => html`<h2>How to</h2>
   <ol>
@@ -243,7 +244,7 @@ const Help = () => html`${HowTo()}
 `
 
 
-const ItemView = (entry, index) => {
+const ItemView = (entry, isCoverOnly = true) => {
   const {
     id,
     thumbnail,
@@ -257,12 +258,19 @@ const ItemView = (entry, index) => {
   return html`
   <li class="library-list-image" @click=${clickHandler}>
     <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
+    ${isCoverOnly
+      ? ''
+      : html`
+      <div class="card-body">
+        <b id=${entry.id}>${entry.title}</b>
+        <p id=${entry.id}>${entry.summary}</p>
+      </div>`}
   </li>`}
 const LibraryList = (items = []) => {
   return html`
   ${items.length === 0
     ? html`${EmptyLibrary()}`
-    : html`<ul class="library-list">${items.map((item, index) => ItemView(item, index))}</ul>`
+    : html`<ul class="library-list">${items.map((item) => ItemView(item))}</ul>`
   }`}
 
 
@@ -311,7 +319,7 @@ function collectionID(entry, subjectTitle) {
   return entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
 }
 
-const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
+const SubjectEntry = (entry, isCoverOnly = true, subjectTitle = '') => {
   const clickHandler = clickHandlerCreator({
     type: 'click-title',
     entryId: entry.id,
@@ -323,12 +331,12 @@ const SubjectEntry = (entry, isCoverOnly = false, subjectTitle = '') => {
     <div class="collectionId">${collectionNum}</div>
     <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
     ${isCoverOnly
-      ? html`
+      ? ''
+      : html`
       <div class="card-body">
         <b id=${entry.id}>${entry.title}</b>
         <p id=${entry.id}>${entry.summary}</p>
-      </div>`
-      : ''}
+      </div>`}
   </li>
   `
 }
@@ -422,7 +430,7 @@ const Category = (category) => {
     title,
     entries,
   } = category;
-  const isCoverOnly = true;
+  const isCoverOnly = false;
   return html`
   <h2>${title}</h2>
   <ul class="category-list">
@@ -436,7 +444,7 @@ const CollectionCategory = (category) => {
     title,
     entries,
   } = category;
-  const isCoverOnly = true;
+  const isCoverOnly = false;
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
@@ -459,7 +467,7 @@ const AuthorList = (results = []) => {
     ${results.length === 0
       ? html`${EmptySearch()}`
       : html`${results.map(item => {
-                return html`${SubjectEntry(item.item, true)}`
+                return html`${SubjectEntry(item.item, false)}`
                 })
               }`
     }
@@ -484,6 +492,7 @@ const DetailView = (entry) => {
     title,
     authorArray,
     summary,
+    content,
     categories,
     inUserLibrary,
     collection = [],
@@ -495,7 +504,7 @@ const DetailView = (entry) => {
   const clickAdd = clickHandlerCreator({
     type: 'click-add-to-library',
     entryId: entry.id,
-  })
+  }, () => {window.location.href = readLink})
   const clickRemove = clickHandlerCreator({
     type: 'click-remove-from-library',
     entryId: entry.id,
@@ -512,14 +521,14 @@ const DetailView = (entry) => {
     <div class="modal">
       <div class="modal-content">
         <span @click=${clickClose} class="close">X</span>
-        <a href=${readLink}>
+        <a @click=${clickAdd}>
           <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
         </a>
         <div>
-          <h2 class="pointer"><a href=${readLink}>${title}</a></h2>
+          <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase)} Reading Level</span></p>
-          <p>${summary}</p>
+          <p>${content}</p>
           ${collection.length ? (
             html`<b>Collections</b>
             ${CollectionList(collection)}`
@@ -533,7 +542,7 @@ const DetailView = (entry) => {
     </div>
   `
 }
-const clickHandlerCreator = (action) => {
+const clickHandlerCreator = (action, cb = () => {}) => {
   return {
     // handleEvent method is required.
     handleEvent(e) {
@@ -544,6 +553,7 @@ const clickHandlerCreator = (action) => {
         },
       }
       w.postMessage({type:'click', payload:JSON.stringify(payload)})
+      cb()
     },
     // event listener objects can also define zero or more of the event 
     // listener options: capture, passive, and once.
@@ -672,10 +682,10 @@ function rerender(props) {
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
           <div class="parent">
-            ${LibraryNavigation()}
             ${NewNavigation()}
             ${BrowseNavigation()}
             ${CollectionsNavigation()}
+            ${LibraryNavigation()}
             ${SearchNavigation()}
           </div>
         </nav>
