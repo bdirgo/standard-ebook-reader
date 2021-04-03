@@ -675,10 +675,10 @@ function rerender(props) {
       tab: 'HELP'
     })
     return html`
-      <h1 class="pointer" @click=${toggleNav}>${toTitleCase(activeTab)}
+      <h1 class="pointer" @click=${toggleNav}>
       ${activeTab === 'AUTHOR'
         ? toTitleCase(activeEntry?.authorArray[0].name)
-        : null}</h1>
+        : toTitleCase(activeTab ? activeTab : 'Ebook Reader')}</h1>
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
           <div class="parent">
