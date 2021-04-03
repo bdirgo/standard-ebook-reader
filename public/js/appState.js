@@ -362,15 +362,16 @@ class BelongsToCollection {
 function convertContentToString(content) {
     const createAttributes = (attributes) => {
         if (attributes?.href ?? false) {
-            return `href=${attributes?.href}`
+            return ` href=${attributes?.href}`
         } else if (attributes?.lang ?? false) {
-            return `lang=${attributes?.lang}`
+            return ` lang=${attributes?.lang}`
         } else {
             return ''
         }
     }
     if (content?.tagName ?? false) {
-        return `<${content?.tagName}${content?.attributes ? createAttributes(content?.attributes) : ''}>${content?.children.map((child) => convertContentToString(child))}</${content?.tagName}>`
+        return `${content?.children.map((child) => convertContentToString(child)).join('')}`
+        // return `<${content?.tagName}${content?.attributes ? createAttributes(content?.attributes) : ''}>${content?.children.map((child) => convertContentToString(child))}</${content?.tagName}>`
     } else {
         return `${content}`
     }
