@@ -485,6 +485,24 @@ const ViewAuthorArray = (authorArray) => {
   })
 }
 
+function convertContentToString(content) {
+  const createAttributes = (attributes) => {
+      if (attributes?.href ?? false) {
+          return ` href=${attributes?.href}`
+      } else if (attributes?.lang ?? false) {
+          return ` lang=${attributes?.lang}`
+      } else {
+          return ''
+      }
+  }
+  if (content?.tagName ?? false) {
+      return `${content?.children.map((child) => convertContentToString(child)).join('')}`
+      // return `<${content?.tagName}${content?.attributes ? createAttributes(content?.attributes) : ''}>${content?.children.map((child) => convertContentToString(child)).join('')}</${content?.tagName}>`
+  } else {
+      return  `${content}`
+  }
+}
+
 const DetailView = (entry) => {
   const {
     ebookLink,
@@ -528,7 +546,7 @@ const DetailView = (entry) => {
           <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase)} Reading Level</span></p>
-          <p>${content}</p>
+          <p>${convertContentToString(content)}</p>
           ${collection.length ? (
             html`<b>Collections</b>
             ${CollectionList(collection)}`
@@ -685,8 +703,8 @@ function rerender(props) {
             ${NewNavigation()}
             ${BrowseNavigation()}
             ${CollectionsNavigation()}
-            ${LibraryNavigation()}
             ${SearchNavigation()}
+            ${LibraryNavigation()}
           </div>
         </nav>
       </div>

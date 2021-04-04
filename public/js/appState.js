@@ -89,7 +89,7 @@ class SubjectFeedEntry extends XMLObject {
         this.link = this.filterLink(json)
         this.updated = new Date(this.filterUpdated(json))
         this.id = this.filterId(json)
-        this.content = convertContentToString(this.filterContent(json))
+        this.content = this.filterContent(json)
         this.url = this.id
     }
 

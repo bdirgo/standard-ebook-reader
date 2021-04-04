@@ -6,7 +6,7 @@
 }
 
 .library-list-image {
-	flex: 1 1 155px; /*  Stretching: */
+	flex: 1 1 152px; /*  Stretching: */
 	margin: 5px;
     max-width: 50%;
 }
@@ -56,7 +56,7 @@
 
 .book-cover {
     object-fit: cover;
-    max-width: 155px;
+    max-width: 148px;
     height: auto;
 }
 
