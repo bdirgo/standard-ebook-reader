@@ -41,7 +41,7 @@ const EaseToGrade = (ease) => {
   } else if (ease >= 0 && ease < 30) {
     return "Graduate"
   }
-  return 'Galactic'
+  return null
 }
 const EaseToString = (ease) => {
   if(ease >= 90) {
@@ -59,7 +59,7 @@ const EaseToString = (ease) => {
   } else if (ease >= 0 && ease < 30) {
     return "Very Difficult"
   }
-  return 'Reading Level unknown, try opening the book first'
+  return null
 }
 /**
  * Service Worker
@@ -196,7 +196,7 @@ const LibraryNavigation = () => {
           type: 'library-tab',
           tab: 'LIBRARY'
         })
-  return html`<button @click=${clickHandler} class="box button">Library</button>`
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:20px;'>&#127968;</span>Home</button>`
 }
 const NewNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -232,7 +232,8 @@ const HowTo = () => html`<h2>How to</h2>
   <li>Browse to add a few books.</li>
   <li>The app will remember your place. So, you can come back and pick up where you left off.</li>
   </ol>`
-const EmptyLibrary = () => html`<p>Your Library is empty.</p>${HowTo()}`
+
+const EmptyLibrary = () => html`<p>Your Library is empty.</p>${HowTo()}<p>Here are the latest books added to the library, to get you started.</p>`
 const EmptySearch = () => html`<p>Results are empty.</p>`
 
 const Help = () => html`${HowTo()}
@@ -545,7 +546,7 @@ const DetailView = (entry) => {
         <div>
           <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
           ${ViewAuthorArray(authorArray)}
-          <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase)} Reading Level</span></p>
+          <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : 'Reading Level unknown, should populate after opening book.'}</span></p>
           <p>${convertContentToString(content)}</p>
           ${collection.length ? (
             html`<b>Collections</b>
@@ -647,7 +648,10 @@ function rerender(props) {
     const TabContent = (activeTab) => {
       switch(activeTab) {
         case('LIBRARY'): {
-          return Library(userLibrary);
+          return html`
+            ${Library(userLibrary)}
+            ${New(bookLibrary)}
+          `
         }
         case('BROWSE'): {
           return Browse(bookLibrary);
@@ -700,11 +704,10 @@ function rerender(props) {
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
           <div class="parent">
-            ${NewNavigation()}
+            ${LibraryNavigation()}
             ${BrowseNavigation()}
             ${CollectionsNavigation()}
             ${SearchNavigation()}
-            ${LibraryNavigation()}
           </div>
         </nav>
       </div>
@@ -724,4 +727,4 @@ function rerender(props) {
 document.querySelector('.first-content').hidden = true
 rerender({detail: JSON.stringify({isLoading:true, showSideBarMenu:'show'})})
 
-elem.addEventListener('re-render', (e) => rerender({detail: e.detail}))
+elem.addEventListener('re-render', (e) => rerender({detail: e.detail})) 

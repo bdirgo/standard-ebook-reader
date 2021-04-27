@@ -651,6 +651,8 @@ async function bookLibraryReducer(state = [], action) {
                 });
             return bookLibrary;
         }
+        case('help-tab'):
+        case('library-tab'): 
         case('new-tab'): {
             let entriesNew = await myDB.getItem('entriesNew')
             const isOld = lastUpdated(entriesNew, 1.5)
