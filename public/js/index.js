@@ -196,7 +196,7 @@ const LibraryNavigation = () => {
           type: 'library-tab',
           tab: 'LIBRARY'
         })
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:20px;'>&#127968;</span>Home</button>`
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:20px;'>&#127968;</span>&nbsp;Home</button>`
 }
 const NewNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -224,7 +224,7 @@ const SearchNavigation = () => {
     type: 'search-tab',
     tab: 'SEARCH'
   })
-  return html`<button @click=${clickHandler} class="box button">Search</button>`
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:20px;'>&#128269;</span>&nbsp;Search</button>`
 }
 const HowTo = () => html`<h2>How to</h2>
   <ol>
@@ -232,11 +232,19 @@ const HowTo = () => html`<h2>How to</h2>
   <li>Browse to add a few books.</li>
   <li>The app will remember your place. So, you can come back and pick up where you left off.</li>
   </ol>`
+const HowToFollow = () => html`<h2>How to Follow Categories</h2>
+  <ol>
+  <li>Click a book to open its details</li>
+  <li>Scroll to the bottome to view the categories it is a part of</li>
+  <li>Click a category to see similar books in that category (sometimes it's only one, sorry)</li>
+  <li>Click "Follow" to follow, and "Unfollow" to unfollow</li>
+  </ol>`
 
 const EmptyLibrary = () => html`<p>Your Library is empty.</p>${HowTo()}<p>Here are the latest books added to the library, to get you started.</p>`
 const EmptySearch = () => html`<p>Results are empty.</p>`
 
 const Help = () => html`${HowTo()}
+${HowToFollow()}
 <b>Tips</b>
 <p>Clicking the H1 title at the top of the page will toggle the navigation.</p>
 <p>Clicking the Moon/Sun button will toggle the site into dark mode</p>
@@ -354,7 +362,10 @@ const New = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  <h2 class="pointer" @click=${clickHandler}>${title} (${length})</h2>
+  <h2>
+    ${title} (${length})
+    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
+  </h2>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -375,7 +386,7 @@ const Collection = (subject) => {
   })
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
-  <h2 class="pointer" @click=${clickHandler}>${title} (${length})</h2>
+  <h3 class="pointer" @click=${clickHandler}>${title} (${length})</h3>
   <ul class="subject-list">
     ${list.map(entry => {
       return SubjectEntry(entry)
@@ -407,7 +418,7 @@ const Subjects = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  <h2 class="pointer" @click=${clickHandler}>${title} (${length})</h2>
+  <h3 class="pointer" @click=${clickHandler}>${title} ${length ? `(${length})` : ''}</h3>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -426,14 +437,38 @@ const Browse = (items = []) => {
             }`
   }`}
 
+const Subject = (category) => {
+    const {
+      title,
+      entries,
+    } = category;
+    const isCoverOnly = false;
+    const clickHandler = clickHandlerCreator({
+      type:'click-add-subject-to-library',
+      subjectName: title
+    })
+    return html`
+    <h2>${title}</h2>
+    <span @click=${clickHandler}>Follow</span>
+    <ul class="category-list">
+      ${entries.map(entry => {
+        return SubjectEntry(entry, isCoverOnly)
+      })}
+    </ul>`
+  }
 const Category = (category) => {
   const {
     title,
     entries,
   } = category;
   const isCoverOnly = false;
+  const clickHandler = clickHandlerCreator({
+    type:'click-add-category-to-library',
+    categoryName: title
+  })
   return html`
   <h2>${title}</h2>
+  <span @click=${clickHandler}>Follow</span>
   <ul class="category-list">
     ${entries.map(entry => {
       return SubjectEntry(entry, isCoverOnly)
@@ -446,9 +481,14 @@ const CollectionCategory = (category) => {
     entries,
   } = category;
   const isCoverOnly = false;
+  const clickHandler = clickHandlerCreator({
+    type:'click-add-collection-to-library',
+    collectionName: title
+  })
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
+  <p @click=${clickHandler}>Follow</p>
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
@@ -609,6 +649,64 @@ const CategoryList = (categories) => {
   </ul>
   `
 }
+const FollowedCollections = (followedCollections) => {
+  const clickHandler = clickHandlerCreator({
+    type: 'collection-tab',
+    tab: 'COLLECTIONS'
+  })
+  return followedCollections.length
+  ? html`
+  <h2>
+    Followed Collections
+    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
+  </h2>
+  ${Browse(followedCollections)}
+  `
+  : html`
+      <h2>
+        Followed Collections
+        <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
+      </h2>
+    `
+}
+const FollowedSubjects = (followedSubjects) => {
+  const clickHandler = clickHandlerCreator({
+    type: 'browse-tab',
+    tab: 'BROWSE'
+  })
+  return followedSubjects.length
+  ? html`
+  <h2>
+    Followed Subjects
+    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
+  </h2>
+  ${Browse(followedSubjects)}
+  `
+  : html`
+  <h2>
+    Followed Subjects
+    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
+  </h2>`
+}
+const FollowedCategories = (followedCategories) => {
+  const clickHandler = clickHandlerCreator({
+    type:'help-tab',
+    tab: 'HELP'
+  })
+  return followedCategories.length
+  ? html`
+  <h2>
+    Followed Categories
+    <strong class="pointer" @click=${clickHandler}>Follow More ></strong>
+  </h2>
+  ${Browse(followedCategories)}
+  `
+  : html`
+  <h2>
+    Followed Categories
+    <strong class="pointer" @click=${clickHandler}>Follow More ></strong>
+  </h2>`
+}
 const LoadingMessages = (index = 0) => {
   const msgs = [
     html`Loading...`,
@@ -639,6 +737,9 @@ function rerender(props) {
       activeTab = '',
       activeCategory,
       activeEntry,
+      followedCollections,
+      followedSubjects,
+      followedCategories,
       searchResults,
       showDetailModal,
       showSideBarMenu,
@@ -648,23 +749,30 @@ function rerender(props) {
     const TabContent = (activeTab) => {
       switch(activeTab) {
         case('LIBRARY'): {
+          window.scrollTo(0,0)
           return html`
             ${Library(userLibrary)}
             ${New(bookLibrary)}
+            ${FollowedCollections(followedCollections)}
+            ${FollowedSubjects(followedSubjects)}
+            ${FollowedCategories(followedCategories)}
           `
         }
         case('BROWSE'): {
+          window.scrollTo(0,0)
           return Browse(bookLibrary);
         }
         case('COLLECTIONS'): {
+          window.scrollTo(0,0)
           return Collections(bookLibrary);
         }
         case('NEW'): {
+          window.scrollTo(0,0)
           return New(bookLibrary);
         }
         case('SUBJECT'): {
           window.scrollTo(0,0)
-          return Category(activeCategory);
+          return Subject(activeCategory);
         }
         case('CATEGORY'): {
           window.scrollTo(0,0)
@@ -675,6 +783,7 @@ function rerender(props) {
           return CollectionCategory(activeCategory);
         }
         case('SEARCH'): {
+          window.scrollTo(0,0)
           return SearchBar(searchResults)
         }
         case('AUTHOR'):{
@@ -682,6 +791,7 @@ function rerender(props) {
           return AuthorList(searchResults)
         }
         case('HELP'): {
+          window.scrollTo(0,0)
           return Help()
         }
         default:
@@ -705,8 +815,6 @@ function rerender(props) {
         <nav>
           <div class="parent">
             ${LibraryNavigation()}
-            ${BrowseNavigation()}
-            ${CollectionsNavigation()}
             ${SearchNavigation()}
           </div>
         </nav>

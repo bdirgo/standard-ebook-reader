@@ -161,3 +161,9 @@ ol > li:hover, ol > li:focus {
 .list-item {
 	margin-bottom: 1em;
 }
+
+h2 strong {
+	display: block;
+	font-size: 75%;
+	opacity: 0.75;
+}

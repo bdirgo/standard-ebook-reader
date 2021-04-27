@@ -324,6 +324,18 @@ class MyLibrary extends MyCategory {
     constructor(props) {
         super(props)
         this.currentlyReading = []
+        this.followedCategories = [
+            // "Historical fiction",
+            // "War stories"
+        ]
+        this.followedCollections = [
+            // "Sherlock Holmes",
+            // "The Guardian’s Best 100 Novels in English (2015)",
+        ]
+        this.followedSubjects = [
+            // "https://standardebooks.org/opds/subjects/adventure",
+            // "https://standardebooks.org/opds/subjects/mystery",
+        ]
     }
 }
 
@@ -569,13 +581,14 @@ async function userLibraryReducer(state = [], action) {
                 return userLibrary
             }
         }
+
         case('click-add-to-library'): {
             // Doesn't work , not sure why
             let userLibrary = await myDB.getItem('userLibrary')
             console.log(userLibrary)
             if (!userLibrary) {
                 console.log('creating Library')
-                userLibrary = await createUserLibrary(entryId)
+                userLibrary = await createUserLibrary()
             }
             let newEntry = await bookEntires.getItem(entryId);
             newEntry.inUserLibrary = true;
@@ -595,6 +608,7 @@ async function userLibraryReducer(state = [], action) {
             myDB.setItem('userLibrary', userLibrary)
             return userLibrary;
         }
+
         default:
             return state
     }
@@ -728,6 +742,165 @@ function activeTabReducer(state = 'LIBRARY', action) {
         case('search-tab'): {
             return tab;
         }
+        default:
+            return state
+    }
+}
+
+async function followedCollectionsReducer(state = [], action) {
+    const {
+        type,
+        collectionName,
+    } = action
+    console.log(collectionName);
+    const previewLength = 8;
+    switch (type) {
+        case('library-tab'): {
+            let userLibrary = await myDB.getItem('userLibrary')
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary()
+            }
+            return userLibrary.followedCollections ?? [];
+        }
+        case('click-add-collection-to-library'): {
+            console.log('adding collection to library')
+            let userLibrary = await myDB.getItem('userLibrary')
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary()
+            }
+            const entriesByCollection = await myDB.getItem('entriesByCollection')
+            const isOld = lastUpdated(entriesByCollection)
+            if (isOld) {
+                console.log('repopulating collections')
+                bookLibrary = await fetchCollections()
+            } else {
+                console.log('collections in storage')
+                bookLibrary = entriesByCollection
+            }
+            collection = bookLibrary.collections
+                .filter(val => {
+                    return val.title === collectionName;
+                })
+                .map(val => {
+                    return {
+                        title: val.title,
+                        entries: val.entries.slice(0, previewLength),
+                        length: val.entries.length,
+                    }
+                })[0]
+            console.log(bookLibrary)
+            console.log(collection)
+            console.log(userLibrary)
+            let newEntry = collection
+            newEntry.inUserLibrary = true;
+            userLibrary.followedCollections.push(newEntry)
+            myDB.setItem('userLibrary', userLibrary)
+            return userLibrary.followedCollections;
+        }
+        case('click-remove-collection-from-library'): 
+        default:
+            return state
+    }
+}
+async function followedSubjectsReducer(state = [], action) {
+    const {
+        type,
+        subjectName,
+    } = action
+    const previewLength = 8;
+    switch (type) {
+        case('library-tab'): {
+            let userLibrary = await myDB.getItem('userLibrary')
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary()
+            }
+            return userLibrary.followedSubjects ?? [];
+        }
+        case('click-add-subject-to-library'): {
+            console.log('adding subjects to library')
+            let userLibrary = await myDB.getItem('userLibrary')
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary()
+            }
+            const entriesBySubject = await myDB.getItem('entriesBySubject')
+            const isOld = lastUpdated(entriesBySubject)
+            let subject;
+            if (isOld) {
+                console.log('fetching new subjects')
+                subject = await fetchStandardBooks();
+                await createCategroiesFrom(subject)
+            } else {
+                console.log('subjects in storage')
+                subject = entriesBySubject
+            }
+            subject = subject.subjects
+                .filter(val => {
+                    return val.title === subjectName;
+                })
+                .map(val => {
+                    return {
+                        title: val.title,
+                        entries: val.entries.slice(0, previewLength),
+                        length: val.entries.length,
+                    }
+                })[0]
+            console.log(subject)
+            console.log(userLibrary)
+            let newEntry = subject
+            newEntry.inUserLibrary = true;
+            userLibrary.followedSubjects.push(newEntry)
+            myDB.setItem('userLibrary', userLibrary)
+            return userLibrary.followedSubjects;
+        }
+        case('click-remove-subject-from-library'): {
+            let userLibrary = await myDB.getItem('userLibrary')
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary()
+            }
+            // TODO
+            return userLibrary.followedSubjects;
+        }
+        default:
+            return state
+    }
+}
+async function followedCategoriesReducer(state = [], action) {
+    const {
+        type,
+        categoryName,
+    } = action
+    switch (type) {
+        case('library-tab'): {
+            let userLibrary = await myDB.getItem('userLibrary')
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary()
+            }
+            return userLibrary.followedCategories ?? [];
+        }
+        case('click-add-category-to-library'): {
+            console.log('adding subjects to library')
+            let userLibrary = await myDB.getItem('userLibrary')
+            if (!userLibrary) {
+                console.log('creating Library')
+                userLibrary = await createUserLibrary()
+            }
+            const cats = await myDB.getItem('entriesByCategory')
+            const category = cats.categories.filter(val => val.term === categoryName)[0];
+            console.log(category)
+            console.log(userLibrary)
+            let newEntry = category
+            newEntry.inUserLibrary = true;
+            userLibrary.followedCategories.push(newEntry)
+            myDB.setItem('userLibrary', userLibrary)
+            return userLibrary.followedCategories;
+        }
+        case('click-remove-category-from-library'): 
         default:
             return state
     }
@@ -869,6 +1042,9 @@ async function app(state = {}, action) {
         activeTab: activeTabReducer(state.activeTab, action),
         activeEntry: await activeEntryReducer(state.activeEntry, action),
         activeCategory: await activeCategoryReducer(state.activeCategory, action),
+        followedCollections: await followedCollectionsReducer(state.followedCollections, action),
+        followedSubjects: await followedSubjectsReducer(state.followedSubjects, action),
+        followedCategories: await followedCategoriesReducer(state.followedCategories, action),
         isLoading: false,
         showDetailModal: showDetailModalReducer(state.showDetailModal, action),
         showSideBarMenu: sideBarReducer(state.showSideBarMenu, action),
