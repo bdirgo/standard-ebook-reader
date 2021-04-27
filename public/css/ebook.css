@@ -50,6 +50,11 @@ img {
     max-width: 90%;
 }
 
+.loading-message {
+    padding-top: 1em;
+    margin: 0 auto;
+}
+
 .view {
     position: relative;
     left: -7px;

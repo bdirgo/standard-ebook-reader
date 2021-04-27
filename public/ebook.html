@@ -68,6 +68,10 @@
             img.width = 350
             console.log(img)
             loadingCover.appendChild(img)
+            const loadingMessage = document.createElement('span');
+            loadingMessage.textContent = "Loading..."
+            loadingMessage.className = 'loading-message'
+            loadingCover.appendChild(loadingMessage)
             var thumbnailLink = document.createElement('link');
             thumbnailLink.rel = 'apple-touch-icon';
             thumbnailLink.href = coverThumbnailUrl.href;
