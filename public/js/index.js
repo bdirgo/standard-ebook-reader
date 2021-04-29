@@ -1,12 +1,12 @@
-import {html, render} from 'https://unpkg.com/lit-html?module';
+import { html, render } from 'https://unpkg.com/lit-html?module';
 
 const w = new Worker("./js/appState.js");
 const log = console.log;
 const populateStorage = (id, value) => {
-  window.localStorage.setItem(id, value);
+    window.localStorage.setItem(id, value);
 }
 const getStorage = (id) => {
-  return window.localStorage.getItem(id);
+    return window.localStorage.getItem(id);
 }
 
 /* 
@@ -20,81 +20,82 @@ Reading Ease:
 0-30  Graduate Very Difficult
 */
 const EaseToGrade = (ease) => {
-  if(ease >= 90) {
-    return "5th Grade";
-  } else if (ease >= 80 && ease < 90) {
-    return "6th Grade"
-  } else if (ease >=70 && ease < 80) {
-    return "7th Grade"
-  } else if (ease >=65 && ease < 70) {
-    return "8th Grade"
-  } else if (ease >=60 && ease < 65) {
-    return "9th Grade"
-  } else if (ease >=57 && ease < 60) {
-    return "10th Grade"
-  } else if (ease >=53 && ease < 57) {
-    return "11th Grade"
-  } else if (ease >=50 && ease < 53) {
-    return "12th Grade"
-  } else if (ease >= 30 && ease < 50) {
-    return "College"
-  } else if (ease >= 0 && ease < 30) {
-    return "Graduate"
-  }
-  return null
+    if (ease >= 90) {
+        return "5th Grade";
+    } else if (ease >= 80 && ease < 90) {
+        return "6th Grade"
+    } else if (ease >= 70 && ease < 80) {
+        return "7th Grade"
+    } else if (ease >= 65 && ease < 70) {
+        return "8th Grade"
+    } else if (ease >= 60 && ease < 65) {
+        return "9th Grade"
+    } else if (ease >= 57 && ease < 60) {
+        return "10th Grade"
+    } else if (ease >= 53 && ease < 57) {
+        return "11th Grade"
+    } else if (ease >= 50 && ease < 53) {
+        return "12th Grade"
+    } else if (ease >= 30 && ease < 50) {
+        return "College"
+    } else if (ease >= 0 && ease < 30) {
+        return "Graduate"
+    }
+    return null
 }
 const EaseToString = (ease) => {
-  if(ease >= 90) {
-    return "Very Easy";
-  } else if (ease >= 80 && ease < 90) {
-    return "Easy"
-  } else if (ease >=70 && ease < 80) {
-    return "Fairly Easy"
-  } else if (ease >=60 && ease < 70) {
-    return "Standard"
-  } else if (ease >=50 && ease < 60) {
-    return "Fairly Difficult"
-  } else if (ease >= 30 && ease < 50) {
-    return "Difficult"
-  } else if (ease >= 0 && ease < 30) {
-    return "Very Difficult"
-  }
-  return null
-}
-/**
- * Service Worker
- */
+        if (ease >= 90) {
+            return "Very Easy";
+        } else if (ease >= 80 && ease < 90) {
+            return "Easy"
+        } else if (ease >= 70 && ease < 80) {
+            return "Fairly Easy"
+        } else if (ease >= 60 && ease < 70) {
+            return "Standard"
+        } else if (ease >= 50 && ease < 60) {
+            return "Fairly Difficult"
+        } else if (ease >= 30 && ease < 50) {
+            return "Difficult"
+        } else if (ease >= 0 && ease < 30) {
+            return "Very Difficult"
+        }
+        return null
+    }
+    /**
+     * Service Worker
+     */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-          .then(reg => {
-              console.log("Registered!", reg)
-              // registration worked
-          }).catch(err => {
-              console.log('Registration failed with ' + err);
-          })
-  })
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => {
+                console.log("Registered!", reg)
+                    // registration worked
+            }).catch(err => {
+                console.log('Registration failed with ' + err);
+            })
+    })
 }
+
 function unregister() {
-  if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready
-          .then((registration) => {
-              registration.unregister();
-          })
-          .catch((error) => {
-              console.error(error.message);
-          });
-  }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+            .then((registration) => {
+                registration.unregister();
+            })
+            .catch((error) => {
+                console.error(error.message);
+            });
+    }
 }
 // unregister()
 window.addEventListener('DOMContentLoaded', () => {
-  // TODO: Electron
+    // TODO: Electron
     let displayMode = 'browser tab';
     if (navigator.standalone) {
-      displayMode = 'standalone-ios';
+        displayMode = 'standalone-ios';
     }
     if (window.matchMedia('(display-mode: standalone)').matches) {
-      displayMode = 'standalone';
+        displayMode = 'standalone';
     }
     console.log('DISPLAY_MODE_LAUNCH:', displayMode);
 });
@@ -102,73 +103,72 @@ window.addEventListener('DOMContentLoaded', () => {
 let elem = document.body
 
 w.onmessage = function(event) {
-  const {
-    data,
-  } = event
-  const {
-    type,
-    payload,
-  } = data
-  if (type === 'state') {
-    const state = payload
-    elem.dispatchEvent(new CustomEvent('re-render', {
-      detail: state,
-    }))
-  } else {
-    const details = data
-    console.log(details)
-  }
+    const {
+        data,
+    } = event
+    const {
+        type,
+        payload,
+    } = data
+    if (type === 'state') {
+        const state = payload
+        elem.dispatchEvent(new CustomEvent('re-render', {
+            detail: state,
+        }))
+    } else {
+        const details = data
+        console.log(details)
+    }
 };
 
 const getCurrentlyReadingStorage = () => {
-  const stor = localStorage.getItem('currentlyReading')
-  if (!stor) {
-    return JSON.stringify([])
-  } else {
-    return stor
-  }
+    const stor = localStorage.getItem('currentlyReading')
+    if (!stor) {
+        return JSON.stringify([])
+    } else {
+        return stor
+    }
 }
 
 // TODO: call state mgmt
 w.postMessage({
-  type:"init",
-  payload:
-    JSON.stringify({
-      action: {
-        currentlyReading:getCurrentlyReadingStorage()
-      }
+    type: "init",
+    payload: JSON.stringify({
+        action: {
+            currentlyReading: getCurrentlyReadingStorage()
+        }
     })
 });
 
 function toTitleCase(str) {
-  return str.replace(
-      /\w\S*/g,
-      function(txt) {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-      }
-  );
+    return str.replace(
+        /\w\S*/g,
+        function(txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        }
+    );
 }
 
 const SearchBar = (results = []) => {
-  let query = ''
-  const submitHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      e.preventDefault();
-      const payload = {
-        action: {
-          type: 'search-query',
-          query,
-          currentlyReading:getCurrentlyReadingStorage()
-        },
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
-  return html`
+        let query = ''
+        const submitHandler = {
+            // handleEvent method is required.
+            handleEvent(e) {
+                e.preventDefault();
+                const payload = {
+                    action: {
+                        type: 'search-query',
+                        query,
+                        currentlyReading: getCurrentlyReadingStorage()
+                    },
+                }
+                w.postMessage({ type: 'click', payload: JSON.stringify(payload) })
+            },
+            // event listener objects can also define zero or more of the event 
+            // listener options: capture, passive, and once.
+            capture: true,
+        }
+        return html `
     <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">Search for a book, based on title, author, subject, or description</label>
       <div>
         <input
@@ -500,6 +500,9 @@ const CollectionCategory = (category) => {
 const emptyState = {
   userLibrary:{},
   bookLibrary:{},
+  followedCollections: [],
+  followedCategories: [],
+  followedSubjects: [],
   activeTab:'LIBRARY',
 }
 
@@ -747,9 +750,9 @@ function rerender(props) {
       loadingMessageindex,
     } = state
     const TabContent = (activeTab) => {
+      window.scrollTo(0,0)
       switch(activeTab) {
         case('LIBRARY'): {
-          window.scrollTo(0,0)
           return html`
             ${Library(userLibrary)}
             ${New(bookLibrary)}
@@ -759,45 +762,35 @@ function rerender(props) {
           `
         }
         case('BROWSE'): {
-          window.scrollTo(0,0)
           return Browse(bookLibrary);
         }
         case('COLLECTIONS'): {
-          window.scrollTo(0,0)
           return Collections(bookLibrary);
         }
         case('NEW'): {
-          window.scrollTo(0,0)
           return New(bookLibrary);
         }
         case('SUBJECT'): {
-          window.scrollTo(0,0)
           return Subject(activeCategory);
         }
         case('CATEGORY'): {
-          window.scrollTo(0,0)
           return Category(activeCategory);
         }
         case('COLLECTION'): {
-          window.scrollTo(0,0)
           return CollectionCategory(activeCategory);
         }
         case('SEARCH'): {
-          window.scrollTo(0,0)
           return SearchBar(searchResults)
         }
         case('AUTHOR'):{
-          window.scrollTo(0,0)
           return AuthorList(searchResults)
         }
         case('HELP'): {
-          window.scrollTo(0,0)
           return Help()
         }
         default:
           return html`Default View. Not yet implemented.`;
       }
-      
     }
     const toggleNav = clickHandlerCreator({
       type: `${showSideBarMenu === 'show' ? 'click-open-main-menu': 'click-close-main-menu'}`
@@ -835,4 +828,4 @@ function rerender(props) {
 document.querySelector('.first-content').hidden = true
 rerender({detail: JSON.stringify({isLoading:true, showSideBarMenu:'show'})})
 
-elem.addEventListener('re-render', (e) => rerender({detail: e.detail})) 
+elem.addEventListener('re-render', (e) => rerender({detail: e.detail}))
