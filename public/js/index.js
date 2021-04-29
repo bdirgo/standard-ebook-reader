@@ -713,18 +713,18 @@ const FollowedCategories = (followedCategories) => {
 const LoadingMessages = (index = 0) => {
   const msgs = [
     html`Loading...`,
-    html`Still Loading...`,
+    html`The first load is the longest...`,
+    html`Downloading new Standard Books...`,
+    html`Collections may take a minute to load...`,
     html`Organizing Libraries...`,
     html`Collecting Collections...`,
     html`Parsing New books...`,
     html`Reticulating Splines...`,
     html`Ordering LLamas...`,
-    html`Or was it Alpacas?`,
     html`Generating witty dialog...`,
     html`Swapping time and space...`,
-    html`The servers are having a slow day, today.`,
     html`Tokenizing real life...`,
-    html`Don't think of purple hippos...`,
+    html`The servers are having a slow day, today.`,
   ]  
   return msgs[index]
 }
