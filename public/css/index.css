@@ -162,8 +162,19 @@ ol > li:hover, ol > li:focus {
 	margin-bottom: 1em;
 }
 
+h2 {
+    font-size: 1.25em;
+	min-width: 71px;
+}
+
 h2 strong {
-	display: block;
+	display: inline-block;
 	font-size: 75%;
 	opacity: 0.75;
+	float: right;
+}
+
+.flex-title {
+	display: flex;
+	justify-content: space-between;
 }
