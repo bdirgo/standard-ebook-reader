@@ -46,6 +46,9 @@
               <button class="style-button" onclick="biggerFont()">+</button>
               <button class="style-button" onclick="smallerFont()">-</button>
             </p>
+            <p id='font-size-example'>
+                Example Text, Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            </p>
         </div>
     </div>
     <div id="prev" class="left-side">&nbsp;</div>
@@ -101,6 +104,16 @@
                     break;
                 }
             }
+            document.getElementById('font-size-example').style.fontSize = `${
+                size == '-1'
+                ? 'small'
+                : size == '0'
+                    ? '21px'
+                    : 'xx-large'}`
+            document.getElementById('font-size-example').style.lineHeight = `${
+                size == '-1' || size == '0'
+                ? '1.3125'
+                : '1.5'}`
         }
         function openStylesModal() {
             document.getElementById("stylesModal").style.display = "initial";
