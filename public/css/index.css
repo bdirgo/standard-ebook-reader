@@ -47,6 +47,8 @@ body {
 	top:20px;
 	right:20px;
 	position: absolute;
+    min-width: 40px;
+    min-height: 40px;
 }
 
 .flex-group {

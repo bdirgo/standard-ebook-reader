@@ -16,8 +16,20 @@
   const READINGEASEID = bookTag`${bookUrl}-readingEase`
   const CURRENTLYREADING = 'currentlyReading'
   const isDarkMode = window.localStorage.getItem('darkMode') === 'dark'
+  const isLargeText = window.localStorage.getItem('fontSize') === 'large'
+  const isSmallText = window.localStorage.getItem('fontSize') === 'small'
   console.log(CURRENTPAGEID)
 
+  function whichStyleSheet() {
+    return `../../../css/ebook-styles/${isDarkMode ? 'dark-': ''}${
+      isLargeText
+      ? 'large-'
+      : isSmallText
+        ? 'small-'
+        : 'default-'
+    }text.css`
+  }
+console.log(whichStyleSheet())
   const populateStorage = (id, value) => {
     window.localStorage.setItem(id, value);
   }
@@ -65,7 +77,7 @@
     width: targetWidth,
     height: targetHeight,
     script: '../../../lib/swiped-events.js',
-    stylesheet: isDarkMode ? '../../../css/dark-ebook-styles.css' : '../../../css/ebook-styles.css',
+    stylesheet: whichStyleSheet(),
   });
   console.log('rendition')
   console.log(rendition)

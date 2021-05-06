@@ -22,6 +22,27 @@ header {
     grid-column: 1 / 4;
 }
 
+.style-button {
+    min-width: 40px;
+    min-height: 40px;
+}
+
+#stylesModal {
+    display: none;
+}
+
+.modal {
+    z-index: 150;
+}
+
+#styles-button {
+	top: 20px;
+	right: 68px;
+	position: absolute;
+    min-width: 40px;
+    min-height: 40px;
+}
+
 .left-side {
     grid-column: 1 / 2;
 }

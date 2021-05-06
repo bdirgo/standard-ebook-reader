@@ -11,6 +11,7 @@
     <meta name="Description" content="Read books from Standard Ebooks">
 
     <link rel="manifest" href="./manifest.json" />
+    <link rel="stylesheet" type="text/css" href="./css/styles.css" media="screen"/>
     <link rel="stylesheet" type="text/css" href="./css/index.css" media="screen"/>
     <link rel="stylesheet" type="text/css" href="./css/ebook.css" media="screen"/>
     
@@ -28,7 +29,8 @@
             </p>
             <p>&nbsp;<a href="/">Back to Library</a></p>
             <p>&nbsp;<b id="topbar-book-title"></b></p>
-            <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
+            <button id="styles-button" onclick="openStylesModal()">Aa</button>
+            <button name="Toggle dark mode" role="button" value="light" id="dark-button" onclick="refreshPage()">&nbsp;</button>
             <label for="tocSelect">Chapter:</label>
             <div class="select">
                 <select name="chapter" id="tocSelect"></select>
@@ -37,6 +39,15 @@
         </div>
         <div id="openbtn" class="openbtn" onclick="openNav()">&#9776;</div>
     </header>
+    <div class="modal" id="stylesModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeStylesModal()">X</span>
+            <p>Font Size: 
+              <button class="style-button" onclick="biggerFont()">+</button>
+              <button class="style-button" onclick="smallerFont()">-</button>
+            </p>
+        </div>
+    </div>
     <div id="prev" class="left-side">&nbsp;</div>
     <main>
         <div id="loading-cover" class="loading-cover"></div>
@@ -45,6 +56,60 @@
     <div id="next" class="right-side">&nbsp;</div>
     <footer id="footer" class="section"></footer>
     <script>
+        const fontSize = 'fontSize-num'
+        if(!window.localStorage.getItem(fontSize)) {
+            window.localStorage.setItem(fontSize, 0);
+        }
+        switchOnSize()
+        function biggerFont() {
+            let size = window.localStorage.getItem(fontSize)
+            if (Number(size) == 0 || Number(size) == -1) {
+                size++;
+                window.localStorage.setItem(fontSize, size);
+            }
+            switchOnSize()
+        }
+        function smallerFont() {
+            let size = window.localStorage.getItem(fontSize)
+            if (Number(size) == 0 || Number(size) == 1) {
+                size--;
+                window.localStorage.setItem(fontSize, size);
+            }
+            switchOnSize()
+        }
+        function switchOnSize() {
+            let size = window.localStorage.getItem(fontSize)
+            switch(size) {
+                case('-1'): {
+                    console.log('small')
+                    window.localStorage.setItem('fontSize', 'small')
+                    break;
+                }
+                case('0'): {
+                    console.log('zero')
+                    window.localStorage.setItem('fontSize', 'default')
+                    break;
+                }
+                case('1'): {
+                    console.log('large')
+                    window.localStorage.setItem('fontSize', 'large')
+                    break;
+                }
+                default: {
+                    console.log('default')
+                    window.localStorage.setItem('fontSize', 'default')
+                    break;
+                }
+            }
+        }
+        function openStylesModal() {
+            document.getElementById("stylesModal").style.display = "initial";
+            // document.getElementById("openbtn").style.display = "none"
+        }
+        function closeStylesModal() {
+            document.getElementById("stylesModal").style.display = "none";
+            refreshPage();
+        }
         function openNav() {
             document.getElementById("myTopBar").style.display = "initial";
             document.getElementById("openbtn").style.display = "none"
@@ -54,6 +119,9 @@
             document.getElementById("myTopBar").style.display = "none";
             document.getElementById("openbtn").style.display = "initial";
         } 
+        function refreshPage() {
+            window.location.reload(true)
+        }
         closeNav()
         const params = (new URL(document.location)).searchParams;
         const bookParam = params.get('book')
