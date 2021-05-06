@@ -896,11 +896,6 @@ async function followedCollectionsReducer(state = [], action) {
         case('click-remove-collection-from-library'): {
             let userLibrary = await getUserLibrary();
             const newCollections = userLibrary.followedCollections
-                // .map(v => {
-                //     if(v.title === collectionName) {
-                //         v.inUserLibrary = false
-                //     }
-                // })
                 .filter(v => v.title !== collectionName)
             console.log(newCollections);
             userLibrary.followedCollections = newCollections
@@ -1026,56 +1021,33 @@ async function followedCategoriesReducer(state = [], action) {
     }
 }
 
-const isCollectionInUserLibrary = async (collectionName) => {
+const hasFollowedCollection = async (arrayName, name = '') => {
     let userLibrary = await getUserLibrary();
-    const newCollections = userLibrary.followedCollections.filter(v => {
-        return v?.title === collectionName
+    const filteredElement = userLibrary[arrayName].filter(v => {
+        return v?.title === name
     })
-    console.log(newCollections);
-    if (newCollections.length > 0) {
+    console.log(filteredElement);
+    if (filteredElement.length > 0) {
         return true
     } else {
         return false
     }
+}
+
+const isCollectionInUserLibrary = async (collectionName) => {
+    return await hasFollowedCollection('followedCollections', collectionName)
 }
 
 const isCategoryInUserLibrary = async (collectionName) => {
-    let userLibrary = await getUserLibrary();
-    const newCollections = userLibrary.followedCategories.filter(v => {
-        return v?.title === collectionName
-    })
-    console.log(newCollections);
-    if (newCollections.length > 0) {
-        return true
-    } else {
-        return false
-    }
+    return await hasFollowedCollection('followedCategories', collectionName)
 }
 
 const isSubjectInUserLibrary = async (collectionName) => {
-    let userLibrary = await getUserLibrary();
-    const newCollections = userLibrary.followedSubjects.filter(v => {
-        return v?.title === collectionName
-    })
-    console.log(newCollections);
-    if (newCollections.length > 0) {
-        return true
-    } else {
-        return false
-    }
+    return await hasFollowedCollection('followedSubjects', collectionName)
 }
 
 const isResultInUserLibrary = async (query) => {
-    let userLibrary = await getUserLibrary();
-    const newCollections = userLibrary.followedSearchResults.filter(v => {
-        return v?.title === query
-    })
-    console.log(newCollections);
-    if (newCollections.length > 0) {
-        return true
-    } else {
-        return false
-    }
+    return await hasFollowedCollection('followedSearchResults', query)
 }
 
 
