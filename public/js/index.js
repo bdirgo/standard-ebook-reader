@@ -149,47 +149,51 @@ function toTitleCase(str) {
     );
 }
 
-const SearchBar = (results = []) => {
-        let query = ''
-        const submitHandler = {
-            // handleEvent method is required.
-            handleEvent(e) {
-                e.preventDefault();
-                const payload = {
-                    action: {
-                        type: 'search-query',
-                        query,
-                        currentlyReading: getCurrentlyReadingStorage()
-                    },
-                }
-                w.postMessage({ type: 'click', payload: JSON.stringify(payload) })
+const SearchBar = (queryResults) => {
+  let {
+    query = '',
+    results = [],
+  } = queryResults
+  const title = toTitleCase(query)
+  const submitHandler = {
+    // handleEvent method is required.
+    handleEvent(e) {
+        e.preventDefault();
+        const payload = {
+            action: {
+                type: 'search-query',
+                query,
+                currentlyReading: getCurrentlyReadingStorage()
             },
-            // event listener objects can also define zero or more of the event 
-            // listener options: capture, passive, and once.
-            capture: true,
         }
-        return html `
-    <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">Search for a book, based on title, author, subject, or description</label>
-      <div>
-        <input
-          type="search"
-          id="mySearch"
-          name="q"
-          placeholder="Search for a book..."
-          .value=${query}
-          @change=${e => {query = e.target.value;}}
-          size="35">
-        <button>Search</button>
-      </div>
-    </form>
-    
-      ${results.length === 0
-        ? html`${EmptySearch()}`
-        : html`<ul class="list-style-none library-list no-padding">${results.map(item => {
-                  return html`${ItemView(item.item, false)}`
-                  })
-                }</ul>`
-      }`
+        w.postMessage({ type: 'click', payload: JSON.stringify(payload) })
+    },
+    // event listener objects can also define zero or more of the event 
+    // listener options: capture, passive, and once.
+    capture: true,
+  }
+  return html `
+  <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">Search for a book, based on title, author, subject, or description</label>
+    <div>
+      <input
+        type="search"
+        id="mySearch"
+        name="q"
+        placeholder="Search for a book..."
+        .value=${query}
+        @change=${e => {query = e.target.value;}}
+        size="35">
+      <button>Search</button>
+    </div>
+  </form>
+  <h2>${title}</h2>
+  ${results.length === 0
+    ? html`${EmptySearch()}`
+    : html`<ul class="list-style-none library-list no-padding">${results.map(item => {
+              return html`${ItemView(item.item, false)}`
+              })
+            }</ul>`
+  }`
 }
 const LibraryNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -226,7 +230,7 @@ const SearchNavigation = () => {
   })
   return html`<button @click=${clickHandler} class="box button"><span style='font-size:20px;'>&#128269;</span>&nbsp;Search</button>`
 }
-const HowTo = () => html`<h2>How to</h2>
+const HowTo = () => html`
   <ol>
   <li>Add this web page to your homescreen.</li>
   <li>Browse to add a few books.</li>
@@ -240,10 +244,12 @@ const HowToFollow = () => html`<h2>How to Follow Categories</h2>
   <li>Click "Follow" to follow, and "Unfollow" to unfollow</li>
   </ol>`
 
-const EmptyLibrary = () => html`<p>Your Library is empty.</p>${HowTo()}<p>Here are the latest books added to the library, to get you started.</p>`
+const EmptyLibrary = () => html`<p><b>Your Library is empty.</b></p>${HowTo()}<p>Here are the latest books added to the library, to get you started.</p>`
 const EmptySearch = () => html`<p>Results are empty.</p>`
 
-const Help = () => html`${HowTo()}
+const Help = () => html`
+<h2>How to</h2>
+${HowTo()}
 ${HowToFollow()}
 <b>Tips</b>
 <p>Clicking the H1 title at the top of the page will toggle the navigation.</p>
@@ -362,10 +368,7 @@ const New = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  <h2>
-    ${title} (${length})
-    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
-  </h2>
+  ${FollowTitle(`${title} (${length})`, clickHandler)}
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -406,19 +409,38 @@ const Collections = (items = []) => {
             }`
   }`}
 
-const Subjects = (subject) => {
+const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}) => {
   const {
     title,
     entries,
     length,
   } = subject;
-  const clickHandler = clickHandlerCreator({
+  const clickCollection = clickHandlerCreator({
+    type: 'click-collection',
+    categoryTerm: title,
+    tab: 'COLLECTION',
+  })
+  const clickCategory = clickHandlerCreator({
+    type: 'click-category',
+    categoryTerm: title,
+    tab: 'CATEGORY',
+  })
+  const clickSubject = clickHandlerCreator({
     type: 'click-subject',
     categoryTerm: title,
     tab: 'SUBJECT',
   })
+  const clickAuthor = clickHandlerCreator({
+    type:'search-author',
+    tab:'AUTHOR',
+    query: title,
+  })
   return html`
-  <h3 class="pointer" @click=${clickHandler}>${title} ${length ? `(${length})` : ''}</h3>
+  <h3 class="pointer" @click=${
+    (isSubject && clickSubject)
+    || (isAuthor && clickAuthor)
+    || (isCategory && clickCategory)
+    || (isCollection && clickCollection)}>${title} ${length ? `(${length})` : ''}</h3>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -427,12 +449,12 @@ const Subjects = (subject) => {
   `
 }
 
-const Browse = (items = []) => {
+const Browse = (items = [], {isAuthor = false, isSubject = false, isCategory = false, isCollection = false}) => {
   return html`
   ${items.length === 0
     ? html`${EmptyLibrary()}`
     : html`${items.map(subject => {
-                    return html`${Subjects(subject)}`
+                    return html`${Subjects(subject, {isAuthor, isSubject, isCategory, isCollection})}`
                     })
             }`
   }`}
@@ -441,15 +463,22 @@ const Subject = (category) => {
     const {
       title,
       entries,
+      inUserLibrary,
     } = category;
     const isCoverOnly = false;
+    const removeHandler = clickHandlerCreator({
+      type:'click-remove-subject-from-library',
+      subjectName: title
+    })
     const clickHandler = clickHandlerCreator({
       type:'click-add-subject-to-library',
       subjectName: title
     })
     return html`
     <h2>${title}</h2>
-    <span @click=${clickHandler}>Follow</span>
+    ${title !== 'Newest 30 Standard Ebooks' ? html`
+      <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
+    ` : ''}
     <ul class="category-list">
       ${entries.map(entry => {
         return SubjectEntry(entry, isCoverOnly)
@@ -460,15 +489,20 @@ const Category = (category) => {
   const {
     title,
     entries,
+    inUserLibrary,
   } = category;
   const isCoverOnly = false;
+  const removeHandler = clickHandlerCreator({
+    type:'click-remove-category-from-library',
+    categoryName: title
+  })
   const clickHandler = clickHandlerCreator({
     type:'click-add-category-to-library',
     categoryName: title
   })
   return html`
   <h2>${title}</h2>
-  <span @click=${clickHandler}>Follow</span>
+  <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
   <ul class="category-list">
     ${entries.map(entry => {
       return SubjectEntry(entry, isCoverOnly)
@@ -479,8 +513,13 @@ const CollectionCategory = (category) => {
   const {
     title,
     entries,
+    inUserLibrary = false,
   } = category;
   const isCoverOnly = false;
+  const removeHandler = clickHandlerCreator({
+    type:'click-remove-collection-from-library',
+    collectionName: title
+  })
   const clickHandler = clickHandlerCreator({
     type:'click-add-collection-to-library',
     collectionName: title
@@ -488,7 +527,7 @@ const CollectionCategory = (category) => {
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
-  <p @click=${clickHandler}>Follow</p>
+  <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
@@ -506,8 +545,27 @@ const emptyState = {
   activeTab:'LIBRARY',
 }
 
-const AuthorList = (results = []) => {
-  return html`<ul class="list-style-none">
+const AuthorList = (queryResults) => {
+  const {
+    query = '',
+    results,
+    inUserLibrary,
+  } = queryResults
+  const title = toTitleCase(query)
+  const removeHandler = clickHandlerCreator({
+    type:'click-remove-search-results-from-library',
+    subjectName: title,
+    query,
+  })
+  const clickHandler = clickHandlerCreator({
+    type:'click-add-search-results-to-library',
+    subjectName: title,
+    query,
+  })
+  return html`
+  <h2>${title}</h2>
+  <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
+  <ul class="list-style-none">
     ${results.length === 0
       ? html`${EmptySearch()}`
       : html`${results.map(item => {
@@ -652,63 +710,64 @@ const CategoryList = (categories) => {
   </ul>
   `
 }
+const FollowTitle = (titleText, clickHandler) => html`
+<div class="flex-title">
+  <h2>
+    ${titleText}
+  </h2>
+  <h2>
+    <strong class="pointer" @click=${clickHandler}>See All ></strong>
+  </h2>
+</div>`
 const FollowedCollections = (followedCollections) => {
+  const isCollection = true
   const clickHandler = clickHandlerCreator({
     type: 'collection-tab',
     tab: 'COLLECTIONS'
   })
   return followedCollections.length
   ? html`
-  <h2>
-    Followed Collections
-    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
-  </h2>
-  ${Browse(followedCollections)}
+  ${FollowTitle('Followed Collections', clickHandler)}
+  ${Browse(followedCollections, {isCollection})}
   `
-  : html`
-      <h2>
-        Followed Collections
-        <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
-      </h2>
-    `
+  : html`${FollowTitle('Followed Collections', clickHandler)}`
 }
 const FollowedSubjects = (followedSubjects) => {
+  const isSubject = true
   const clickHandler = clickHandlerCreator({
     type: 'browse-tab',
     tab: 'BROWSE'
   })
   return followedSubjects.length
   ? html`
-  <h2>
-    Followed Subjects
-    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
-  </h2>
-  ${Browse(followedSubjects)}
+  ${FollowTitle('Followed Subjects', clickHandler)}
+  ${Browse(followedSubjects, {isSubject})}
   `
-  : html`
+  : html`${FollowTitle('Followed Subjects', clickHandler)}`
+}
+const FollowedAuthors = (followedAuthors) => {
+  const isAuthor = true
+  return followedAuthors.length
+  ? html`
   <h2>
-    Followed Subjects
-    <strong class="pointer" @click=${clickHandler}>Browse All ></strong>
-  </h2>`
+    Followed Authors
+  </h2>
+  ${Browse(followedAuthors, {isAuthor})}
+  `
+  : html``
 }
 const FollowedCategories = (followedCategories) => {
+  const isCategory = true
   const clickHandler = clickHandlerCreator({
     type:'help-tab',
     tab: 'HELP'
   })
   return followedCategories.length
   ? html`
-  <h2>
-    Followed Categories
-    <strong class="pointer" @click=${clickHandler}>Follow More ></strong>
-  </h2>
-  ${Browse(followedCategories)}
+  ${FollowTitle('Followed Categories', clickHandler)}
+  ${Browse(followedCategories, {isCategory})}
   `
-  : html`
-  <h2>
-    Followed Categories
-    <strong class="pointer" @click=${clickHandler}>Follow More ></strong>
-  </h2>`
+  : html``
 }
 const LoadingMessages = (index = 0) => {
   const msgs = [
@@ -743,6 +802,7 @@ function rerender(props) {
       followedCollections,
       followedSubjects,
       followedCategories,
+      followedSearchResults,
       searchResults,
       showDetailModal,
       showSideBarMenu,
@@ -755,6 +815,7 @@ function rerender(props) {
         case('LIBRARY'): {
           return html`
             ${Library(userLibrary)}
+            ${FollowedAuthors(followedSearchResults)}
             ${New(bookLibrary)}
             ${FollowedCollections(followedCollections)}
             ${FollowedSubjects(followedSubjects)}
@@ -762,7 +823,8 @@ function rerender(props) {
           `
         }
         case('BROWSE'): {
-          return Browse(bookLibrary);
+          const isSubject = true
+          return Browse(bookLibrary, {isSubject});
         }
         case('COLLECTIONS'): {
           return Collections(bookLibrary);
@@ -802,7 +864,7 @@ function rerender(props) {
     return html`
       <h1 class="pointer" @click=${toggleNav}>
       ${activeTab === 'AUTHOR'
-        ? toTitleCase(activeEntry?.authorArray[0].name)
+        ? toTitleCase(searchResults.query)
         : toTitleCase(activeTab ? activeTab : 'Ebook Reader')}</h1>
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav>
