@@ -66,7 +66,7 @@
         switchOnSize()
         function biggerFont() {
             let size = window.localStorage.getItem(fontSize)
-            if (Number(size) == 0 || Number(size) == -1) {
+            if (Number(size) < 2) {
                 size++;
                 window.localStorage.setItem(fontSize, size);
             }
@@ -74,7 +74,7 @@
         }
         function smallerFont() {
             let size = window.localStorage.getItem(fontSize)
-            if (Number(size) == 0 || Number(size) == 1) {
+            if (Number(size) > -2) {
                 size--;
                 window.localStorage.setItem(fontSize, size);
             }
@@ -82,37 +82,44 @@
         }
         function switchOnSize() {
             let size = window.localStorage.getItem(fontSize)
+            let absFontSize = 'medium'
+            let lineHeight = 1;
             switch(size) {
+                case('-2'): {
+                    console.log('x-small')
+                    absFontSize = 'small';
+                    break;
+                }
                 case('-1'): {
                     console.log('small')
-                    window.localStorage.setItem('fontSize', 'small')
+                    absFontSize = 'medium';
                     break;
                 }
                 case('0'): {
                     console.log('zero')
-                    window.localStorage.setItem('fontSize', 'default')
+                    absFontSize = 'large';
                     break;
                 }
                 case('1'): {
                     console.log('large')
-                    window.localStorage.setItem('fontSize', 'large')
+                    absFontSize = 'x-large';
+                    break;
+                }
+                case('2'): {
+                    console.log('x-large')
+                    absFontSize = 'xx-large';
                     break;
                 }
                 default: {
                     console.log('default')
-                    window.localStorage.setItem('fontSize', 'default')
                     break;
                 }
             }
-            document.getElementById('font-size-example').style.fontSize = `${
-                size == '-1'
-                ? 'small'
-                : size == '0'
-                    ? '21px'
-                    : 'xx-large'}`
+            window.localStorage.setItem('fontSize', absFontSize)
+            document.getElementById('font-size-example').style.fontSize = `${absFontSize}`
             document.getElementById('font-size-example').style.lineHeight = `${
-                size == '-1' || size == '0'
-                ? '1.3125'
+                size <= '0'
+                ? '1'
                 : '1.5'}`
         }
         function openStylesModal() {
