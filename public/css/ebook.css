@@ -38,6 +38,7 @@ header {
 
 #dark-button {
     font-size: 20px;
+    margin: 0 0 0 1.25em;
 }
 
 #styles-button {
@@ -47,6 +48,7 @@ header {
     min-width: 40px;
     min-height: 40px;
     font-size: 20px;
+    margin: 0 1.25em 0 0;
 }
 
 .left-side {
