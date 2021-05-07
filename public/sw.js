@@ -1,4 +1,4 @@
-const cacheName = 'cache-v1.3.6';
+const cacheName = 'cache-v1.3.6a';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,
@@ -14,6 +14,7 @@ const resourcesToPrecache = [
     `/css/index.css`,
     '/css/styles.css',
     '/css/ebook.css',
+    '/css/ebook-styles/',
     '/js/darkMode.js',
     '/js/constats.js',
     '/js/utility.js',

@@ -25,6 +25,7 @@ header {
 .style-button {
     min-width: 40px;
     min-height: 40px;
+    font-size: 20px;
 }
 
 #stylesModal {
@@ -35,12 +36,17 @@ header {
     z-index: 150;
 }
 
+#dark-button {
+    font-size: 20px;
+}
+
 #styles-button {
 	top: 20px;
 	right: 68px;
 	position: absolute;
     min-width: 40px;
     min-height: 40px;
+    font-size: 20px;
 }
 
 .left-side {
