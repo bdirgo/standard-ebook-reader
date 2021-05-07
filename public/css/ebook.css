@@ -129,9 +129,42 @@ img {
 }
 .closebtn {
     font-size: 40px;
-    line-height: .5;
+    line-height: 0;
+    margin-left: 4px;
+    margin-right: 12px;
     text-decoration: none;
+    top: 14px;
+    left: 0px;
+    position: relative;
+    z-index: 100;
 }
+.myTopBar-controls {
+    margin: 0.5em 0 0;
+    position: relative;
+    top: -30px;
+    max-width: calc(100% - 8px);
+}
+.myTopBar-controls {
+    margin-left: 48px;
+}
+.myTopBar-controls > p {
+    margin-bottom: 0;
+}
+.myTopBar-title {
+    margin: 0.5em 0 1em;
+}
+.myTopBar-title > p {
+    text-align: center;
+    margin: 0;
+}
+.myTopBar-page {
+    margin: 0.5em 0 0;
+}
+.myTopBar-page > p {
+    text-align: center;
+    margin: 0;
+}
+
 select {
     appearance: none;
     background-color: transparent;

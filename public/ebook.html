@@ -24,18 +24,24 @@
   <body>
     <header class="section">
         <div id="myTopBar" class="topbar">
-            <p>
-                &nbsp;<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-            </p>
-            <p>&nbsp;<a href="/">Back to Library</a></p>
-            <p>&nbsp;<b id="topbar-book-title"></b></p>
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
             <button id="styles-button" onclick="openStylesModal()">Aa</button>
             <button name="Toggle dark mode" role="button" value="light" id="dark-button" onclick="refreshPage()">&nbsp;</button>
-            <label for="tocSelect">Chapter:</label>
+            <div class='myTopBar-controls'>
+                <p>
+                    <a href="/">< Back</a>
+                </p>
+            </div>
+            <div class="myTopBar-title">
+                <p><b id="topbar-book-title"></b></p>
+            </div>
+            <!-- <label for="tocSelect">Chapter:</label> -->
             <div class="select">
                 <select name="chapter" id="tocSelect"></select>
             </div>
-            <p>&nbsp;Page: <span id="topbar-book-page"></span></p>
+            <div class="myTopBar-page">
+                <p>Page: <span id="topbar-book-page"></span></p>
+            </div>
         </div>
         <div id="openbtn" class="openbtn" onclick="openNav()">&#9776;</div>
     </header>
