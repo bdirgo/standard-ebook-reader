@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, render } from 'https://unpkg.com/lit-html?module';
 
 const w = new Worker("./js/appState.js");
 const log = console.log;
