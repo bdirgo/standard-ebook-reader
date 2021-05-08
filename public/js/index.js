@@ -1,4 +1,4 @@
-import { html, render } from 'https://unpkg.com/lit-html?module';
+import { html, render } from 'lit-html';
 
 const w = new Worker("./js/appState.js");
 const log = console.log;
@@ -88,9 +88,9 @@ function unregister() {
     }
 }
 // unregister()
+let displayMode = 'browser tab';
 window.addEventListener('DOMContentLoaded', () => {
     // TODO: Electron
-    let displayMode = 'browser tab';
     if (navigator.standalone) {
         displayMode = 'standalone-ios';
     }

@@ -1026,7 +1026,6 @@ const hasFollowedCollection = async (arrayName, name = '') => {
     const filteredElement = userLibrary[arrayName].filter(v => {
         return v?.title === name
     })
-    console.log(filteredElement);
     if (filteredElement.length > 0) {
         return true
     } else {
@@ -1114,7 +1113,6 @@ async function activeCategoryReducer(state = null, action) {
             let isSubject = await isSubjectInUserLibrary(categoryTerm)
             let isCat = await isCategoryInUserLibrary(categoryTerm) 
             let isColl = await isCollectionInUserLibrary(categoryTerm);
-            console.log(isSubject, isCat, isColl);
             let inUserLibrary = isSubject || isCat || isColl;
             return {
                 ...state,
@@ -1299,7 +1297,7 @@ self.onmessage = async function(event) {
         postLoading()
     }, LOAD_TIME);
     switch (type) {
-        case "init": {
+        case 'init': {
             console.log('init')
             state = {
                 userLibrary: {},
