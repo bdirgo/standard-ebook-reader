@@ -36,6 +36,12 @@ header {
     z-index: 150;
 }
 
+#openbtn {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 #dark-button {
     font-size: 20px;
     margin: 0 0 0 1.25em;

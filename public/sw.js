@@ -18,6 +18,7 @@ const resourcesToPrecache = [
     '/js/darkMode.js',
     '/js/constats.js',
     '/js/utility.js',
+    'https://unpkg.com/lit-html?module',
 ]
 
 self.addEventListener('install', event => {

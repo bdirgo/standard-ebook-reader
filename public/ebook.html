@@ -129,21 +129,20 @@
                 : '1.5'}`
         }
         function openStylesModal() {
-            document.getElementById("stylesModal").style.display = "initial";
-            // document.getElementById("openbtn").style.display = "none"
+            document.getElementById("stylesModal").style.display = "block";
         }
         function closeStylesModal() {
             document.getElementById("stylesModal").style.display = "none";
             refreshPage();
         }
         function openNav() {
-            document.getElementById("myTopBar").style.display = "initial";
+            document.getElementById("myTopBar").style.display = "block";
             document.getElementById("openbtn").style.display = "none"
         }
 
         function closeNav() {
             document.getElementById("myTopBar").style.display = "none";
-            document.getElementById("openbtn").style.display = "initial";
+            document.getElementById("openbtn").style.display = "block";
         } 
         function refreshPage() {
             window.location.reload(true)
