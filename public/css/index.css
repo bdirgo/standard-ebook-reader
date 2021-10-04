@@ -10,6 +10,16 @@ nav a, footer div a {
 	margin:0px 5px;
 }
 
+nav.parent-nav {
+    background: #fff;
+    bottom: 0;
+    height: 45px;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    position: fixed;
+}
+
 footer {
 	margin-top:40px;
 	text-align: center;
@@ -80,7 +90,7 @@ img, video{
 }
 
 nav {
-	margin-bottom: 8px;
+	padding-bottom: 8px;
 }
 
 button.button {
