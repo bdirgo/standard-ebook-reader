@@ -463,6 +463,7 @@ const Subject = (category) => {
     const {
       title,
       entries,
+      lastUpdated,
       inUserLibrary,
     } = category;
     const isCoverOnly = false;
@@ -478,7 +479,14 @@ const Subject = (category) => {
     <h2>${title}</h2>
     ${title !== 'Newest 30 Standard Ebooks' ? html`
       <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
-    ` : ''}
+    ` : html`
+      <button @click=${clickHandlerCreator({
+        shouldForceRefresh: true,
+        type: 'click-new',
+        categoryTerm: title,
+        tab: 'SUBJECT',
+      })}}>Refresh newest 30 books</button> Last updated: ${new Date(lastUpdated).toDateString()}
+    `}
     <ul class="category-list">
       ${entries.map(entry => {
         return SubjectEntry(entry, isCoverOnly)

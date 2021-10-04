@@ -458,11 +458,13 @@ async function fetchCollections() {
     const items = await fetchGithubSearchResults();
     let collections = [];
     await Promise.all(items.map(async (item) => {
-        // url: "https://api.github.com/repos/standardebooks/ford-madox-ford_no-more-parades"
+        // https://api.github.com/repos/standardebooks/ford-madox-ford_no-more-parades
         const entryId = createEntryId(item.repository.url);
-        // "https://standardebooks.org/ebooks/ford-madox-ford/no-more-parades"
+        // https://standardebooks.org/ebooks/ford-madox-ford/no-more-parades
         const entry = await bookEntires.getItem(entryId);
+        // https://github.com/standardebooks/ford-madox-ford_some-do-not/blob/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
         const opfUrl = RawGithubURL(item.html_url);
+        // https://raw.githubusercontent.com/standardebooks/ford-madox-ford_some-do-not/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
         const res = await fetch(opfUrl);
         const text = await res.text();
         // TODO: books out of a collection have an ease score
@@ -683,7 +685,7 @@ async function bookLibraryReducer(state = [], action) {
         case('new-tab'): {
             let entriesNew = await myDB.getItem('entriesNew')
             const isOld = lastUpdated(entriesNew, 1.5)
-            if (isOld) {
+            if (isOld || action?.shouldForceRefresh) {
                 console.log('checking for new realeases...')
                 entriesNew = await fetchNewReleases(new_url)
             } 
@@ -1103,9 +1105,15 @@ async function activeCategoryReducer(state = null, action) {
         }
         case('click-new'): {
             const newEntries = await myDB.getItem('entriesNew')
+            const isOld = lastUpdated(newEntries, 1.5)
+            if (isOld || action?.shouldForceRefresh) {
+                console.log('checking for new realeases...')
+                entriesNew = await fetchNewReleases(new_url)
+            } 
             entriesNew = {
                 title: newEntries.title,
-                entries: newEntries.entries
+                entries: newEntries.entries,
+                lastUpdated: newEntries.updated,
             }
             return entriesNew
         }
