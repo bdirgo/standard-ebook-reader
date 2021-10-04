@@ -633,10 +633,22 @@ const DetailView = (entry) => {
     type: 'click-add-to-library',
     entryId: entry.id,
   }, () => {window.location.href = readLink})
-  const clickRemove = clickHandlerCreator({
-    type: 'click-remove-from-library',
-    entryId: entry.id,
-  })
+  const clickRemove = () => {
+    // Remove from cookie
+    let currentBooks = JSON.parse(getCurrentlyReadingStorage())
+    const bookParam = ebookLink.href
+    if (currentBooks.length > 0) {
+        if (currentBooks.includes(bookParam)) {
+          const index = currentBooks.findIndex(v => v === bookParam);
+          currentBooks.splice(index, 1);
+        }
+        populateStorage('currentlyReading', JSON.stringify(currentBooks))
+    }
+    return clickHandlerCreator({
+      type: 'click-remove-from-library',
+      entryId: entry.id,
+    })
+  }
   const clickClose = clickHandlerCreator({
     type: 'click-close-details-modal',
   })
@@ -654,6 +666,10 @@ const DetailView = (entry) => {
         </a>
         <div>
           <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
+          <p @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
+            type: 'click-add-to-library',
+            entryId: entry.id,
+          })}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></p>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : 'Reading Level unknown, should populate after opening book.'}</span></p>
           <p>${convertContentToString(content)}</p>
@@ -744,7 +760,8 @@ const FollowedSubjects = (followedSubjects) => {
   const isSubject = true
   const clickHandler = clickHandlerCreator({
     type: 'browse-tab',
-    tab: 'BROWSE'
+    tab: 'BROWSE',
+    shouldForceRefresh: true,
   })
   return followedSubjects.length
   ? html`
@@ -875,7 +892,7 @@ function rerender(props) {
         ? toTitleCase(searchResults.query)
         : toTitleCase(activeTab ? activeTab : 'Ebook Reader')}</h1>
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
-        <nav>
+        <nav class="parent-nav">
           <div class="parent">
             ${LibraryNavigation()}
             ${SearchNavigation()}

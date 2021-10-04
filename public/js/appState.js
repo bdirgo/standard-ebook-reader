@@ -597,30 +597,39 @@ async function userLibraryReducer(state = [], action) {
         }
 
         case('click-add-to-library'): {
-            // Doesn't work , not sure why
-            let userLibrary = await myDB.getItem('userLibrary')
-            console.log(userLibrary)
-            if (!userLibrary) {
-                console.log('creating Library')
-                userLibrary = await createUserLibrary()
+            let userLibrary = await getUserLibrary();
+            const newEntry = await bookEntires.getItem(entryId);
+            const alreadyInLibrary = userLibrary.entries.filter(v => {
+                return v.id === entryId
+            })
+            if (alreadyInLibrary.length === 0) {
+                console.log('adding entry to library')
+                newEntry.inUserLibrary = true;
+                try {
+                    userLibrary.entries.push(newEntry) 
+                } catch (error) {
+                    userLibrary.entries = [newEntry]
+                }
+                await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: true});
+                await myDB.setItem('userLibrary', userLibrary)
             }
-            let newEntry = await bookEntires.getItem(entryId);
-            newEntry.inUserLibrary = true;
-            userLibrary.entries.push(newEntry)
-            await bookEntires.setItem(entryId, newEntry)
-            await myDB.setItem('userLibrary', userLibrary)
             return userLibrary;
         }
         case('click-remove-from-library'): {
-            // Doesn't work , not sure why
-            let userLibrary = await myDB.getItem('userLibrary')
-            const index = userLibrary.entries.findIndex(val => val.id === entryId)
-            userLibrary.entries.splice(index, 1)
-            console.log(userLibrary)
-            let oldEntry = await bookEntires.getItem(entryId);
-            oldEntry.inUserLibrary = false;
-            await bookEntires.setItem(entryId, oldEntry)
-            await myDB.setItem('userLibrary', userLibrary)
+            let userLibrary = await getUserLibrary();
+            const newEntry = await bookEntires.getItem(entryId);
+            const entryIndex = userLibrary.entries.findIndex(v => v.id === entryId);
+            if (entryIndex >= 0) {
+                userLibrary.entries.splice(entryIndex, 1)
+            }
+            const currIndex = userLibrary.currentlyReading.findIndex(v => v.id === entryId);
+            if (currIndex >= 0) {
+                userLibrary.currentlyReading.splice(currIndex, 1)
+            }
+            // Remove book out of library
+            newEntry.inUserLibrary = false;
+            await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: false});
+            await myDB.setItem('userLibrary', userLibrary);
             return userLibrary;
         }
 
@@ -649,7 +658,7 @@ async function bookLibraryReducer(state = [], action) {
         case('browse-tab'): {
             const entriesBySubject = await myDB.getItem('entriesBySubject')
             const isOld = lastUpdated(entriesBySubject)
-            if (isOld) {
+            if (isOld || action?.shouldForceRefresh) {
                 console.log('fetching new subjects')
                 bookLibrary = await fetchStandardBooks();
                 await createCategroiesFrom(bookLibrary)
@@ -699,7 +708,7 @@ async function bookLibraryReducer(state = [], action) {
         case('collection-tab'): {
             const entriesByCollection = await myDB.getItem('entriesByCollection')
             const isOld = lastUpdated(entriesByCollection)
-            if (isOld) {
+            if (isOld || action?.shouldForceRefresh) {
                 console.log('repopulating collections')
                 bookLibrary = await fetchCollections()
             } else {
@@ -792,7 +801,7 @@ async function followedSearchResultsReducer(state = [], action) {
         case('click-add-search-results-to-library'): {
             let userLibrary = await getUserLibrary();
             const alreadyInLibrary = userLibrary.followedSearchResults.filter(v => {
-                return v.title = query
+                return v.title === query
             })
             if (alreadyInLibrary.length === 0) {
                 console.log('adding search results to library')
@@ -833,6 +842,11 @@ async function followedSearchResultsReducer(state = [], action) {
             })
             userLibrary.followedSearchResults = newCollections
             await myDB.setItem('userLibrary', userLibrary)
+
+            // // // Remove results from library
+            // const results = await myDB.getItem('entriesByresults')
+            // const res = results.collections.filter(val => val.title === query)[0];
+            // res.inUserLibrary = false;
             return userLibrary.followedSearchResults
         }
         default:
@@ -863,7 +877,7 @@ async function followedCollectionsReducer(state = [], action) {
                 console.log('adding collection to library')
                 const entriesByCollection = await myDB.getItem('entriesByCollection')
                 const isOld = lastUpdated(entriesByCollection)
-                if (isOld) {
+                if (isOld || action?.shouldForceRefresh) {
                     console.log('repopulating collections')
                     bookLibrary = await fetchCollections()
                 } else {
@@ -902,6 +916,11 @@ async function followedCollectionsReducer(state = [], action) {
             console.log(newCollections);
             userLibrary.followedCollections = newCollections
             await myDB.setItem('userLibrary', userLibrary)
+
+            // // Remove subject out of library
+            const collection = await myDB.getItem('entriesByCollection')
+            const col = collection.collections.filter(val => val.title === collectionName)[0];
+            col.inUserLibrary = false;
             return userLibrary.followedCollections
         }
         default:
@@ -923,14 +942,14 @@ async function followedSubjectsReducer(state = [], action) {
         case('click-add-subject-to-library'): {
             let userLibrary = await getUserLibrary();
             const alreadyInLibrary = userLibrary.followedSubjects.filter(v => {
-                return v.title = subjectName
+                return v.title === subjectName
             })
             if (alreadyInLibrary.length === 0) {
                 console.log('adding subjects to library')
                 const entriesBySubject = await myDB.getItem('entriesBySubject')
                 const isOld = lastUpdated(entriesBySubject)
                 let subject;
-                if (isOld) {
+                if (isOld || action?.shouldForceRefresh) {
                     console.log('fetching new subjects')
                     subject = await fetchStandardBooks();
                     await createCategroiesFrom(subject)
@@ -969,6 +988,11 @@ async function followedSubjectsReducer(state = [], action) {
             })
             userLibrary.followedSubjects = newCollections
             await myDB.setItem('userLibrary', userLibrary)
+
+            // // Remove subject out of library
+            const subject = await myDB.getItem('entriesBySubject')
+            const sub = subject.subjects.filter(val => val.title === subjectName)[0];
+            sub.inUserLibrary = false;
             return userLibrary.followedSubjects
         }
         default:
@@ -989,7 +1013,7 @@ async function followedCategoriesReducer(state = [], action) {
         case('click-add-category-to-library'): {
             let userLibrary = await getUserLibrary();
             const alreadyInLibrary = userLibrary.followedCategories.filter(v => {
-                return v.title = categoryName
+                return v.title === categoryName
             })
             if (alreadyInLibrary.length === 0) {
                 console.log('adding subjects to library')
@@ -1015,7 +1039,11 @@ async function followedCategoriesReducer(state = [], action) {
                 return v.title !== categoryName
             })
             userLibrary.followedCategories = newCollections
-            await myDB.setItem('userLibrary', userLibrary)
+            await myDB.setItem('userLibrary', userLibrary);
+            // Remove category out of library
+            const cats = await myDB.getItem('entriesByCategory')
+            const category = cats.categories.filter(val => val.term === categoryName)[0];
+            category.inUserLibrary = false;
             return userLibrary.followedCategories
         }
         default:
@@ -1136,7 +1164,18 @@ async function activeEntryReducer(state = null, action) {
         entryId,
     } = action
     switch (type) {
-        case('click-remove-from-library'): 
+        case('click-add-to-library'): {
+            const newEntry = await bookEntires.getItem(entryId);
+            newEntry.inUserLibrary = true;
+            await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: true});
+            return newEntry;
+        }
+        case('click-remove-from-library'): {
+            const newEntry = await bookEntires.getItem(entryId);
+            newEntry.inUserLibrary = false;
+            await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: false});
+            return newEntry;
+        }
         case('click-title'): {
             const entry = await bookEntires.getItem(entryId);
             return entry;
@@ -1243,6 +1282,8 @@ function showDetailModalReducer(state = false, action) {
         case('click-close-details-modal'): {
             return false
         }
+        case('click-add-to-library'):
+        case('click-remove-from-library'):
         case('click-title'):{
             return true
         }
