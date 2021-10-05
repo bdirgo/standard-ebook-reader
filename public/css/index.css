@@ -13,7 +13,6 @@ nav a, footer div a {
 nav.parent-nav {
     background: #fff;
     bottom: 0;
-    height: 45px;
     left: 0;
     right: 0;
     z-index: 900;
@@ -70,6 +69,15 @@ body {
 	color: white;
 	background-color: rgb(32, 37, 48);
 }
+.dark nav.parent-nav {
+	background-color: rgb(32,37,48);
+	color: whitesmoke;
+}
+
+.dark button.button {
+	background-color: rgb(77, 98, 105);
+	color: whitesmoke;
+}
 
 img, video{
 	max-width: 600px;
@@ -90,7 +98,7 @@ img, video{
 }
 
 nav {
-	padding-bottom: 8px;
+	padding: 0 16px 20px;
 }
 
 button.button {
@@ -123,10 +131,12 @@ a.nav-link {
 }
 
 .box.button {
-	flex: 1 1 120px; 
-	height: 44px;
-	margin: 2px 5px 3px 0;
+	flex: 1 1; 
+	height: 50px;
 	font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .results {

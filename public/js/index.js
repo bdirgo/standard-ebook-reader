@@ -182,7 +182,7 @@ const SearchBar = (queryResults) => {
         placeholder="Search for a book..."
         .value=${query}
         @change=${e => {query = e.target.value;}}
-        size="35">
+        size="30">
       <button>Search</button>
     </div>
   </form>
@@ -200,14 +200,14 @@ const LibraryNavigation = () => {
           type: 'library-tab',
           tab: 'LIBRARY'
         })
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:20px;'>&#127968;</span>&nbsp;Home</button>`
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:24px;'>&#8962;</span>&nbsp;Home</button>`
 }
 const NewNavigation = () => {
   const clickHandler = clickHandlerCreator({
           type: 'new-tab',
           tab: 'NEW'
         })
-        return html`<button @click=${clickHandler} class="box button">New Books</button>`
+        return html`<button @click=${clickHandler} class="box button">&nbsp;<span style='font-size:18px;'>&#9734;</span>&nbsp;New Books</button>`
       }
 const CollectionsNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -228,7 +228,7 @@ const SearchNavigation = () => {
     type: 'search-tab',
     tab: 'SEARCH'
   })
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:20px;'>&#128269;</span>&nbsp;Search</button>`
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:28px;'>&#8981;</span>&nbsp;Search</button>`
 }
 const HowTo = () => html`
   <ol>
@@ -841,10 +841,10 @@ function rerender(props) {
           return html`
             ${Library(userLibrary)}
             ${FollowedAuthors(followedSearchResults)}
-            ${New(bookLibrary)}
             ${FollowedCollections(followedCollections)}
             ${FollowedSubjects(followedSubjects)}
             ${FollowedCategories(followedCategories)}
+            ${New(bookLibrary)}
           `
         }
         case('BROWSE'): {
@@ -879,15 +879,12 @@ function rerender(props) {
           return html`Default View. Not yet implemented.`;
       }
     }
-    const toggleNav = clickHandlerCreator({
-      type: `${showSideBarMenu === 'show' ? 'click-open-main-menu': 'click-close-main-menu'}`
-    })
     const helpHandler = clickHandlerCreator({
       type:'help-tab',
       tab: 'HELP'
     })
     return html`
-      <h1 class="pointer" @click=${toggleNav}>
+      <h1 class="pointer">
       ${activeTab === 'AUTHOR'
         ? toTitleCase(searchResults.query)
         : toTitleCase(activeTab ? activeTab : 'Ebook Reader')}</h1>
@@ -895,6 +892,7 @@ function rerender(props) {
         <nav class="parent-nav">
           <div class="parent">
             ${LibraryNavigation()}
+            ${NewNavigation()}
             ${SearchNavigation()}
           </div>
         </nav>
