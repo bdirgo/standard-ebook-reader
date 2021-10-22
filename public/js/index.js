@@ -204,8 +204,11 @@ const LibraryNavigation = () => {
 }
 const NewNavigation = () => {
   const clickHandler = clickHandlerCreator({
-          type: 'new-tab',
-          tab: 'NEW'
+          type: 'click-new',
+          // TODO: GET RID OF THIS MAGIC STRING
+          categoryTerm: "Newest 30 Standard Ebooks",
+          // END TODO: GET RID OF THIS MAGIC STRING
+          tab: 'SUBJECT',
         })
         return html`<button @click=${clickHandler} class="box button">&nbsp;<span style='font-size:18px;'>&#9734;</span>&nbsp;New Books</button>`
       }
@@ -244,7 +247,7 @@ const HowToFollow = () => html`<h2>How to Follow Categories</h2>
   <li>Click "Follow" to follow, and "Unfollow" to unfollow</li>
   </ol>`
 
-const EmptyLibrary = () => html`<p><b>Your Library is empty.</b></p>${HowTo()}<p>Here are the latest books added to the library, to get you started.</p>`
+const EmptyLibrary = () => html`<p><b>Your Library is empty.</b></p>${HowTo()}`
 const EmptySearch = () => html`<p>Results are empty.</p>`
 
 const Help = () => html`
@@ -331,28 +334,28 @@ const Library = (userLibrary) => {
 }
 
 function collectionID(entry, subjectTitle) {
-  return entry.collection?.filter(val => val.title === subjectTitle)[0]?.position
+  return entry?.collection?.filter(val => val.title === subjectTitle)[0]?.position
 }
 
 const SubjectEntry = (entry, isCoverOnly = true, subjectTitle = '') => {
   const clickHandler = clickHandlerCreator({
     type: 'click-title',
-    entryId: entry.id,
+    entryId: entry?.id,
   })
   const collectionNum = collectionID(entry, subjectTitle)
   const standardURL = 'https://standardebooks.org/'
-  return html`
-  <li class="subject-list-image" @click=${clickHandler}>
-    <div class="collectionId">${collectionNum}</div>
-    <img class="book-cover" loading=lazy id=${entry.id} width=350 height=525 src=${standardURL + entry.thumbnail?.href} alt=${entry.title}/>
-    ${isCoverOnly
-      ? ''
-      : html`
-      <div class="card-body">
-        <b id=${entry.id}>${entry.title}</b>
-        <p id=${entry.id}>${entry.summary}</p>
-      </div>`}
-  </li>
+  return entry === null ? html``: html`
+    <li class="subject-list-image" @click=${clickHandler}>
+      <div class="collectionId">${collectionNum}</div>
+      <img class="book-cover" loading=lazy id=${entry?.id} width=350 height=525 src=${standardURL + entry?.thumbnail?.href} alt=${entry?.title}/>
+      ${isCoverOnly
+        ? ''
+        : html`
+        <div class="card-body">
+        <b id=${entry?.id}>${entry?.title}</b>
+        <p id=${entry?.id}>${entry?.summary}</p>
+        </div>`}
+    </li>
   `
 }
 
