@@ -1,4 +1,4 @@
-const cacheName = 'cache-v1.4.3a';
+const cacheName = 'cache-v1.4.4';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,
@@ -45,12 +45,13 @@ self.addEventListener('activate', event => {
     );
 })
 self.addEventListener('fetch', event => {
-    console.log('fetch intercepted for:', event.request.url)
+    const url = new URL(event.request.url)
+    console.log('fetch intercepted for:', url)
     event.respondWith(caches.match(event.request)
         .then(cachedResponse => {
             return cachedResponse || fetch(event.request).then(async function (response) {
                 const clonedRes = response.clone();
-                console.log('caching for next time', event.request.url)
+                console.log('caching for next time', url)
                 await caches.open(cacheName)
                 .then(cache => {
                     cache.put(event.request, clonedRes);

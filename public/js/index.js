@@ -328,7 +328,6 @@ const Library = (userLibrary) => {
   const books = Array.from(new Set(dupBooks.map(a => a?.id)))
         .map(id => dupBooks.find(a => a.id === id))
   return html`
-    <h2>${title}</h2>
     ${LibraryList(books)}
   `
 }
@@ -620,6 +619,7 @@ const DetailView = (entry) => {
     content,
     categories,
     inUserLibrary,
+    wasCopySuccessfull = false,
     collection = [],
   } = entry
   const readLink = `/ebook.html?book=${ebookLink.href}`
@@ -654,18 +654,35 @@ const DetailView = (entry) => {
       document.querySelector('.close').click()
     }
   }, {once: true})
+  const shareURL = `https://standard-ebook-reader.web.app${readLink}`
   const shareData = {
     title,
     text: summary,
-    url: `${window.location.origin}${readLink}`
+    url: shareURL,
   }
-
+  async function copyShareUrl() {
+    try {
+      await navigator.clipboard.writeText(shareURL);
+      console.log('Page URL copied to clipboard');
+      const payload = {
+        action: {
+          type: 'click-copied-share-url',
+          entryId: entry.id,
+          currentlyReading:getCurrentlyReadingStorage(),
+        },
+      }
+      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  }
   const shareHandler = async () => {
     try {
       await navigator.share(shareData)
       log('shared successfully')
     } catch(err) {
       log('Error: ' + err)
+      await copyShareUrl();
     }
   }
   return html`
@@ -677,7 +694,7 @@ const DetailView = (entry) => {
         </a>
         <div>
           <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
-          <button @click=${shareHandler} class="share">&#128279;</button>
+          <button @click=${shareHandler} class="share">${wasCopySuccessfull ? html`&#9989;` : html`&#128279;`}</button>
           <button @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
             entryId: entry.id,

@@ -1183,6 +1183,11 @@ async function activeEntryReducer(state = null, action) {
             const entry = await bookEntires.getItem(entryId);
             return entry;
         }
+        case('click-copied-share-url'): {
+            const entry = await bookEntires.getItem(entryId);
+            entry.wasCopySuccessfull = true;
+            return entry;
+        }
         default:
             return state
     }
@@ -1285,6 +1290,7 @@ function showDetailModalReducer(state = false, action) {
         case('click-close-details-modal'): {
             return false
         }
+        case('click-copied-share-url'): 
         case('click-add-to-library'):
         case('click-remove-from-library'):
         case('click-title'):{

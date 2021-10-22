@@ -1,13 +1,13 @@
 
-  const bookUrl = `${bookPath}.epub`
-  const uploadedbookPath = params.get('uploadedBook')
+  const bookUrl = `${bookParam}.epub`
+  const uploadedBookParam = params.get('uploadedBook')
   const windowHeight = window.innerHeight
   const windowWidth = window.innerWidth
   const targetHeight = windowHeight * 0.93
   const targetWidth = windowWidth * 0.94
   function bookTag(strs, exp) {
-    if (bookPath === null) {
-      return `${strs[0]}${uploadedbookPath}${strs[1]}`
+    if (bookParam === null) {
+      return `${strs[0]}${uploadedBookParam}${strs[1]}`
     } else {
       return `${strs[0]}${exp}${strs[1]}`
     }
@@ -35,18 +35,18 @@ console.log(whichStyleSheet())
       currentBooks = JSON.parse(getStorage(CURRENTLYREADING))
     }
     if (currentBooks.length > 0) {
-      if (currentBooks.includes(bookPath)) {
+      if (currentBooks.includes(bookParam)) {
         currentBooks.forEach(function(bookUrl,i){
-          if(bookUrl === bookPath){
+          if(bookUrl === bookParam){
             currentBooks.splice(i, 1);
             currentBooks.unshift(bookUrl);
           }
         });
       } else {
-        currentBooks = [bookPath].concat(currentBooks)
+        currentBooks = [bookParam].concat(currentBooks)
       }
     } else {
-      currentBooks = [bookPath]
+      currentBooks = [bookParam]
     }
     console.log(currentBooks)
     populateStorage(CURRENTLYREADING, JSON.stringify(currentBooks))

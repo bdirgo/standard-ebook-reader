@@ -167,12 +167,12 @@
         closeNav()
         const params = (new URL(document.location)).searchParams;
         // const bookPath = createBookPathFrom(params.get('book'))
-        const bookPath = params.get('book');
+        const bookParam = params.get('book');
         const standardUrl = `https://standardebooks.org`
         const loadingCover = document.getElementById('loading-cover')
-        if (bookPath !== null) {
-            const coverThumbnailUrl = new URL(standardUrl + bookPath + '/../' + 'cover-thumbnail.jpg')
-            const coverUrl = new URL(standardUrl + bookPath + '/../' + 'cover.jpg')
+        if (bookParam !== null) {
+            const coverThumbnailUrl = new URL(standardUrl + bookParam + '/../' + 'cover-thumbnail.jpg')
+            const coverUrl = new URL(standardUrl + bookParam + '/../' + 'cover.jpg')
             console.log(coverThumbnailUrl.href)
             const img = document.createElement('img')
             img.src = coverThumbnailUrl.href
@@ -204,7 +204,7 @@
                 title = document.createElement('title');
                 document.getElementsByTagName('head')[0].appendChild(title);
             }
-            var urlTitle = toTitleCase(bookPath.slice(bookPath.indexOf("_")+1).replaceAll('-',' '))
+            var urlTitle = toTitleCase(bookParam.slice(bookParam.indexOf("_")+1).replaceAll('-',' '))
             title.innerText = urlTitle;
         }
     </script>
