@@ -140,7 +140,7 @@ w.postMessage({
     })
 });
 
-function toTitleCase(str) {
+function toTitleCase(str = '') {
     return str.replace(
         /\w\S*/g,
         function(txt) {
@@ -481,14 +481,8 @@ const Subject = (category) => {
     return html`
     <h2>${title}</h2>
     ${title !== 'Newest 30 Standard Ebooks' ? html`
-      <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
-    ` : html`
-      <button @click=${clickHandlerCreator({
-        shouldForceRefresh: true,
-        type: 'click-new',
-        categoryTerm: title,
-        tab: 'SUBJECT',
-      })}}>Refresh newest 30 books</button> Last updated: ${new Date(lastUpdated).toDateString()}
+      <button @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+    ` : html`Last updated: ${new Date(lastUpdated).toDateString()}
     `}
     <ul class="category-list">
       ${entries.map(entry => {
@@ -513,7 +507,7 @@ const Category = (category) => {
   })
   return html`
   <h2>${title}</h2>
-  <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
+  <button @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <ul class="category-list">
     ${entries.map(entry => {
       return SubjectEntry(entry, isCoverOnly)
@@ -538,7 +532,7 @@ const CollectionCategory = (category) => {
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
-  <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
+  <button @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
@@ -575,7 +569,7 @@ const AuthorList = (queryResults) => {
   })
   return html`
   <h2>${title}</h2>
-  <p @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></p>
+  <button role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <ul class="list-style-none">
     ${results.length === 0
       ? html`${EmptySearch()}`
@@ -660,6 +654,20 @@ const DetailView = (entry) => {
       document.querySelector('.close').click()
     }
   }, {once: true})
+  const shareData = {
+    title,
+    text: summary,
+    url: `${window.location.origin}${readLink}`
+  }
+
+  const shareHandler = async () => {
+    try {
+      await navigator.share(shareData)
+      log('shared successfully')
+    } catch(err) {
+      log('Error: ' + err)
+    }
+  }
   return html`
     <div class="modal">
       <div class="modal-content">
@@ -669,10 +677,11 @@ const DetailView = (entry) => {
         </a>
         <div>
           <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
-          <p @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
+          <button @click=${shareHandler} class="share">&#128279;</button>
+          <button @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
             entryId: entry.id,
-          })}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></p>
+          })}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></button>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : ''}</span></p>
           <p>${convertContentToString(content)}</p>
@@ -811,6 +820,7 @@ const LoadingMessages = (index = 0) => {
     html`Generating witty dialog...`,
     html`Swapping time and space...`,
     html`Tokenizing real life...`,
+    html`Downloading new Standard Books...`,
     html`The servers are having a slow day, today.`,
   ]  
   return msgs[index]

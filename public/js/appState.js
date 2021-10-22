@@ -462,6 +462,9 @@ async function fetchCollections() {
         const entryId = createEntryId(item.repository.url);
         // https://standardebooks.org/ebooks/ford-madox-ford/no-more-parades
         const entry = await bookEntires.getItem(entryId);
+        log(item)
+        log(entryId)
+        log(entry)
         // https://github.com/standardebooks/ford-madox-ford_some-do-not/blob/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
         const opfUrl = RawGithubURL(item.html_url);
         // https://raw.githubusercontent.com/standardebooks/ford-madox-ford_some-do-not/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
@@ -482,11 +485,11 @@ async function fetchCollections() {
                 foundIndex = collections.findIndex(val => val?.term === collection.term)
             }
             const foundCollection = collections[foundIndex]
-            const entryInCollection = foundCollection.entries.findIndex(val => val.id === entryId)
+            const entryInCollection = foundCollection.entries.findIndex(val => val?.id === entryId)
             if (entryInCollection === -1) {
                 foundCollection.addEntry(entry)
             }
-            const arr = entry.collection || []
+            const arr = entry?.collection || []
             arr.push(collection)
             entry.collection = arr
         })
@@ -693,11 +696,11 @@ async function bookLibraryReducer(state = [], action) {
         case('library-tab'): 
         case('new-tab'): {
             let entriesNew = await myDB.getItem('entriesNew')
-            const isOld = lastUpdated(entriesNew, 1.5)
-            if (isOld || action?.shouldForceRefresh) {
+            // const isOld = lastUpdated(entriesNew, 1.5)
+            // if (isOld || action?.shouldForceRefresh) {
                 console.log('checking for new realeases...')
                 entriesNew = await fetchNewReleases(new_url)
-            } 
+            // } 
             entriesNew = {
                 title: entriesNew.title,
                 entries: entriesNew.entries.slice(0, previewLength),
@@ -1133,11 +1136,11 @@ async function activeCategoryReducer(state = null, action) {
         }
         case('click-new'): {
             const newEntries = await myDB.getItem('entriesNew')
-            const isOld = lastUpdated(newEntries, 1.5)
-            if (isOld || action?.shouldForceRefresh) {
+            // const isOld = lastUpdated(newEntries, 1.5)
+            // if (isOld || action?.shouldForceRefresh) {
                 console.log('checking for new realeases...')
                 entriesNew = await fetchNewReleases(new_url)
-            } 
+            // } 
             entriesNew = {
                 title: newEntries.title,
                 entries: newEntries.entries,

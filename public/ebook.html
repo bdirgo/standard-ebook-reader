@@ -5,7 +5,7 @@
     <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="theme-color" content="#1271e6">
+    <meta name="theme-color" content="#202530">
     <meta property="og:title" content="Standard Ebook Reader" />
     <meta property="og:image" content="https://standardebooks.org/images/logo.png" />
     <meta name="Description" content="Read books from Standard Ebooks">
@@ -147,14 +147,32 @@
         function refreshPage() {
             window.location.reload(true)
         }
+        const createBookPathFrom = (bookParam = '') => {
+            // Input
+            // ?book=w-somerset-maugham_on-a-chinese-screen
+            // Output
+            // /ebooks/w-somerset-maugham/on-a-chinese-screen/downloads/w-somerset-maugham_on-a-chinese-screen
+            // Uuuuuuugggggghhhhhhhhh
+            // ?book=/ebooks/karl-marx_friedrich-engels/the-communist-manifesto/samuel-moore/downloads/karl-marx_friedrich-engels_the-communist-manifesto_samuel-moore
+            // Author1_Author2_Title_Translator1_Translator2 => Author1_AuthorN/Title/Translator1_TranslatorN
+            // /ebooks/leo-tolstoy/short-fiction/louise-maude_aylmer-maude_nathan-haskell-dole_constance-garnett_j-d-duff_leo-weiner_r-s-townsend_hagberg-wright_benjamin-tucker_everymans-library_vladimir-chertkov_isabella-fyvie-mayo
+            // href: "/ebooks/leo-tolstoy/short-fiction/louise-maude_aylmer-maude_nathan-haskell-dole_constance-garnett_j-d-duff_leo-weiner_r-s-townsend_hagberg-wright_benjamin-tucker_everymans-library_vladimir-chertkov_isabella-fyvie-mayo/downloads/leo-tolstoy_short-fiction_louise-maude_aylmer-maude_nathan-haskell-dole_constance-garnett_j-d-duff_leo-weiner_r-s-townsend_hagberg-wright_benjamin-tucker_everymans-library_vladimir-chertkov_isabella-fyvie-mayo"
+
+
+            const splitParam = bookParam.split('_');
+            splitParam.reverse();
+            splitParam.join()
+            return `/ebooks/${splitParam[0]}/${splitParam[1]}/downloads/${bookParam}`
+        }
         closeNav()
         const params = (new URL(document.location)).searchParams;
-        const bookParam = params.get('book')
+        // const bookPath = createBookPathFrom(params.get('book'))
+        const bookPath = params.get('book');
         const standardUrl = `https://standardebooks.org`
         const loadingCover = document.getElementById('loading-cover')
-        if (bookParam !== null) {
-            const coverThumbnailUrl = new URL(standardUrl + bookParam + '/../' + 'cover-thumbnail.jpg')
-            const coverUrl = new URL(standardUrl + bookParam + '/../' + 'cover.jpg')
+        if (bookPath !== null) {
+            const coverThumbnailUrl = new URL(standardUrl + bookPath + '/../' + 'cover-thumbnail.jpg')
+            const coverUrl = new URL(standardUrl + bookPath + '/../' + 'cover.jpg')
             console.log(coverThumbnailUrl.href)
             const img = document.createElement('img')
             img.src = coverThumbnailUrl.href
@@ -186,7 +204,7 @@
                 title = document.createElement('title');
                 document.getElementsByTagName('head')[0].appendChild(title);
             }
-            var urlTitle = toTitleCase(bookParam.slice(bookParam.indexOf("_")+1).replaceAll('-',' '))
+            var urlTitle = toTitleCase(bookPath.slice(bookPath.indexOf("_")+1).replaceAll('-',' '))
             title.innerText = urlTitle;
         }
     </script>
