@@ -671,7 +671,7 @@ const DetailView = (entry) => {
             entryId: entry.id,
           })}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></p>
           ${ViewAuthorArray(authorArray)}
-          <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : 'Reading Level unknown, should populate after opening book.'}</span></p>
+          <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : ''}</span></p>
           <p>${convertContentToString(content)}</p>
           ${collection.length ? (
             html`<b>Collections</b>
