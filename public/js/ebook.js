@@ -1,4 +1,4 @@
-
+(async function() {
   const bookUrl = `${bookParam}.epub`
   const uploadedBookParam = params.get('uploadedBook')
   const windowHeight = window.innerHeight
@@ -61,7 +61,9 @@ console.log(whichStyleSheet())
   }
   console.log(standardUrl)
   console.log(bookUrl)
-  var book = ePub(standardUrl + bookUrl);
+  const response = await fetch(`https://standardebooks.org${bookUrl}`);
+  const buffer = await response.arrayBuffer();
+  var book = ePub(buffer);
   console.log('book')
   console.log(book)
   var rendition = book.renderTo("viewer", {
@@ -180,4 +182,4 @@ console.log(whichStyleSheet())
   }
   rendition.on("keyup", keyListener);
   document.addEventListener("keyup", keyListener, false);
-
+})()

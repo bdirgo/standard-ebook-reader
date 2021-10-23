@@ -117,6 +117,7 @@ button.follow {
 
 /* The Close Button */
 .close {
+    background-color: #FFF;
     color: #aaaaaa;
     font-size: 28px;
     font-weight: bold;

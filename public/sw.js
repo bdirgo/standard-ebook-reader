@@ -1,4 +1,4 @@
-const cacheName = 'cache-v1.4.7z';
+const cacheName = 'cache-v1.4.7d';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,
@@ -24,12 +24,10 @@ const resourcesToPrecache = [
 
 self.addEventListener('install', event => {
     console.log('Install Event')
-    event.waitUntil(
-        caches.open(cacheName)
-            .then(cache => {
-                return cache.addAll(resourcesToPrecache);
-            })
-    )
+    event.waitUntil(async function() {
+        const cache = await caches.open(cacheName)
+        await cache.addAll(resourcesToPrecache);
+    })
 })
 self.addEventListener('activate', event => {
     console.log('Activate Event')

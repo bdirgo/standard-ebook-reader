@@ -685,11 +685,11 @@ const DetailView = (entry) => {
       await copyShareUrl();
     }
   }
-  const cacheBook = () => {
-      var oReq = new XMLHttpRequest();
-      oReq.open("GET", `${ebookLink.href}.epub`, true);
-      oReq.responseType = "blob";
-      oReq.send(null);
+  const cacheBook = async () => {
+      const cache = await caches.open('offline-books');
+      const url = `https://standardebooks.org${ebookLink.href}.epub`;
+      const response = await fetch(url);
+      await cache.put(url, response);
   }
   return html`
     <div class="modal">
