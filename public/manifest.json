@@ -1,12 +1,13 @@
 {
     "name": "Standard Ebook reader",
     "short_name": "Ebook Reader",
+    "description": "Read, download, and browse books from the Standard Ebook library",
     "start_url": "/",
     "scope":"/",
     "display":"standalone",
     "orientation":"portrait",
-    "theme_color":"#000",
-    "background_color":"#000",
+    "theme_color":"#202530",
+    "background_color":"#FFF",
     "icons":[
         {
             "src":"/icon.png",

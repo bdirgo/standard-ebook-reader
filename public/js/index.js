@@ -480,7 +480,7 @@ const Subject = (category) => {
     return html`
     <h2>${title}</h2>
     ${title !== 'Newest 30 Standard Ebooks' ? html`
-      <button @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+      <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
     ` : html`Last updated: ${new Date(lastUpdated).toDateString()}
     `}
     <ul class="category-list">
@@ -506,7 +506,7 @@ const Category = (category) => {
   })
   return html`
   <h2>${title}</h2>
-  <button @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <ul class="category-list">
     ${entries.map(entry => {
       return SubjectEntry(entry, isCoverOnly)
@@ -531,7 +531,7 @@ const CollectionCategory = (category) => {
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h2>${title}</h2>
-  <button @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
@@ -568,7 +568,7 @@ const AuthorList = (queryResults) => {
   })
   return html`
   <h2>${title}</h2>
-  <button role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+  <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <ul class="list-style-none">
     ${results.length === 0
       ? html`${EmptySearch()}`
@@ -656,7 +656,7 @@ const DetailView = (entry) => {
   }, {once: true})
   const shareURL = `https://standard-ebook-reader.web.app${readLink}`
   const shareData = {
-    title,
+    title: title,
     text: summary,
     url: shareURL,
   }
@@ -686,37 +686,22 @@ const DetailView = (entry) => {
     }
   }
   const cacheBook = () => {
-    // caches.open('offline-book').then(function(cache) {
       var oReq = new XMLHttpRequest();
       oReq.open("GET", `${ebookLink.href}.epub`, true);
       oReq.responseType = "blob";
-      // oReq.onload = function () {
-      //   oReq.response
-      //   var data = oReq.response; 
-      //   cache.addAll(data);
-      // };
       oReq.send(null);
-
-      // fetch(`${ebookLink.href}.epub`).then(function(response) {
-      //   // /get-article-urls returns a JSON-encoded array of
-      //   // resource URLs that a given article depends on
-      //   return response.blob();
-      // }).then(function(data) {
-      //   cache.addAll(data);
-      // });
-    // });
   }
   return html`
     <div class="modal">
       <div class="modal-content">
-        <span @click=${clickClose} class="close">X</span>
+        <button @click=${clickClose} class="close">X</button>
         <a @click=${clickAdd}>
           <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
         </a>
         <div>
           <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
           <button @click=${shareHandler} class="share ${wasCopySuccessfull ? 'copied':''}">${wasCopySuccessfull ? html`&#9989;` : html`&#128279;`}</button>
-          <button @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
+          <button class="follow" @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
             entryId: entry.id,
           }, cacheBook)}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></button>

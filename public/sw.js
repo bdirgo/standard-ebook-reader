@@ -1,4 +1,4 @@
-const cacheName = 'cache-v1.4.6b';
+const cacheName = 'cache-v1.4.7z';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,
@@ -18,6 +18,7 @@ const resourcesToPrecache = [
     '/js/darkMode.js',
     '/js/constats.js',
     '/js/utility.js',
+    '/splashscreens/',
     'https://unpkg.com/lit-html?module',
 ]
 

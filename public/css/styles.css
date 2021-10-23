@@ -111,6 +111,10 @@
 	background-color: rgb(32, 37, 48);
 }
 
+button.follow {
+    font-size: large;
+}
+
 /* The Close Button */
 .close {
     color: #aaaaaa;
@@ -123,6 +127,10 @@
     right: 18px;
 }
 
+.dark .close {
+    background-color: #202530;
+}
+
 .close:hover,
 .close:focus {
     color: #000;
@@ -131,7 +139,7 @@
 }
 
 
-/* The Close Button */
+/* The Share Button */
 .share {
     color: #aaaaaa;
     background-color: #FFF;
@@ -143,6 +151,9 @@
     position: absolute;
     right: 18px;
     top: 60px;
+}
+.dark .share {
+    background-color: #202530;
 }
 
 .share:hover,
