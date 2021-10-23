@@ -719,7 +719,7 @@ const DetailView = (entry) => {
           <button @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
             entryId: entry.id,
-          }, cacheBook())}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></button>
+          }, cacheBook)}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></button>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : ''}</span></p>
           <p>${convertContentToString(content)}</p>
