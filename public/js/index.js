@@ -685,6 +685,27 @@ const DetailView = (entry) => {
       await copyShareUrl();
     }
   }
+  const cacheBook = () => {
+    // caches.open('offline-book').then(function(cache) {
+      var oReq = new XMLHttpRequest();
+      oReq.open("GET", `${ebookLink.href}.epub`, true);
+      oReq.responseType = "blob";
+      // oReq.onload = function () {
+      //   oReq.response
+      //   var data = oReq.response; 
+      //   cache.addAll(data);
+      // };
+      oReq.send(null);
+
+      // fetch(`${ebookLink.href}.epub`).then(function(response) {
+      //   // /get-article-urls returns a JSON-encoded array of
+      //   // resource URLs that a given article depends on
+      //   return response.blob();
+      // }).then(function(data) {
+      //   cache.addAll(data);
+      // });
+    // });
+  }
   return html`
     <div class="modal">
       <div class="modal-content">
@@ -694,11 +715,11 @@ const DetailView = (entry) => {
         </a>
         <div>
           <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
-          <button @click=${shareHandler} class="share">${wasCopySuccessfull ? html`&#9989;` : html`&#128279;`}</button>
+          <button @click=${shareHandler} class="share ${wasCopySuccessfull ? 'copied':''}">${wasCopySuccessfull ? html`&#9989;` : html`&#128279;`}</button>
           <button @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
             entryId: entry.id,
-          })}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></button>
+          }, cacheBook())}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></button>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : ''}</span></p>
           <p>${convertContentToString(content)}</p>

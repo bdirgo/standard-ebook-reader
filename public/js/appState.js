@@ -1056,10 +1056,10 @@ async function followedCategoriesReducer(state = [], action) {
 
 const hasFollowedCollection = async (arrayName, name = '') => {
     let userLibrary = await getUserLibrary();
-    const filteredElement = userLibrary[arrayName].filter(v => {
+    const filteredElement = userLibrary?.[arrayName]?.filter(v => {
         return v?.title === name
     })
-    if (filteredElement.length > 0) {
+    if (filteredElement && filteredElement?.length > 0) {
         return true
     } else {
         return false
