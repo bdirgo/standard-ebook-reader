@@ -673,7 +673,8 @@ async function bookLibraryReducer(state = [], action) {
                 .map(val => {
                     return {
                         title: val.title,
-                        entries: val.entries.slice(0, previewLength),
+                        // entries: val.entries.slice(0, previewLength),
+                        entries: val.entries,
                         length: val.entries.length,
                     }
                 })
@@ -703,7 +704,8 @@ async function bookLibraryReducer(state = [], action) {
             // } 
             entriesNew = {
                 title: entriesNew.title,
-                entries: entriesNew.entries.slice(0, previewLength),
+                // entries: entriesNew.entries.slice(0, previewLength),
+                entries: entriesNew.entries,
                 length: 30,
             }
             return entriesNew
@@ -722,7 +724,8 @@ async function bookLibraryReducer(state = [], action) {
                 .map(val => {
                     return {
                         title: val.title,
-                        entries: val.entries.slice(0, previewLength),
+                        // entries: val.entries.slice(0, previewLength),
+                        entries: val.entries,
                         length: val.entries.length,
                     }
                 })
@@ -894,7 +897,8 @@ async function followedCollectionsReducer(state = [], action) {
                     .map(val => {
                         return {
                             title: val.title,
-                            entries: val.entries.slice(0, previewLength),
+                            // entries: val.entries.slice(0, previewLength),
+                            entries: val.entries,
                             length: val.entries.length,
                             inUserLibrary: true,
                         }
@@ -967,7 +971,8 @@ async function followedSubjectsReducer(state = [], action) {
                     .map(val => {
                         return {
                             title: val.title,
-                            entries: val.entries.slice(0, previewLength),
+                            // entries: val.entries.slice(0, previewLength),
+                            entries: val.entries,
                             length: val.entries.length,
                             inUserLibrary: true,
                         }
@@ -1279,7 +1284,6 @@ async function initApp(state, action) {
         currentlyReading,
     })
     // populate database if it doesnt exist ?? Maybe only whent he user clicks browse?? if they first click search then, fallback on SE search and not myDB
-    
 }
 
 function showDetailModalReducer(state = false, action) {

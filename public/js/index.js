@@ -190,7 +190,7 @@ const SearchBar = (queryResults) => {
   ${results.length === 0
     ? html`${EmptySearch()}`
     : html`<ul class="list-style-none library-list no-padding">${results.map(item => {
-              return html`${ItemView(item.item, false)}`
+              return html`${ItemView(item.item)}`
               })
             }</ul>`
   }`
@@ -273,22 +273,29 @@ ${HowToFollow()}
 `
 
 
-const ItemView = (entry, isCoverOnly = true) => {
+const ItemView = (entry, isLibraryListView = false) => {
   const {
     id,
     thumbnail,
     title,
+    ebookLink,
   } = entry;
-  const clickHandler = clickHandlerCreator({
+  const readLink = `/ebook.html?book=${ebookLink.href}`
+  const clickOpenBook = clickHandlerCreator({}, () => {window.location.href = readLink})
+  const clickOpenDetailView = clickHandlerCreator({
     type: 'click-title',
     entryId: entry.id,
   });
   const standardURL = 'https://standardebooks.org/'
   return html`
-  <li class="library-list-image" @click=${clickHandler}>
-    <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
-    ${isCoverOnly
-      ? ''
+  <li class="library-list-image">
+    <img @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
+    ${isLibraryListView
+      ? html`
+      <div class="card-body">
+        <a class="information-icon" @click=${clickOpenDetailView}>&#9432;</a>
+      </div>
+      `
       : html`
       <div class="card-body">
         <b id=${entry.id}>${entry.title}</b>
@@ -299,7 +306,7 @@ const LibraryList = (items = []) => {
   return html`
   ${items.length === 0
     ? html`${EmptyLibrary()}`
-    : html`<ul class="library-list">${items.map((item) => ItemView(item))}</ul>`
+    : html`<ul class="library-list">${items.map((item) => ItemView(item, true))}</ul>`
   }`}
 
 
@@ -424,6 +431,7 @@ const Collections = (items = []) => {
   }`}
 
 const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}) => {
+  if (subject !== null) {
   const {
     title,
     entries,
@@ -462,6 +470,7 @@ const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}) => {
   </ul>
   `
 }
+}
 
 const Browse = (items = [], {isAuthor = false, isSubject = false, isCategory = false, isCollection = false}) => {
   return html`
@@ -492,7 +501,7 @@ const Subject = (category) => {
     // <h2>${title}</h2>
     return html`
     ${title !== 'Newest 30 Standard Ebooks' ? html`
-      <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+      <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
     ` : html`Last updated: ${new Date(lastUpdated).toDateString()}
     `}
     <ul class="category-list">
@@ -518,7 +527,7 @@ const Category = (category) => {
   })
   // <h2>${title}</h2>
   return html`
-  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
   <ul class="category-list">
     ${entries.map(entry => {
       return SubjectEntry(entry, isCoverOnly)
@@ -543,7 +552,7 @@ const CollectionCategory = (category) => {
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   // <h2>${title}</h2>
   return html`
-  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
@@ -578,9 +587,9 @@ const AuthorList = (queryResults) => {
     subjectName: title,
     query,
   })
+  // <h2>${title}</h2>
   return html`
-  <h2>${title}</h2>
-  <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
+  <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
   <ul class="list-style-none">
     ${results.length === 0
       ? html`${EmptySearch()}`
@@ -783,7 +792,7 @@ const CategoryList = (categories) => {
 }
 const FollowTitle = (titleText, clickHandler, linkText = 'See All') => html`
 <div class="flex-title">
-  <h2>
+  <h2 @click=${clickHandler}>
     ${titleText}
   </h2>
   <h2>
