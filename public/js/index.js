@@ -798,7 +798,7 @@ const FollowTitle = (titleText, clickHandler, linkText = 'See All') => html`
     ${titleText}
   </h2>
   <h2>
-    <strong class="pointer" @click=${clickHandler}>${linkText} ></strong>
+    <strong class="pointer see-all" @click=${clickHandler}>${linkText} ></strong>
   </h2>
 </div>`
 const AllCollections = () => {

@@ -125,6 +125,10 @@ h2 {
     overflow: hidden;
 }
 
+.see-all {
+    line-height: 27px;
+}
+
 .top-nav__breadcrumb {
     position: sticky;
     top: 0;
