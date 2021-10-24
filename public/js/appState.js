@@ -1369,7 +1369,8 @@ self.onmessage = async function(event) {
                 activeCategory: null,
             }
             state = await initApp(state, parsedPayload.action)
-            if (!state?.userLibrary?.currentlyReading?.length) {
+            if (state?.userLibrary?.currentlyReading?.length === 0 && state?.userLibrary?.entries?.length === 0) {
+                console.log('no currently reading');
                 state = await app(state, {
                     tab: 'NEW',
                     type: 'new-tab',
