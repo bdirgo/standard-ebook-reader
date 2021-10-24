@@ -951,6 +951,12 @@ const H1Title = (props) => {
       <h1 class="pointer">${BROWSETITLE}</h1>
       `
     }
+    case('LIBRARY') : {
+      return html`
+      <h1 class="pointer">
+      My Library
+      </h1>`
+    }
     default: {
       return html`
       <h1 class="pointer">
