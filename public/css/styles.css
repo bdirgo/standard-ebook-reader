@@ -115,6 +115,10 @@ button {
     font-size: large;
 }
 
+#mySearch {
+    font-size: large;
+}
+
 .top-nav__breadcrumb {
     position: sticky;
     top: 0;

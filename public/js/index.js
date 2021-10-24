@@ -173,7 +173,7 @@ const SearchBar = (queryResults) => {
     capture: true,
   }
   return html `
-  <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">Search for a book, based on title, author, subject, or description</label>
+  <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">You can search for a title, author, subject, etc.</label>
     <div>
       <input
         type="search"
@@ -241,8 +241,10 @@ const SearchNavigation = () => {
   // &#8981;
   // left facing icon
   // &#128269;
+  // right facing icon
+  // &#128270;
   
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:18px; padding-right:4px;'>&#128270;</span><span style='font-size:18px; padding-left:4px;'>Search</span></button>`
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:18px; padding-right:4px;'>&#128269;</span><span style='font-size:18px; padding-left:4px;'>Search</span></button>`
 }
 const HowTo = () => html`
   <ol>
