@@ -111,8 +111,22 @@
 	background-color: rgb(32, 37, 48);
 }
 
-button.follow {
+button {
     font-size: large;
+}
+
+.top-nav__breadcrumb {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    padding: 12px 0 12px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.dark .top-nav__breadcrumb {
+    background-color: #202530;
 }
 
 /* The Close Button */

@@ -200,17 +200,23 @@ const LibraryNavigation = () => {
           type: 'library-tab',
           tab: 'LIBRARY'
         })
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:24px;'>&#8962;</span>&nbsp;Home</button>`
+        // square house 
+        // &#8962;
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:18px;padding-right:4px;'>&#127968;</span><span style='font-size:18px;padding-left:4px;'>Home</span></button>`
 }
-const NewNavigation = () => {
+const NewBrowseNavigation = () => {
   const clickHandler = clickHandlerCreator({
-          type: 'click-new',
-          // TODO: GET RID OF THIS MAGIC STRING
-          categoryTerm: "Newest 30 Standard Ebooks",
-          // END TODO: GET RID OF THIS MAGIC STRING
-          tab: 'SUBJECT',
+          type: 'new-tab',
+          tab: 'NEW'
+          // type: 'click-new',
+          // // TODO: GET RID OF THIS MAGIC STRING
+          // categoryTerm: "Newest 30 Standard Ebooks",
+          // // END TODO: GET RID OF THIS MAGIC STRING
+          // tab: 'SUBJECT',
         })
-        return html`<button @click=${clickHandler} class="box button">&nbsp;<span style='font-size:18px;'>&#9734;</span>&nbsp;New Books</button>`
+        // star
+        // &#9734; 
+        return html`<button @click=${clickHandler} class="box button">&nbsp;<span style='font-size:18px;padding-right:4px;'>&#128218;</span><span style='font-size:18px;padding-left:4px;'>Browse</span></button>`
       }
 const CollectionsNavigation = () => {
   const clickHandler = clickHandlerCreator({
@@ -231,7 +237,12 @@ const SearchNavigation = () => {
     type: 'search-tab',
     tab: 'SEARCH'
   })
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:28px;'>&#8981;</span>&nbsp;Search</button>`
+  // outline search
+  // &#8981;
+  // left facing icon
+  // &#128269;
+  
+  return html`<button @click=${clickHandler} class="box button"><span style='font-size:18px; padding-right:4px;'>&#128270;</span><span style='font-size:18px; padding-left:4px;'>Search</span></button>`
 }
 const HowTo = () => html`
   <ol>
@@ -242,9 +253,10 @@ const HowTo = () => html`
 const HowToFollow = () => html`<h2>How to Follow Categories</h2>
   <ol>
   <li>Click a book to open its details</li>
-  <li>Scroll to the bottome to view the categories it is a part of</li>
-  <li>Click a category to see similar books in that category (sometimes it's only one, sorry)</li>
+  <li>Scroll to the bottom to view the categories the book is included in (i.e. "Irish Poetry", or "Shipwrecks--Fiction")</li>
+  <li>Click a category to see similar books in that category (sometimes it's only one book)</li>
   <li>Click "Follow" to follow, and "Unfollow" to unfollow</li>
+  <li>The category will show up on your home Library, and will update when there is a new book available.</li>
   </ol>`
 
 const EmptyLibrary = () => html`<p><b>Your Library is empty.</b></p>${HowTo()}`
@@ -255,7 +267,6 @@ const Help = () => html`
 ${HowTo()}
 ${HowToFollow()}
 <b>Tips</b>
-<p>Clicking the H1 title at the top of the page will toggle the navigation.</p>
 <p>Clicking the Moon/Sun button will toggle the site into dark mode</p>
 <p>When reading clicking the chapter title at the top of the screen will bring up a chapter selection menu</p>
 <p>If you toggle dark mode while reading a book, you may need to refresh the page for the colors to load correctly.</p>
@@ -328,6 +339,7 @@ const Library = (userLibrary) => {
   const books = Array.from(new Set(dupBooks.map(a => a?.id)))
         .map(id => dupBooks.find(a => a.id === id))
   return html`
+    <h2>Currently reading</h2>
     ${LibraryList(books)}
   `
 }
@@ -477,8 +489,8 @@ const Subject = (category) => {
       type:'click-add-subject-to-library',
       subjectName: title
     })
+    // <h2>${title}</h2>
     return html`
-    <h2>${title}</h2>
     ${title !== 'Newest 30 Standard Ebooks' ? html`
       <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
     ` : html`Last updated: ${new Date(lastUpdated).toDateString()}
@@ -504,8 +516,8 @@ const Category = (category) => {
     type:'click-add-category-to-library',
     categoryName: title
   })
+  // <h2>${title}</h2>
   return html`
-  <h2>${title}</h2>
   <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <ul class="category-list">
     ${entries.map(entry => {
@@ -529,8 +541,8 @@ const CollectionCategory = (category) => {
     collectionName: title
   })
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
+  // <h2>${title}</h2>
   return html`
-  <h2>${title}</h2>
   <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Unfollow' : 'Follow'}</b></button>
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
@@ -778,6 +790,15 @@ const FollowTitle = (titleText, clickHandler) => html`
     <strong class="pointer" @click=${clickHandler}>See All ></strong>
   </h2>
 </div>`
+const AllCollections = () => {
+  const clickHandler = clickHandlerCreator({
+    type: 'collection-tab',
+    tab: 'COLLECTIONS'
+  })
+  return html`
+  ${FollowTitle('By Collection', clickHandler)}
+  `
+}
 const FollowedCollections = (followedCollections) => {
   const isCollection = true
   const clickHandler = clickHandlerCreator({
@@ -789,7 +810,16 @@ const FollowedCollections = (followedCollections) => {
   ${FollowTitle('Followed Collections', clickHandler)}
   ${Browse(followedCollections, {isCollection})}
   `
-  : html`${FollowTitle('Followed Collections', clickHandler)}`
+  : html``
+}
+const AllSubjects = () => {
+  const clickHandler = clickHandlerCreator({
+    type: 'browse-tab',
+    tab: 'BROWSE',
+  })
+  return html`
+  ${FollowTitle('By Subject', clickHandler)}
+  `
 }
 const FollowedSubjects = (followedSubjects) => {
   const isSubject = true
@@ -803,7 +833,7 @@ const FollowedSubjects = (followedSubjects) => {
   ${FollowTitle('Followed Subjects', clickHandler)}
   ${Browse(followedSubjects, {isSubject})}
   `
-  : html`${FollowTitle('Followed Subjects', clickHandler)}`
+  : html``
 }
 const FollowedAuthors = (followedAuthors) => {
   const isAuthor = true
@@ -815,6 +845,15 @@ const FollowedAuthors = (followedAuthors) => {
   ${Browse(followedAuthors, {isAuthor})}
   `
   : html``
+}
+const AllCategories = () => {
+  const clickHandler = clickHandlerCreator({
+    type:'help-tab',
+    tab: 'HELP'
+  })
+  return html`
+  ${FollowTitle('By Category', clickHandler)}
+  `
 }
 const FollowedCategories = (followedCategories) => {
   const isCategory = true
@@ -828,6 +867,86 @@ const FollowedCategories = (followedCategories) => {
   ${Browse(followedCategories, {isCategory})}
   `
   : html``
+}
+const H1Title = (props) => {
+  const {activeTab, searchResults, activeCategory} = props;
+
+  const browseHandler = clickHandlerCreator({
+    type: 'new-tab',
+    tab: 'NEW'
+  })
+  const allSubjectsHandler = clickHandlerCreator({
+    type: 'browse-tab',
+    tab: 'BROWSE',
+  })
+  const allCollectionsHandler = clickHandlerCreator({
+    type: 'collection-tab',
+    tab: 'COLLECTIONS'
+  })
+  switch(activeTab) {
+    case('AUTHOR'): {
+      return html`
+      <h1 class="pointer">
+      ${toTitleCase(searchResults.query)}
+      </h1>
+      `
+    }
+    case('BROWSE'):{
+      return html`
+      <h1 class="pointer">Subjects</h1>
+      <div class="top-nav__breadcrumb">
+        <a @click=${browseHandler}>Browse</a> | Subjects
+      </div>
+      `
+    }
+    case('SUBJECT'):{
+      return activeCategory?.title === "Newest 30 Standard Ebooks" ? (
+        html`
+        <h1 class="pointer">${activeCategory?.title}</h1>
+        <div class="top-nav__breadcrumb">
+          <a @click=${browseHandler}>Browse</a> | ${activeCategory?.title}
+        </div>
+        `
+      ) : (html`
+      <h1 class="pointer">${activeCategory?.title}</h1>
+      <div class="top-nav__breadcrumb">
+        <a @click=${browseHandler}>Browse</a> | <a @click=${allSubjectsHandler}>Subjects</a> | ${activeCategory?.title}
+      </div>
+      `)
+    }
+    case('COLLECTIONS'): {
+      return html`
+      <h1 class="pointer">${toTitleCase(activeTab)}</h1>
+      <div class="top-nav__breadcrumb">
+        <a @click=${browseHandler}>Browse</a> | Collections
+      </div>
+      `
+    }
+    case('COLLECTION'): {
+      return html`
+      <h1 class="pointer">${activeCategory?.title}</h1>
+      <div class="top-nav__breadcrumb">
+        <a @click=${browseHandler}>Browse</a> | <a @click=${allCollectionsHandler}>Collections</a> | ${activeCategory?.title}
+      </div>
+      `
+    }
+    case('CATEGORY'): {
+      return html`
+      <h1 class="pointer">${activeCategory?.title}</h1>
+      `
+    }
+    case('NEW'): {
+      return html`
+      <h1 class="pointer">Browse Books</h1>
+      `
+    }
+    default: {
+      return html`
+      <h1 class="pointer">
+      ${toTitleCase(activeTab ? activeTab : 'Ebook Reader')}
+      </h1>`
+    }
+  }
 }
 const LoadingMessages = (index = 0) => {
   const msgs = [
@@ -880,7 +999,6 @@ function rerender(props) {
             ${FollowedCollections(followedCollections)}
             ${FollowedSubjects(followedSubjects)}
             ${FollowedCategories(followedCategories)}
-            ${New(bookLibrary)}
           `
         }
         case('BROWSE'): {
@@ -891,7 +1009,12 @@ function rerender(props) {
           return Collections(bookLibrary);
         }
         case('NEW'): {
-          return New(bookLibrary);
+          return html`
+          ${New(bookLibrary)}
+          ${AllCollections()}
+          ${AllSubjects()}
+          ${AllCategories()}
+          `
         }
         case('SUBJECT'): {
           return Subject(activeCategory);
@@ -920,15 +1043,12 @@ function rerender(props) {
       tab: 'HELP'
     })
     return html`
-      <h1 class="pointer">
-      ${activeTab === 'AUTHOR'
-        ? toTitleCase(searchResults.query)
-        : toTitleCase(activeTab ? activeTab : 'Ebook Reader')}</h1>
+      ${H1Title({activeTab, searchResults, activeCategory})}
       <div id="sidebar" class="sidebar ${showSideBarMenu}">
         <nav class="parent-nav">
           <div class="parent">
             ${LibraryNavigation()}
-            ${NewNavigation()}
+            ${NewBrowseNavigation()}
             ${SearchNavigation()}
           </div>
         </nav>
