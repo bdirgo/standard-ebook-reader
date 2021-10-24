@@ -1369,6 +1369,13 @@ self.onmessage = async function(event) {
                 activeCategory: null,
             }
             state = await initApp(state, parsedPayload.action)
+            if (!state?.userLibrary?.currentlyReading?.length) {
+                state = await app(state, {
+                    tab: 'NEW',
+                    type: 'new-tab',
+                    currentlyReading: state?.userLibrary?.currentlyReading,
+                }) 
+            }
             clearInterval(loadingInterval)
             self.postMessage({type:"state", payload:JSON.stringify(state)});
             break;

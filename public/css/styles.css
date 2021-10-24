@@ -119,6 +119,12 @@ button {
     font-size: large;
 }
 
+h2 {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 .top-nav__breadcrumb {
     position: sticky;
     top: 0;
