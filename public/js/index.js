@@ -781,13 +781,13 @@ const CategoryList = (categories) => {
   </ul>
   `
 }
-const FollowTitle = (titleText, clickHandler) => html`
+const FollowTitle = (titleText, clickHandler, linkText = 'See All') => html`
 <div class="flex-title">
   <h2>
     ${titleText}
   </h2>
   <h2>
-    <strong class="pointer" @click=${clickHandler}>See All ></strong>
+    <strong class="pointer" @click=${clickHandler}>${linkText} ></strong>
   </h2>
 </div>`
 const AllCollections = () => {
@@ -807,7 +807,6 @@ const FollowedCollections = (followedCollections) => {
   })
   return followedCollections.length
   ? html`
-  ${FollowTitle('Followed Collections', clickHandler)}
   ${Browse(followedCollections, {isCollection})}
   `
   : html``
@@ -830,7 +829,6 @@ const FollowedSubjects = (followedSubjects) => {
   })
   return followedSubjects.length
   ? html`
-  ${FollowTitle('Followed Subjects', clickHandler)}
   ${Browse(followedSubjects, {isSubject})}
   `
   : html``
@@ -852,7 +850,7 @@ const AllCategories = () => {
     tab: 'HELP'
   })
   return html`
-  ${FollowTitle('By Category', clickHandler)}
+  ${FollowTitle('By Category', clickHandler, 'Learn')}
   `
 }
 const FollowedCategories = (followedCategories) => {
@@ -863,7 +861,6 @@ const FollowedCategories = (followedCategories) => {
   })
   return followedCategories.length
   ? html`
-  ${FollowTitle('Followed Categories', clickHandler)}
   ${Browse(followedCategories, {isCategory})}
   `
   : html``
@@ -883,6 +880,9 @@ const H1Title = (props) => {
     type: 'collection-tab',
     tab: 'COLLECTIONS'
   })
+  const BROWSETITLE = "Browse Books"
+  const COLLECTIONTITLE = "By Collection"
+  const SUBJECTTITLE = "By Subject"
   switch(activeTab) {
     case('AUTHOR'): {
       return html`
@@ -895,7 +895,7 @@ const H1Title = (props) => {
       return html`
       <h1 class="pointer">Subjects</h1>
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>Browse</a> | Subjects
+        <a @click=${browseHandler}>${BROWSETITLE}</a> | ${SUBJECTTITLE}
       </div>
       `
     }
@@ -904,13 +904,13 @@ const H1Title = (props) => {
         html`
         <h1 class="pointer">${activeCategory?.title}</h1>
         <div class="top-nav__breadcrumb">
-          <a @click=${browseHandler}>Browse</a> | ${activeCategory?.title}
+          <a @click=${browseHandler}>${BROWSETITLE}</a> | ${activeCategory?.title}
         </div>
         `
       ) : (html`
       <h1 class="pointer">${activeCategory?.title}</h1>
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>Browse</a> | <a @click=${allSubjectsHandler}>Subjects</a> | ${activeCategory?.title}
+        <a @click=${browseHandler}>${BROWSETITLE}</a> | <a @click=${allSubjectsHandler}>${SUBJECTTITLE}</a> | ${activeCategory?.title}
       </div>
       `)
     }
@@ -918,7 +918,7 @@ const H1Title = (props) => {
       return html`
       <h1 class="pointer">${toTitleCase(activeTab)}</h1>
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>Browse</a> | Collections
+        <a @click=${browseHandler}>${BROWSETITLE}</a> | ${COLLECTIONTITLE}
       </div>
       `
     }
@@ -926,7 +926,7 @@ const H1Title = (props) => {
       return html`
       <h1 class="pointer">${activeCategory?.title}</h1>
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>Browse</a> | <a @click=${allCollectionsHandler}>Collections</a> | ${activeCategory?.title}
+        <a @click=${browseHandler}>${BROWSETITLE}</a> | <a @click=${allCollectionsHandler}>${COLLECTIONTITLE}</a> | ${activeCategory?.title}
       </div>
       `
     }
@@ -937,13 +937,13 @@ const H1Title = (props) => {
     }
     case('NEW'): {
       return html`
-      <h1 class="pointer">Browse Books</h1>
+      <h1 class="pointer">${BROWSETITLE}</h1>
       `
     }
     default: {
       return html`
       <h1 class="pointer">
-      ${toTitleCase(activeTab ? activeTab : 'Ebook Reader')}
+      ${toTitleCase(activeTab ? activeTab : 'Standard Ebooks')}
       </h1>`
     }
   }
