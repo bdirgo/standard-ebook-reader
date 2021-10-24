@@ -292,17 +292,16 @@ const ItemView = (entry, isLibraryListView = false) => {
   return html`
   <li class="library-list-image">
     <img @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
+    <div class="card-body" @click=${clickOpenDetailView}>
     ${isLibraryListView
       ? html`
-      <div class="card-body">
-        <a class="information-icon" @click=${clickOpenDetailView}>&#9432;</a>
-      </div>
+        <a class="information-icon">&#9432;</a>
       `
       : html`
-      <div class="card-body">
-        <b id=${entry.id}>${entry.title}</b>
+        <a><b id=${entry.id}>${entry.title}</b></a>
         <p id=${entry.id}>${entry.summary}</p>
-      </div>`}
+        `}
+    </div>
   </li>`}
 const LibraryList = (items = []) => {
   return html`
