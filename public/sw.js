@@ -46,17 +46,21 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url)
     console.log('fetch intercepted for:', url)
-    event.respondWith(caches.match(event.request)
-        .then(cachedResponse => {
-            return cachedResponse || fetch(event.request).then(async function (response) {
-                const clonedRes = response.clone();
-                console.log('caching for next time', url)
-                await caches.open(cacheName)
-                .then(cache => {
-                    cache.put(event.request, clonedRes);
+    if (url !== 'https://standardebooks.org/opds/new-releases') {
+        event.respondWith(caches.match(event.request)
+            .then(cachedResponse => {
+                return cachedResponse || fetch(event.request).then(async function (response) {
+                    const clonedRes = response.clone();
+                    console.log('caching for next time', url)
+                    await caches.open(cacheName)
+                    .then(cache => {
+                        cache.put(event.request, clonedRes);
+                    })
+                    return response;
                 })
-                return response;
-              })
-        })
-    )
+            })
+        )
+    } else {
+        event.respondWith(fetch(event.request))
+    }
 })

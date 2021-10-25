@@ -693,22 +693,26 @@ async function bookLibraryReducer(state = [], action) {
                 });
             return bookLibrary;
         }
-        case('help-tab'):
-        case('library-tab'): 
         case('new-tab'): {
-            let entriesNew = await myDB.getItem('entriesNew')
-            // const isOld = lastUpdated(entriesNew, 1.5)
-            // if (isOld || action?.shouldForceRefresh) {
-                console.log('checking for new realeases...')
-                entriesNew = await fetchNewReleases(new_url)
-            // } 
-            entriesNew = {
-                title: entriesNew.title,
-                // entries: entriesNew.entries.slice(0, previewLength),
-                entries: entriesNew.entries,
-                length: 30,
+            let newEntries = await myDB.getItem('entriesNew')
+            const isOld = lastUpdated(newEntries, 1.5)
+            console.log(isOld)
+            if (isOld) {
+                try {
+                    console.log('checking for new realeases...')
+                    entriesNew = await fetchNewReleases(new_url)
+                    newEntries = {
+                        title: entriesNew.title,
+                        // entries: entriesNew.entries.slice(0, previewLength),
+                        entries: entriesNew.entries,
+                        lastUpdated: new Date(),
+                        length: entriesNew?.entries?.length,
+                    }
+                } catch (err) {
+                    console.log('trouble fetching new releases, ', err)
+                }
             }
-            return entriesNew
+            return newEntries
         }
         case('collection-tab'): {
             const entriesByCollection = await myDB.getItem('entriesByCollection')
@@ -1140,18 +1144,23 @@ async function activeCategoryReducer(state = null, action) {
             }
         }
         case('click-new'): {
-            const newEntries = await myDB.getItem('entriesNew')
-            // const isOld = lastUpdated(newEntries, 1.5)
-            // if (isOld || action?.shouldForceRefresh) {
-                console.log('checking for new realeases...')
-                entriesNew = await fetchNewReleases(new_url)
-            // } 
-            entriesNew = {
-                title: newEntries.title,
-                entries: newEntries.entries,
-                lastUpdated: newEntries.updated,
+            let newEntries = await myDB.getItem('entriesNew')
+            const isOld = lastUpdated(newEntries, 1.5)
+            console.log(isOld)
+            if (isOld) {
+                try {
+                    console.log('checking for new realeases...')
+                    entriesNew = await fetchNewReleases(new_url)
+                    newEntries = {
+                        title: entriesNew.title,
+                        entries: entriesNew.entries,
+                        lastUpdated: new Date(),
+                    }
+                } catch (err) {
+                    console.log('trouble fetching new releases, ', err)
+                }
             }
-            return entriesNew
+            return newEntries
         }
         default: {
             let isSubject = await isSubjectInUserLibrary(categoryTerm)
