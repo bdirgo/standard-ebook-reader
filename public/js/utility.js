@@ -7,10 +7,10 @@ let setStyles = (body, darkButton) => {
     let darkMode = window.localStorage.getItem(darkModeID);
     if (darkMode === dark) {
         body.classList.add(dark)
-        darkButton.innerHTML = Sun;
+        darkButton.innerHTML = Moon;
     } else {
         body.classList.remove(dark)
-        darkButton.innerHTML = Moon;
+        darkButton.innerHTML = Sun;
     }
     darkButton.setAttribute('value', darkMode)
 }
