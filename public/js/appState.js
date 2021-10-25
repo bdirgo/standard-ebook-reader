@@ -1215,6 +1215,7 @@ async function searchReducer(state = {}, action) {
                 keys: ['title', 'authorArray.name', 'content.children', 'categories.title', 'summary']
             })
             return {
+                ...state,
                 results:fuse.search(query),
                 query,
             }
@@ -1235,6 +1236,7 @@ async function searchReducer(state = {}, action) {
             })
             const inUserLibrary = await isResultInUserLibrary(query);
             return {
+                ...state,
                 results:fuse.search(query),
                 query,
                 inUserLibrary,
@@ -1246,7 +1248,6 @@ async function searchReducer(state = {}, action) {
             console.log('searchReducer default');
             return {
                 ...state,
-                query,
                 inUserLibrary,
             }
     }
