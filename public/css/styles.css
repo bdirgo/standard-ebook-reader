@@ -18,7 +18,7 @@
 }
 
 .category-list>.subject-list-image {
-	flex: 1 1 200px; /*  Stretching: */
+	flex: 1 1 160px; /*  Stretching: */
 	margin: 5px;
 }
 .category-list-item {
@@ -41,7 +41,7 @@
     overflow-x: scroll;
 }
 
-.subject-list-image {
+.subject-list .subject-list-image {
     padding: 0 1em 0 0;
 	cursor: pointer;
 }

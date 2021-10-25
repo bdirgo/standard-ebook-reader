@@ -182,7 +182,7 @@ const SearchBar = (queryResults) => {
         placeholder="Search for a book..."
         .value=${query}
         @change=${e => {query = e.target.value;}}
-        size="30">
+        size="26">
       <button>Search</button>
     </div>
   </form>
@@ -273,7 +273,6 @@ ${HowToFollow()}
 <p>When reading clicking the chapter title at the top of the screen will bring up a chapter selection menu</p>
 <p>If you toggle dark mode while reading a book, you may need to refresh the page for the colors to load correctly.</p>
 `
-
 
 const ItemView = (entry, isLibraryListView = false) => {
   const {
@@ -1086,3 +1085,50 @@ document.querySelector('.first-content').hidden = true
 rerender({detail: JSON.stringify({isLoading:true, showSideBarMenu:'show'})})
 
 elem.addEventListener('re-render', (e) => rerender({detail: e.detail}))
+
+document.addEventListener('swiped-down', function(e) {
+  console.log("swiped-down");
+  // console.log(e.target); // element that was swiped
+  // console.log(e.detail); // see event data below
+  const {
+    yEnd,
+    yStart,
+  } = e.detail
+  const changeY = yEnd - yStart;
+  if (document.querySelector(".modal").scrollTop === 0) {
+    if(changeY > 100) {
+      // Close modal
+      const clickClose = clickHandlerCreator({
+        type: 'click-close-details-modal',
+      })
+      clickClose.handleEvent()
+    }
+  }
+});
+
+document.addEventListener('swiped-up', function(e) {
+  console.log("swiped-up");
+  // {
+  //   dir: 'up',            // swipe direction (up,down,left,right)
+  //   touchType: 'direct',  // touch type (stylus,direct) - stylus=apple pencil and direct=finger
+  //   xStart: 196,          // x coords of swipe start
+  //   xEnd: 230,            // x coords of swipe end
+  //   yStart: 196,          // y coords of swipe start
+  //   yEnd: 4               // y coords of swipe end
+  // }
+  const {
+    yEnd,
+    yStart,
+  } = e.detail
+  const changeY = yStart - yEnd;
+  const modalEl = document.querySelector(".modal")
+  if (window.innerHeight + modalEl.scrollTop === modalEl.scrollHeight) {
+    if(changeY > 100) {
+      // Close modal
+      const clickClose = clickHandlerCreator({
+        type: 'click-close-details-modal',
+      })
+      clickClose.handleEvent()
+    }
+  }
+});
