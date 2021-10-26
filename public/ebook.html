@@ -5,10 +5,36 @@
     <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Standard Ebooks">
     <meta name="theme-color" content="#202530">
     <meta property="og:title" content="Standard Ebook Reader" />
-    <meta property="og:image" content="https://standardebooks.org/images/logo.png" />
+    <meta property="og:image" content="./apple-touch-icon.png" />
     <meta name="Description" content="Read books from Standard Ebooks">
+
+    <script>
+        window.addEventListener('unhandledrejection', event => {
+            alert("Error: " + event.reason.message);
+        });
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+          var string = msg.toLowerCase();
+          var substring = "script error";
+          if (string.indexOf(substring) > -1){
+            alert('Script Error: See Browser Console for Detail');
+          } else {
+            var message = [
+              'Message: ' + msg,
+              'URL: ' + url,
+              'Line: ' + lineNo,
+              'Column: ' + columnNo,
+              'Error object: ' + JSON.stringify(error)
+            ].join(' - ');
+  
+            alert(message);
+          }
+  
+          return false;
+        };
+    </script>
 
     <link rel="manifest" href="./manifest.json" />
     <link rel="stylesheet" type="text/css" href="./css/styles.css" media="screen"/>
@@ -139,7 +165,6 @@
             document.getElementById("myTopBar").style.display = "block";
             document.getElementById("openbtn").style.display = "none"
         }
-
         function closeNav() {
             document.getElementById("myTopBar").style.display = "none";
             document.getElementById("openbtn").style.display = "block";
@@ -165,6 +190,20 @@
             return `/ebooks/${splitParam[0]}/${splitParam[1]}/downloads/${bookParam}`
         }
         closeNav()
+        function addThumbnailToMetaLink(coverThumbnailUrl) {
+            var thumbnailLink = document.createElement('link');
+            thumbnailLink.rel = 'apple-touch-icon';
+            thumbnailLink.href = coverThumbnailUrl.href;
+            // var coverLink = document.createElement('link');
+            // coverLink.rel = 'apple-touch-icon';
+            // coverLink.href = coverUrl.href;
+            var metaImage = document.createElement('meta');
+            metaImage.property = "og:image"
+            metaImage.content = coverThumbnailUrl.href
+            document.getElementsByTagName('head')[0].appendChild(thumbnailLink);
+            // document.getElementsByTagName('head')[0].appendChild(coverLink);
+            document.getElementsByTagName('head')[0].appendChild(metaImage);
+        }
         const params = (new URL(document.location)).searchParams;
         // const bookPath = createBookPathFrom(params.get('book'))
         const bookParam = params.get('book');
@@ -183,14 +222,6 @@
             loadingMessage.textContent = "Loading..."
             loadingMessage.className = 'loading-message'
             loadingCover.appendChild(loadingMessage)
-            var thumbnailLink = document.createElement('link');
-            thumbnailLink.rel = 'apple-touch-icon';
-            thumbnailLink.href = coverThumbnailUrl.href;
-            var coverLink = document.createElement('link');
-            coverLink.rel = 'apple-touch-icon';
-            coverLink.href = coverUrl.href;
-            document.getElementsByTagName('head')[0].appendChild(thumbnailLink);
-            document.getElementsByTagName('head')[0].appendChild(coverLink);
             function toTitleCase(str) {
                 return str.replace(
                     /\w\S*/g,
