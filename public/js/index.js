@@ -1095,13 +1095,16 @@ document.addEventListener('swiped-down', function(e) {
     yStart,
   } = e.detail
   const changeY = yEnd - yStart;
-  if (document.querySelector(".modal").scrollTop === 0) {
-    if(changeY > 100) {
-      // Close modal
-      const clickClose = clickHandlerCreator({
-        type: 'click-close-details-modal',
-      })
-      clickClose.handleEvent()
+  const modalEl = document.querySelector(".modal")
+  if (modalEl !== null) {
+    if (modalEl.scrollTop === 0) {
+      if(changeY > 100) {
+        // Close modal
+        const clickClose = clickHandlerCreator({
+          type: 'click-close-details-modal',
+        })
+        clickClose.handleEvent()
+      }
     }
   }
 });
@@ -1122,13 +1125,15 @@ document.addEventListener('swiped-up', function(e) {
   } = e.detail
   const changeY = yStart - yEnd;
   const modalEl = document.querySelector(".modal")
-  if (window.innerHeight + modalEl.scrollTop === modalEl.scrollHeight) {
-    if(changeY > 100) {
-      // Close modal
-      const clickClose = clickHandlerCreator({
-        type: 'click-close-details-modal',
-      })
-      clickClose.handleEvent()
+  if (modalEl !== null) {
+    if (window.innerHeight + modalEl.scrollTop === modalEl.scrollHeight) {
+      if(changeY > 100) {
+        // Close modal
+        const clickClose = clickHandlerCreator({
+          type: 'click-close-details-modal',
+        })
+        clickClose.handleEvent()
+      }
     }
   }
 });

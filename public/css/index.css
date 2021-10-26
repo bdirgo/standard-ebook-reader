@@ -80,6 +80,14 @@ body {
 	color: whitesmoke;
 }
 
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+	select,
+	textarea,
+	input {
+		font-size: 16px;
+	}
+}
+
 img, video{
 	max-width: 600px;
 	border: 2px solid #1271e6;

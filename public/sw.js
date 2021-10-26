@@ -1,4 +1,4 @@
-const cacheName = 'cache-v1.5.4';
+const cacheName = 'cache-v1.5.4b';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,
@@ -20,7 +20,7 @@ const resourcesToPrecache = [
     '/js/utility.js',
     '/splashscreens/',
     'https://unpkg.com/lit-html?module',
-]
+] 
 
 self.addEventListener('install', event => {
     console.log('Install Event')
