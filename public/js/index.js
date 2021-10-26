@@ -1036,7 +1036,6 @@ function rerender(props) {
       loadingMessageindex,
     } = state
     const TabContent = (activeTab) => {
-      window.scrollTo(0,0)
       switch(activeTab) {
         case('LIBRARY'): {
           return html`
@@ -1119,6 +1118,15 @@ rerender({detail: JSON.stringify({isLoading:true, showSideBarMenu:'show'})})
 
 elem.addEventListener('re-render', (e) => rerender({detail: e.detail}))
 
+const closeModalForSwipe = () => {
+  const action = {
+    type: 'click-close-details-modal',
+  }
+  const searchParams = new URLSearchParams(action);
+  window.history.pushState(action, "", `?${searchParams}`);
+  callRender(action)
+}
+
 document.addEventListener('swiped-down', function(e) {
   console.log("swiped-down");
   // console.log(e.target); // element that was swiped
@@ -1133,10 +1141,7 @@ document.addEventListener('swiped-down', function(e) {
     if (modalEl.scrollTop === 0) {
       if(changeY > 100) {
         // Close modal
-        const clickClose = clickHandlerCreator({
-          type: 'click-close-details-modal',
-        })
-        clickClose.handleEvent()
+        closeModalForSwipe()
       }
     }
   }
@@ -1162,10 +1167,7 @@ document.addEventListener('swiped-up', function(e) {
     if (window.innerHeight + modalEl.scrollTop === modalEl.scrollHeight) {
       if(changeY > 100) {
         // Close modal
-        const clickClose = clickHandlerCreator({
-          type: 'click-close-details-modal',
-        })
-        clickClose.handleEvent()
+        closeModalForSwipe()
       }
     }
   }
