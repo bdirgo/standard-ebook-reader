@@ -1417,10 +1417,10 @@ self.onmessage = async function(event) {
     if (loadingInterval !== null) {
         clearInterval(loadingInterval)
     }
-    // loadingInterval = setInterval(() => {
-    //     console.log('loading...')
-    //     postLoading()
-    // }, LOAD_TIME);
+    loadingInterval = setInterval(() => {
+        console.log('loading...')
+        postLoading()
+    }, LOAD_TIME);
     switch (type) {
         case 'init': {
             console.log('init')

@@ -998,20 +998,20 @@ const H1Title = (props) => {
 const LoadingMessages = (index = 0) => {
   const msgs = [
     html`Loading...`,
-    html`The first load is the longest...`,
-    html`Downloading new Standard Books...`,
-    html`Collections may take a minute to load...`,
-    html`Organizing Libraries...`,
-    html`Collecting Collections...`,
-    html`Parsing New books...`,
-    html`Reticulating Splines...`,
-    html`Ordering LLamas...`,
-    html`Generating witty dialog...`,
-    html`Swapping time and space...`,
-    html`Tokenizing real life...`,
-    html`Downloading new Standard Books...`,
-    html`The servers are having a slow day, today.`,
   ]  
+  // html`The first load is the longest...`,
+  // html`Downloading new Standard Books...`,
+  // html`Collections may take a minute to load...`,
+  // html`Organizing Libraries...`,
+  // html`Collecting Collections...`,
+  // html`Parsing New books...`,
+  // html`Reticulating Splines...`,
+  // html`Ordering LLamas...`,
+  // html`Generating witty dialog...`,
+  // html`Swapping time and space...`,
+  // html`Tokenizing real life...`,
+  // html`Downloading new Standard Books...`,
+  // html`The servers are having a slow day, today.`,
   return msgs[index]
 }
 function rerender(props) {
