@@ -90,12 +90,13 @@ function unregister() {
 }
 // unregister()
 
-function initializeApp () {
+function initializeApp (state) {
   window.history.replaceState(state, "", "");
   initialRenderCall();
 }
 let displayMode = 'browser tab';
 window.addEventListener('DOMContentLoaded', () => {
+    log('DOMContentLoaded')
     // TODO: Electron
     if (navigator.standalone) {
         displayMode = 'standalone-ios';
@@ -117,14 +118,23 @@ w.onmessage = function(event) {
         type,
         payload,
     } = data
-    if (type === 'state') {
-        const state = payload
+    switch (type) {
+      case "state": {
         elem.dispatchEvent(new CustomEvent('re-render', {
-            detail: state,
+          detail: payload,
         }))
-    } else {
-        const details = data
-        console.log(details)
+        break;
+      }
+      case "initial-state": {
+        elem.dispatchEvent(new CustomEvent('re-render', {
+          detail: payload,
+        }))
+        callRender(state);
+        break;
+      }
+      default:
+        console.log(data)
+        break;
     }
 };
 
@@ -136,7 +146,6 @@ const getCurrentlyReadingStorage = () => {
         return stor
     }
 }
-
 
 const initialRenderCall = () => {
   log('initial call render')
@@ -162,13 +171,15 @@ const callRender = (state) => {
 }
 
 window.onload = function () {
+  log('onload')
   const url = new URL(window.location.href);
   const searchParams = new URLSearchParams(url.search);
   const urlAction = Object.fromEntries(searchParams);
-  callRender(urlAction)
+  initializeApp(urlAction)
 }
 
 window.onpopstate = function (event) {
+  log('onpopstate')
   if (event.state) {
     state = event.state
   }

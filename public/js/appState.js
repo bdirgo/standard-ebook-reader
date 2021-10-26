@@ -1388,7 +1388,7 @@ self.onmessage = async function(event) {
                 }) 
             }
             clearInterval(loadingInterval)
-            self.postMessage({type:"state", payload:JSON.stringify(state)});
+            self.postMessage({type:"initial-state", payload:JSON.stringify(state)});
             break;
         }
         case "click": {
