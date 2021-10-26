@@ -1,6 +1,7 @@
 import { html, render } from 'https://unpkg.com/lit-html?module';
 
 const w = new Worker("./js/appState.js");
+let state = history.state;
 const log = console.log;
 const populateStorage = (id, value) => {
     window.localStorage.setItem(id, value);
@@ -88,6 +89,11 @@ function unregister() {
     }
 }
 // unregister()
+
+function initializeApp () {
+  window.history.replaceState(state, "", "");
+  initialRenderCall();
+}
 let displayMode = 'browser tab';
 window.addEventListener('DOMContentLoaded', () => {
     // TODO: Electron
@@ -98,6 +104,7 @@ window.addEventListener('DOMContentLoaded', () => {
         displayMode = 'standalone';
     }
     console.log('DISPLAY_MODE_LAUNCH:', displayMode);
+    // initializeApp()
 });
 
 let elem = document.body
@@ -130,15 +137,43 @@ const getCurrentlyReadingStorage = () => {
     }
 }
 
-// TODO: call state mgmt
-w.postMessage({
-    type: "init",
-    payload: JSON.stringify({
-        action: {
-            currentlyReading: getCurrentlyReadingStorage()
-        }
-    })
-});
+
+const initialRenderCall = () => {
+  log('initial call render')
+  w.postMessage({
+      type: "init",
+      payload: JSON.stringify({
+          action: {
+              currentlyReading: getCurrentlyReadingStorage()
+          }
+      })
+  });
+}
+
+const callRender = (state) => {
+  log('callrender')
+  const payload = {
+    action: {
+      ...state,
+      currentlyReading:getCurrentlyReadingStorage()
+    },
+  }
+  w.postMessage({type:'click', payload:JSON.stringify(payload)})
+}
+
+window.onload = function () {
+  const url = new URL(window.location.href);
+  const searchParams = new URLSearchParams(url.search);
+  const urlAction = Object.fromEntries(searchParams);
+  callRender(urlAction)
+}
+
+window.onpopstate = function (event) {
+  if (event.state) {
+    state = event.state
+  }
+  callRender(state)
+}
 
 function toTitleCase(str = '') {
     return str.replace(
@@ -155,23 +190,10 @@ const SearchBar = (queryResults) => {
     results = [],
   } = queryResults
   const title = toTitleCase(query)
-  const submitHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-        e.preventDefault();
-        const payload = {
-            action: {
-                type: 'search-query',
-                query,
-                currentlyReading: getCurrentlyReadingStorage()
-            },
-        }
-        w.postMessage({ type: 'click', payload: JSON.stringify(payload) })
-    },
-    // event listener objects can also define zero or more of the event 
-    // listener options: capture, passive, and once.
-    capture: true,
-  }
+  const submitHandler = clickHandlerCreator({
+    type: 'search-query',
+    query,
+  })
   return html `
   <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">You can search for a title, author, subject, etc.</label>
     <div>
@@ -685,14 +707,10 @@ const DetailView = (entry) => {
     try {
       await navigator.clipboard.writeText(shareURL);
       console.log('Page URL copied to clipboard');
-      const payload = {
-        action: {
-          type: 'click-copied-share-url',
-          entryId: entry.id,
-          currentlyReading:getCurrentlyReadingStorage(),
-        },
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+      callRender({
+        type: 'click-copied-share-url',
+        entryId: entry.id,
+      })
     } catch (err) {
       console.error('Failed to copy: ', err);
     }
@@ -746,13 +764,10 @@ const clickHandlerCreator = (action, cb = () => {}) => {
   return {
     // handleEvent method is required.
     handleEvent(e) {
-      const payload = {
-        action: {
-          ...action,
-          currentlyReading:getCurrentlyReadingStorage()
-        },
-      }
-      w.postMessage({type:'click', payload:JSON.stringify(payload)})
+      e.preventDefault();
+      const searchParams = new URLSearchParams(action);
+      window.history.pushState(action, "", `?${searchParams}`);
+      callRender(action)
       cb()
     },
     // event listener objects can also define zero or more of the event 
@@ -983,6 +998,7 @@ const LoadingMessages = (index = 0) => {
   return msgs[index]
 }
 function rerender(props) {
+  log('re Render')
   const {
     detail = '{}',
   } = props

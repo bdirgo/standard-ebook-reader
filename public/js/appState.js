@@ -796,11 +796,11 @@ async function followedSearchResultsReducer(state = [], action) {
         query,
     } = action;
     const subjects = await myDB.getItem('entriesBySubject')
-    const dupBooks = subjects.subjects.flatMap(sub => {
+    const dupBooks = subjects?.subjects?.flatMap(sub => {
         return sub.entries
     })
-    const books = Array.from(new Set(dupBooks.map(a => a.id)))
-        .map(id => dupBooks.find(a => a.id === id))
+    const books = Array.from(new Set(dupBooks?.map(a => a.id)))
+        .map(id => dupBooks?.find(a => a.id === id))
     console.log(query);
     switch(type) {
         case('library-tab'): {
@@ -1213,11 +1213,11 @@ async function searchReducer(state = {}, action) {
         query,
     } = action;
     const subjects = await myDB.getItem('entriesBySubject')
-    const dupBooks = subjects.subjects.flatMap(sub => {
+    const dupBooks = subjects?.subjects?.flatMap(sub => {
         return sub.entries
     })
-    const books = Array.from(new Set(dupBooks.map(a => a.id)))
-        .map(id => dupBooks.find(a => a.id === id))
+    const books = Array.from(new Set(dupBooks?.map(a => a.id)))
+        .map(id => dupBooks?.find(a => a.id === id))
     switch(type) {
         case('search-query'):{
             const fuse = new Fuse(books, {
@@ -1356,7 +1356,7 @@ self.onmessage = async function(event) {
             type:'state',
             payload: JSON.stringify({
                 isLoading: true,
-                showSideBarMenu: !!state.showSideBarMenu,
+                showSideBarMenu: !!state?.showSideBarMenu,
                 loadingMessageindex: i++ % 13
             })
         })
