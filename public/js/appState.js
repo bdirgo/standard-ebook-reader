@@ -1089,10 +1089,10 @@ async function followedCategoriesReducer(state = [], action) {
     }
 }
 
-const hasFollowedCollection = async (arrayName, name = '') => {
+const hasFollowedCollection = async (arrayName, name = '', key = 'title') => {
     let userLibrary = await getUserLibrary();
     const filteredElement = userLibrary?.[arrayName]?.filter(v => {
-        return v?.title === name
+        return v?.[key] === name
     })
     if (filteredElement && filteredElement?.length > 0) {
         return true
@@ -1213,21 +1213,17 @@ async function activeEntryReducer(state = null, action) {
         entryId,
     } = action
     switch (type) {
-        case('click-add-to-library'): {
-            const newEntry = await bookEntires.getItem(entryId);
-            newEntry.inUserLibrary = true;
-            await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: true});
-            return newEntry;
-        }
-        case('click-remove-from-library'): {
-            const newEntry = await bookEntires.getItem(entryId);
-            newEntry.inUserLibrary = false;
-            await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: false});
-            return newEntry;
-        }
+        case('click-add-to-library'): 
+        case('click-remove-from-library'): 
         case('click-title'): {
             const entry = await bookEntires.getItem(entryId);
-            return entry;
+            const isInLibrary = 
+                await hasFollowedCollection('entries', entryId, 'id') ||
+                await hasFollowedCollection('currentlyReading', entryId, 'id') 
+            return {
+                ...entry,
+                inUserLibrary: isInLibrary,
+            };
         }
         case('click-copied-share-url'): {
             const entry = await bookEntires.getItem(entryId);
