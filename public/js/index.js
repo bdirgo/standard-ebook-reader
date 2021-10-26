@@ -105,7 +105,7 @@ window.addEventListener('DOMContentLoaded', () => {
         displayMode = 'standalone';
     }
     console.log('DISPLAY_MODE_LAUNCH:', displayMode);
-    // initializeApp()
+
 });
 
 let elem = document.body
@@ -1053,8 +1053,8 @@ function rerender(props) {
         case('NEW'): {
           return html`
           ${New(bookLibrary)}
-          ${AllCollections()}
           ${AllSubjects()}
+          ${AllCollections()}
           ${AllCategories()}
           `
         }

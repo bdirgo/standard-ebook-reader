@@ -91,23 +91,29 @@ class SubjectFeedLink extends XMLObject {
     }
 }
 
-class SubjectFeedEntry extends XMLObject {
+class SubjectFeedEntryId extends XMLObject {
+    constructor(json) {
+        super(json)
+        this.id = this.filterId(json)
+    }
+
+    filterId(json) {
+        return this.firstChild(json.children.filter(val => this.getTagName(val) === "id")[0])
+    }
+}
+
+class SubjectFeedEntry extends SubjectFeedEntryId {
     constructor(json) {
         super(json)
         this.title = this.filterTitle(json)
         this.link = this.filterLink(json)
         this.updated = new Date(this.filterUpdated(json))
-        this.id = this.filterId(json)
         this.content = this.filterContent(json)
         this.url = this.id
     }
 
     filterTitle(json) {
         return this.firstChild(json.children.filter(val => this.getTagName(val) === "title")[0])
-    }
-
-    filterId(json) {
-        return this.firstChild(json.children.filter(val => this.getTagName(val) === "id")[0])
     }
 
     filterUpdated(json) {
@@ -547,11 +553,14 @@ async function createCategroiesFrom(entriesBySubject) {
                 if (entryInCategory > -1) {
                     continue;
                 } else {
-                    foundCategory.addEntry(entry)
+                    foundCategory.addEntry(entry.id)
                 }
             }
         }))
     }))
+    categoriesFound.map(category => {
+        category.entries = [...new Set(category.entries)];
+    })
     categoriesFound.sort((a, b) => b.entries.length - a.entries.length)
     console.log('categoriesFound')
     console.log(categoriesFound)
@@ -656,7 +665,6 @@ const lastUpdated = (db, h = 24) => {
 }
 
 async function bookLibraryReducer(state = [], action) {
-    const previewLength = 8;
     switch (action.type) {
         case('browse-tab'): {
             const entriesBySubject = await myDB.getItem('entriesBySubject')
@@ -673,7 +681,6 @@ async function bookLibraryReducer(state = [], action) {
                 .map(val => {
                     return {
                         title: val.title,
-                        // entries: val.entries.slice(0, previewLength),
                         entries: val.entries,
                         length: val.entries.length,
                     }
@@ -703,7 +710,6 @@ async function bookLibraryReducer(state = [], action) {
                     entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
                         title: entriesNew.title,
-                        // entries: entriesNew.entries.slice(0, previewLength),
                         entries: entriesNew.entries,
                         lastUpdated: new Date(),
                         length: entriesNew?.entries?.length,
@@ -728,7 +734,6 @@ async function bookLibraryReducer(state = [], action) {
                 .map(val => {
                     return {
                         title: val.title,
-                        // entries: val.entries.slice(0, previewLength),
                         entries: val.entries,
                         length: val.entries.length,
                     }
@@ -787,6 +792,7 @@ const getUserLibrary = async () => {
         console.log('creating Library')
         userLibrary = await createUserLibrary()
     }
+    
     return userLibrary;
 }
 
@@ -1011,6 +1017,13 @@ async function followedSubjectsReducer(state = [], action) {
             return state
     }
 }
+
+const getEntriesFrom = async (entryIdArray = []) => {
+    return await Promise.all(entryIdArray.map(async (id) => {
+        return await bookEntires.getItem(id)
+    }))
+}
+
 async function followedCategoriesReducer(state = [], action) {
     const {
         type,
@@ -1019,8 +1032,16 @@ async function followedCategoriesReducer(state = [], action) {
     switch (type) {
         case('library-tab'): {
             let userLibrary = await getUserLibrary();
-            
-            return userLibrary.followedCategories ?? [];
+            const followedCategories = userLibrary.followedCategories ?? []
+            const cats = await myDB.getItem('entriesByCategory')
+            return await Promise.all(followedCategories.map(async category => {
+                const categoryTerm = category.term
+                const currentCategory = cats.categories.filter(val => val.term === categoryTerm)[0];
+                currentCategory.entries = await getEntriesFrom(currentCategory?.entries);
+                return {
+                    ...currentCategory,
+                }
+            }));
         }
         case('click-add-category-to-library'): {
             let userLibrary = await getUserLibrary();
@@ -1127,10 +1148,11 @@ async function activeCategoryReducer(state = null, action) {
         }
         case('click-category'): {
             const cats = await myDB.getItem('entriesByCategory')
-            const rv = cats.categories.filter(val => val.term === categoryTerm)[0];
+            const currentCategory = cats.categories.filter(val => val.term === categoryTerm)[0];
+            currentCategory.entries = await getEntriesFrom(currentCategory?.entries);
             const inUserLibrary = await isCategoryInUserLibrary(categoryTerm);
             return {
-                ...rv,
+                ...currentCategory,
                 inUserLibrary
             }
         }
