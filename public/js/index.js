@@ -90,13 +90,12 @@ function unregister() {
 }
 // unregister()
 
-function initializeApp (state) {
-  window.history.replaceState(state, "", "");
+function initializeApp (state, searchParams) {
+  window.history.replaceState(state, "", `?${searchParams}`);
   initialRenderCall();
 }
 let displayMode = 'browser tab';
 window.addEventListener('DOMContentLoaded', () => {
-    log('DOMContentLoaded')
     // TODO: Electron
     if (navigator.standalone) {
         displayMode = 'standalone-ios';
@@ -126,9 +125,6 @@ w.onmessage = function(event) {
         break;
       }
       case "initial-state": {
-        elem.dispatchEvent(new CustomEvent('re-render', {
-          detail: payload,
-        }))
         callRender(state);
         break;
       }
@@ -160,7 +156,6 @@ const initialRenderCall = () => {
 }
 
 const callRender = (state) => {
-  log('callrender')
   const payload = {
     action: {
       ...state,
@@ -175,7 +170,7 @@ window.onload = function () {
   const url = new URL(window.location.href);
   const searchParams = new URLSearchParams(url.search);
   const urlAction = Object.fromEntries(searchParams);
-  initializeApp(urlAction)
+  initializeApp(urlAction, searchParams)
 }
 
 window.onpopstate = function (event) {
@@ -201,10 +196,23 @@ const SearchBar = (queryResults) => {
     results = [],
   } = queryResults
   const title = toTitleCase(query)
-  const submitHandler = clickHandlerCreator({
-    type: 'search-query',
-    query,
-  })
+  const submitHandler = {
+    // handleEvent method is required.
+    handleEvent(e) {
+        e.preventDefault();
+        const action = {
+            type: 'search-query',
+            tab: 'SEARCH',
+            query,
+        }
+        const searchParams = new URLSearchParams(action);
+        window.history.pushState(action, "", `?${searchParams}`);
+        callRender(action)
+    },
+    // event listener objects can also define zero or more of the event 
+    // listener options: capture, passive, and once.
+    capture: true,
+  }
   return html `
   <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">You can search for a title, author, subject, etc.</label>
     <div>
@@ -314,24 +322,24 @@ const ItemView = (entry, isLibraryListView = false) => {
     title,
     ebookLink,
   } = entry;
-  const readLink = `/ebook.html?book=${ebookLink.href}`
+  const readLink = `/ebook.html?book=${ebookLink?.href}`
   const clickOpenBook = clickHandlerCreator({}, () => {window.location.href = readLink})
   const clickOpenDetailView = clickHandlerCreator({
     type: 'click-title',
-    entryId: entry.id,
+    entryId: entry?.id,
   });
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="library-list-image">
-    <img @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail.href} alt=${title}/>
+    <img @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail?.href} alt=${title}/>
     <div class="card-body" @click=${clickOpenDetailView}>
     ${isLibraryListView
       ? html`
         <a class="information-icon">&#9432;</a>
       `
       : html`
-        <a><b id=${entry.id}>${entry.title}</b></a>
-        <p id=${entry.id}>${entry.summary}</p>
+        <a><b id=${entry?.id}>${entry?.title}</b></a>
+        <p id=${entry?.id}>${entry?.summary}</p>
         `}
     </div>
   </li>`}
@@ -519,7 +527,7 @@ const Subject = (category) => {
     const {
       title,
       entries,
-      lastUpdated,
+      updated,
       inUserLibrary,
     } = category;
     const isCoverOnly = false;
@@ -535,7 +543,7 @@ const Subject = (category) => {
     return html`
     ${title !== 'Newest 30 Standard Ebooks' ? html`
       <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
-    ` : html`Last updated: ${new Date(lastUpdated).toDateString()}
+    ` : html`Last updated: ${new Date(updated).toDateString()}
     `}
     <ul class="category-list">
       ${entries.map(entry => {
@@ -736,10 +744,8 @@ const DetailView = (entry) => {
     }
   }
   const cacheBook = async () => {
-      const cache = await caches.open('offline-books');
       const url = `https://standardebooks.org${ebookLink.href}.epub`;
-      const response = await fetch(url);
-      await cache.put(url, response);
+      await fetch(url);
   }
   return html`
     <div class="modal">
@@ -1096,12 +1102,14 @@ function rerender(props) {
         </nav>
       </div>
       <div id="main">
-        ${!isLoading ? TabContent(activeTab) : LoadingMessages(loadingMessageindex)}
+        ${!isLoading ? html`
+          ${TabContent(activeTab)}
+          <footer>
+            <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p>
+            <a class="pointer" @click=${helpHandler}>Help</a>
+          </footer> 
+        ` : LoadingMessages(loadingMessageindex)}
         ${showDetailModal ? DetailView(activeEntry) : html``}
-        <footer>
-          <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p>
-          <a class="pointer" @click=${helpHandler}>Help</a>
-        </footer> 
       </div>
     `
   }

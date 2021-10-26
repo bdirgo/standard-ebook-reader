@@ -135,10 +135,7 @@ class SubjectFeed extends XMLObject {
         this.feed = this.filterFeed(json)
         this.id = this.filterId(this.feed)
         this.title = this.filterTitle(this.feed)
-        this.subtitle = this.filterSubtitle(this.feed)
-        this.linkArray = this.filterLinks(this.feed)
         this.entries = this.filterEntry(this.feed)
-        this.icon = this.filterIcon(this.feed)
         this.updated = new Date(this.filterUpdated(this.feed))
     }
 
@@ -154,22 +151,8 @@ class SubjectFeed extends XMLObject {
         return this.firstChild(this.filterByTag("title", json))
     }
 
-    filterSubtitle(json) {
-        return this.firstChild(this.filterByTag("subtitle", json))
-    }
-
-    filterIcon(json) {
-        return this.firstChild(this.filterByTag("icon", json))
-    }
-
     filterUpdated(json) {
         return this.firstChild(this.filterByTag("updated", json))
-    }
-
-    filterLinks(feed) {
-        return feed
-            .filter(val => this.getTagName(val) === "link")
-            .map(val => new SubjectFeedLink(val))
     }
 
     filterEntry(feed) {
@@ -326,12 +309,32 @@ class BookFeed extends SubjectFeed {
         super(json)
         // TODO: fill this out...content???
         this.entries = this.filterEntry(this.feed)
+        this.linkArray = this.filterLinks(this.feed)
     }
 
     filterEntry(feed) {
         return feed
             .filter(val => this.getTagName(val) === "entry")
             .map(val => new BookFeedEntry(val))
+    }
+
+    filterLinks(feed) {
+        return feed
+            .filter(val => this.getTagName(val) === "link")
+            .map(val => new SubjectFeedLink(val))
+    }
+}
+class BookFeedForEntries extends SubjectFeed {
+    constructor(json) {
+        super(json)
+        // TODO: fill this out...content???
+        this.entries = this.filterEntry(this.feed)
+    }
+
+    filterEntry(feed) {
+        return feed
+            .filter(val => this.getTagName(val) === "entry")
+            .map(val => new SubjectFeedEntryId(val)?.id)
     }
 }
 
@@ -412,7 +415,6 @@ async function fetchSubjects(subjects_url) {
     const text = await response.text()
     const json = xmlConverter.parse(text)
     const subjects = new SubjectFeed(json)
-    myDB.setItem('subjects', subjects)
     return subjects
 }
 
@@ -468,9 +470,6 @@ async function fetchCollections() {
         const entryId = createEntryId(item.repository.url);
         // https://standardebooks.org/ebooks/ford-madox-ford/no-more-parades
         const entry = await bookEntires.getItem(entryId);
-        log(item)
-        log(entryId)
-        log(entry)
         // https://github.com/standardebooks/ford-madox-ford_some-do-not/blob/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
         const opfUrl = RawGithubURL(item.html_url);
         // https://raw.githubusercontent.com/standardebooks/ford-madox-ford_some-do-not/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
@@ -511,23 +510,23 @@ async function fetchNewReleases(new_url) {
     const response = await fetch(new_url)
     const text = await response.text()
     const json = xmlConverter.parse(text)
-    const entry = new BookFeed(json)
+    const entry = new BookFeedForEntries(json)
     myDB.setItem('entriesNew', entry)
     return entry
 }
 
-async function fetchEntries(subjects) {
-    let entries = []
+async function fetchEntriesBySubject(subjects) {
+    let bookFeedEntries = []
     await Promise.all(subjects.entries.map(async (subject) => {
         const url = subject.id
         const res = await fetch(url)
         const text = await res.text()
         const json = xmlConverter.parse(text)
-        const entry = new BookFeed(json)
-        entries.push(entry)
+        const entry = new BookFeedForEntries(json)
+        bookFeedEntries.push(entry)
     }));
     const updated = new Date()
-    const rv = {subjects:entries, updated}
+    const rv = {subjects:bookFeedEntries, updated}
     myDB.setItem('entriesBySubject', rv)
     return rv
 }
@@ -536,11 +535,10 @@ async function createCategroiesFrom(entriesBySubject) {
     // TODO: fix this... localforage has an empty array???
     console.log('finding categories')
     let categoriesFound = []
-    await Promise.all(entriesBySubject.subjects.map(async bookFeed => {
-        await Promise.all(bookFeed.entries.map(async entry => {
+    await Promise.all(entriesBySubject.subjects.map(async subject => {
+        await Promise.all(subject.entries.map(async subjectFeedEntryId => {
+            const entry = await bookEntires.getItem(subjectFeedEntryId);
             const catArray = entry.categories
-            // IS this where we are populating the `bookEntires` db???
-            await bookEntires.setItem(entry.id, entry)
             for (let index = 0; index < catArray.length; index++) {
                 const cat = catArray[index];
                 let foundIndex = categoriesFound.findIndex(val => val?.term === cat.term)
@@ -558,16 +556,12 @@ async function createCategroiesFrom(entriesBySubject) {
             }
         }))
     }))
-    categoriesFound.map(category => {
-        category.entries = [...new Set(category.entries)];
-    })
-    categoriesFound.sort((a, b) => b.entries.length - a.entries.length)
-    console.log('categoriesFound')
-    console.log(categoriesFound)
-    const updated = new Date()
-    const rv = {categories: categoriesFound, updated}
-    await myDB.setItem('entriesByCategory', rv)
-    return rv
+    categoriesFound
+        .map(category => {
+            category.entries = [...new Set(category.entries)];
+        })
+        .sort((a, b) => b.entries.length - a.entries.length)
+    await myDB.setItem('entriesByCategory', {categories: categoriesFound, updated: new Date()})
 }
 
 async function createUserLibrary() {
@@ -669,35 +663,38 @@ async function bookLibraryReducer(state = [], action) {
         case('browse-tab'): {
             const entriesBySubject = await myDB.getItem('entriesBySubject')
             const isOld = lastUpdated(entriesBySubject)
+            let bookLibrary = {
+                subjects: [],
+            }
             if (isOld || action?.shouldForceRefresh) {
                 console.log('fetching new subjects')
                 bookLibrary = await fetchStandardBooks();
-                await createCategroiesFrom(bookLibrary)
             } else {
                 console.log('subjects in storage')
                 bookLibrary = entriesBySubject
             }
-            bookLibrary = bookLibrary.subjects
-                .map(val => {
+            bookLibrary = await Promise.all(bookLibrary.subjects
+                .map(async val => {
+                    const books = await getEntriesFrom(val?.entries ?? [])
                     return {
                         title: val.title,
-                        entries: val.entries,
+                        entries: books,
                         length: val.entries.length,
                     }
-                })
-                .sort(function(a, b) {
-                    var nameA = a.title.toUpperCase(); // ignore upper and lowercase
-                    var nameB = b.title.toUpperCase(); // ignore upper and lowercase
-                    if (nameA < nameB) {
-                      return -1;
-                    }
-                    if (nameA > nameB) {
-                      return 1;
-                    }
-                  
-                    // names must be equal
-                    return 0;
-                });
+                }));
+            bookLibrary.sort(function(a, b) {
+                var nameA = a.title.toUpperCase(); // ignore upper and lowercase
+                var nameB = b.title.toUpperCase(); // ignore upper and lowercase
+                if (nameA < nameB) {
+                    return -1;
+                }
+                if (nameA > nameB) {
+                    return 1;
+                }
+                
+                // names must be equal
+                return 0;
+            });
             return bookLibrary;
         }
         case('new-tab'): {
@@ -707,18 +704,20 @@ async function bookLibraryReducer(state = [], action) {
             if (isOld) {
                 try {
                     console.log('checking for new realeases...')
-                    entriesNew = await fetchNewReleases(new_url)
+                    let entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
-                        title: entriesNew.title,
-                        entries: entriesNew.entries,
-                        lastUpdated: new Date(),
-                        length: entriesNew?.entries?.length,
+                        ...entriesNew,
+                        updated: new Date(),
                     }
                 } catch (err) {
                     console.log('trouble fetching new releases, ', err)
                 }
             }
-            return newEntries
+            const books = await getEntriesFrom(newEntries?.entries ?? [])
+            return {
+                ...newEntries,
+                entries: books,
+            }
         }
         case('collection-tab'): {
             const entriesByCollection = await myDB.getItem('entriesByCollection')
@@ -778,6 +777,7 @@ function activeTabReducer(state = 'LIBRARY', action) {
         case('new-tab'): 
         case('help-tab'):
         case('search-author'):
+        case('search-query'):
         case('search-tab'): {
             return tab;
         }
@@ -801,13 +801,7 @@ async function followedSearchResultsReducer(state = [], action) {
         type,
         query,
     } = action;
-    const subjects = await myDB.getItem('entriesBySubject')
-    const dupBooks = subjects?.subjects?.flatMap(sub => {
-        return sub.entries
-    })
-    const books = Array.from(new Set(dupBooks?.map(a => a.id)))
-        .map(id => dupBooks?.find(a => a.id === id))
-    console.log(query);
+    const books = await getAllBookEntires();
     switch(type) {
         case('library-tab'): {
             let userLibrary = await getUserLibrary();
@@ -876,12 +870,17 @@ async function followedCollectionsReducer(state = [], action) {
         collectionName,
     } = action
     console.log(collectionName);
-    const previewLength = 8;
     switch (type) {
         case('library-tab'): {
             let userLibrary = await getUserLibrary();
-            
             return userLibrary.followedCollections ?? [];
+            // const followedCollections = userLibrary.followedCollections ?? [];
+            // return await Promise.all(followedCollections.map(async collection => {
+            //     return {
+            //         ...collection,
+            //         entries: await getEntriesFrom(collection?.entries)
+            //     }
+            // }));
         }
         case('click-add-collection-to-library'): {
             let userLibrary = await getUserLibrary();
@@ -953,8 +952,13 @@ async function followedSubjectsReducer(state = [], action) {
     switch (type) {
         case('library-tab'): {
             let userLibrary = await getUserLibrary();
-            
-            return userLibrary.followedSubjects ?? [];
+            const followedSubjects = userLibrary.followedSubjects ?? [];
+            return await Promise.all(followedSubjects.map(async subject => {
+                return {
+                    ...subject,
+                    entries: await getEntriesFrom(subject?.entries)
+                }
+            }));
         }
         case('click-add-subject-to-library'): {
             let userLibrary = await getUserLibrary();
@@ -965,11 +969,12 @@ async function followedSubjectsReducer(state = [], action) {
                 console.log('adding subjects to library')
                 const entriesBySubject = await myDB.getItem('entriesBySubject')
                 const isOld = lastUpdated(entriesBySubject)
-                let subject;
+                let subject = {
+                    subjects: [],
+                };
                 if (isOld || action?.shouldForceRefresh) {
                     console.log('fetching new subjects')
                     subject = await fetchStandardBooks();
-                    await createCategroiesFrom(subject)
                 } else {
                     console.log('subjects in storage')
                     subject = entriesBySubject
@@ -1158,10 +1163,12 @@ async function activeCategoryReducer(state = null, action) {
         }
         case('click-subject'): {
             const subs = await myDB.getItem('entriesBySubject')
-            const rv = subs.subjects.filter(val => val.title === categoryTerm)[0];
+            const subject = subs.subjects.filter(val => val.title === categoryTerm)[0];
+            const entries = await getEntriesFrom(subject?.entries)
             const inUserLibrary = await isSubjectInUserLibrary(categoryTerm);
             return {
-                ...rv,
+                ...subject,
+                entries: entries,
                 inUserLibrary
             }
         }
@@ -1172,17 +1179,20 @@ async function activeCategoryReducer(state = null, action) {
             if (isOld) {
                 try {
                     console.log('checking for new realeases...')
-                    entriesNew = await fetchNewReleases(new_url)
+                    let entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
-                        title: entriesNew.title,
-                        entries: entriesNew.entries,
-                        lastUpdated: new Date(),
+                        ...entriesNew,
+                        updated: new Date(),
                     }
                 } catch (err) {
                     console.log('trouble fetching new releases, ', err)
                 }
             }
-            return newEntries
+            const books = await getEntriesFrom(newEntries?.entries ?? [])
+            return {
+                ...newEntries,
+                entries: books,
+            }
         }
         default: {
             let isSubject = await isSubjectInUserLibrary(categoryTerm)
@@ -1229,17 +1239,20 @@ async function activeEntryReducer(state = null, action) {
     }
 }
 
+const getAllBookEntires = async () => {
+    const books = [];
+    await bookEntires.iterate(val => {
+        books.push(val)
+    })
+    return books
+}
+
 async function searchReducer(state = {}, action) {
     const {
         type,
         query,
     } = action;
-    const subjects = await myDB.getItem('entriesBySubject')
-    const dupBooks = subjects?.subjects?.flatMap(sub => {
-        return sub.entries
-    })
-    const books = Array.from(new Set(dupBooks?.map(a => a.id)))
-        .map(id => dupBooks?.find(a => a.id === id))
+    const books = await getAllBookEntires()
     switch(type) {
         case('search-query'):{
             const fuse = new Fuse(books, {
@@ -1306,10 +1319,8 @@ async function initApp(state, action) {
     const {
         currentlyReading,
     } = action
-    await app(state, {
-        type: 'browse-tab',
-        tab: 'BROWSE'
-    });
+    const bookLibrary = await fetchStandardBooks();
+    await createCategroiesFrom(bookLibrary);
     return await app(state, {
         tab: 'LIBRARY',
         type: 'library-tab',
@@ -1355,9 +1366,29 @@ async function app(state = {}, action) {
     }
 }
 
+async function populateBookEntires(subjects) {
+    let bookFeedEntries = []
+    await Promise.all(subjects.entries.map(async (subject) => {
+        const url = subject.id
+        const res = await fetch(url)
+        const text = await res.text()
+        const json = xmlConverter.parse(text)
+        const entry = new BookFeed(json)
+        bookFeedEntries.push(entry)
+    }));
+    const updated = new Date()
+    const entriesBySubject = {subjects:bookFeedEntries, updated}
+    await Promise.all(entriesBySubject.subjects.map(async bookFeed => {
+        await Promise.all(bookFeed.entries.map(async entry => {
+            await bookEntires.setItem(entry.id, entry)
+        }))
+    }))
+}
+
 async function fetchStandardBooks() {
     const subjects = await fetchSubjects(subjects_url)
-    const entriesBySubject = await fetchEntries(subjects)
+    const entriesBySubject = await fetchEntriesBySubject(subjects)
+    await populateBookEntires(subjects)
     return entriesBySubject
 }
 
@@ -1386,10 +1417,10 @@ self.onmessage = async function(event) {
     if (loadingInterval !== null) {
         clearInterval(loadingInterval)
     }
-    loadingInterval = setInterval(() => {
-        console.log('loading...')
-        postLoading()
-    }, LOAD_TIME);
+    // loadingInterval = setInterval(() => {
+    //     console.log('loading...')
+    //     postLoading()
+    // }, LOAD_TIME);
     switch (type) {
         case 'init': {
             console.log('init')
