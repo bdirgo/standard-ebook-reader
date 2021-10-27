@@ -1,0 +1,35 @@
+{
+    "name": "Standard Ebook reader",
+    "short_name": "Standard Ebooks",
+    "description": "Read, download, and browse books from the Standard Ebook library",
+    "start_url": "/",
+    "scope":"/",
+    "display":"standalone",
+    "orientation":"portrait",
+    "theme_color":"#202530",
+    "background_color":"#202530",
+    "icons":[
+        {
+            "src":"/icon.png",
+            "sizes":"512x512",
+            "type":"image/png",
+            "purpose":"maskable"
+        },
+        {
+            "src":"/icon-small.png",
+            "sizes":"128x128",
+            "type":"image/png",
+            "purpose":"maskable"
+        },
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
