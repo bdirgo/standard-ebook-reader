@@ -78,7 +78,14 @@ if ('serviceWorker' in navigator) {
             })
     })
 }
-
+function toggleSideNav() {
+  const sideNav = document.getElementById("mySidenav")
+  if (sideNav.classList.contains("open")) {
+    sideNav.classList.remove("open");
+  } else {
+    sideNav.classList.add("open");
+  }
+}
 function unregister() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready
@@ -353,14 +360,16 @@ const ItemView = (entry, isLibraryListView = false) => {
   const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="library-list-image">
-    <img @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail?.href} alt=${title}/>
+    <a href="" @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} >
+      <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail?.href} alt=${title}/>
+    </a>
     <div class="card-body" @click=${clickOpenDetailView}>
     ${isLibraryListView
       ? html`
-        <a class="information-icon">&#9432;</a>
+        <a href="" class="information-icon">&#9432;</a>
       `
       : html`
-        <a><b id=${entry?.id}>${entry?.title}</b></a>
+        <a href=""><b id=${entry?.id}>${entry?.title}</b></a>
         <p id=${entry?.id}>${entry?.summary}</p>
         `}
     </div>
@@ -433,7 +442,7 @@ const SubjectEntry = (entry, isCoverOnly = true, subjectTitle = '') => {
         ? ''
         : html`
         <div class="card-body">
-        <b id=${entry?.id}>${entry?.title}</b>
+        <a href=""><b id=${entry?.id}>${entry?.title}</b></a>
         <p id=${entry?.id}>${entry?.summary}</p>
         </div>`}
     </li>
