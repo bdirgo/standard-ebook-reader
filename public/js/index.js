@@ -2,6 +2,7 @@ import { html, render } from 'https://unpkg.com/lit-html?module';
 
 const w = new Worker("./js/appState.js");
 let state = history.state;
+let lastActiveTab = ''
 const log = console.log;
 const populateStorage = (id, value) => {
     window.localStorage.setItem(id, value);
@@ -91,6 +92,9 @@ function unregister() {
 // unregister()
 
 function initializeApp (state, searchParams) {
+  if (state?.tab === "LIBRARY" || state?.tab === "NEW" || state?.tab === "SEARCH") {
+    lastActiveTab = state.tab
+  }
   window.history.replaceState(state, "", `?${searchParams}`);
   initialRenderCall();
 }
@@ -206,6 +210,9 @@ const SearchBar = (queryResults) => {
             query,
         }
         const searchParams = new URLSearchParams(action);
+        if (action?.tab === "LIBRARY" || action?.tab === "NEW" || action?.tab === "SEARCH") {
+          lastActiveTab = action.tab
+        }
         window.history.pushState(action, "", `?${searchParams}`);
         callRender(action)
     },
@@ -236,29 +243,56 @@ const SearchBar = (queryResults) => {
             }</ul>`
   }`
 }
-const LibraryNavigation = () => {
+const LibraryNavigation = (isActive = false) => {
   const clickHandler = clickHandlerCreator({
           type: 'library-tab',
           tab: 'LIBRARY'
         })
         // square house 
         // &#8962;
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:18px;padding-right:4px;'>&#127968;</span><span style='font-size:18px;padding-left:4px;'>Home</span></button>`
+        // <div style='font-size:18px;padding-right:4px;'>&#127968;</div>
+  return html`
+  <button @click=${clickHandler} class="box button ${isActive ? 'active' : ''}">
+    <div class="icon icon-home"></div>
+    <div class="button-text">Home</div>
+  </button>
+  `
 }
-const NewBrowseNavigation = () => {
+const NewBrowseNavigation = (isActive = false) => {
   const clickHandler = clickHandlerCreator({
           type: 'new-tab',
           tab: 'NEW'
-          // type: 'click-new',
-          // // TODO: GET RID OF THIS MAGIC STRING
-          // categoryTerm: "Newest 30 Standard Ebooks",
-          // // END TODO: GET RID OF THIS MAGIC STRING
-          // tab: 'SUBJECT',
         })
         // star
         // &#9734; 
-        return html`<button @click=${clickHandler} class="box button">&nbsp;<span style='font-size:18px;padding-right:4px;'>&#128218;</span><span style='font-size:18px;padding-left:4px;'>Browse</span></button>`
-      }
+        // <div style='font-size:18px;padding-right:4px;'>&#128218;</div>
+    return html`
+    <button @click=${clickHandler} class="box button ${isActive ? 'active' : ''}">
+      <div class="icon icon-browse"></div>
+      <div class="button-text">Browse</div>
+    </button>
+    `
+  }
+const SearchNavigation = (isActive = false) => {
+    const clickHandler = clickHandlerCreator({
+      type: 'search-tab',
+      tab: 'SEARCH'
+    })
+    // outline search
+    // &#8981;
+    // left facing icon
+    // &#128269;
+    // right facing icon
+    // &#128270;
+    // <div style='font-size:18px; padding-right:4px;'>&#128269;</div>
+    
+    return html`
+    <button @click=${clickHandler} class="box button  ${isActive ? 'active' : ''}">
+        <div class="icon icon-search"></div>
+        <div class="button-text">Search</div>
+    </button>
+    `
+}
 const CollectionsNavigation = () => {
   const clickHandler = clickHandlerCreator({
           type: 'collection-tab',
@@ -272,20 +306,6 @@ const BrowseNavigation = () => {
     tab: 'BROWSE'
   })
   return html`<button @click=${clickHandler} class="box button">Browse Subjects</button>`
-}
-const SearchNavigation = () => {
-  const clickHandler = clickHandlerCreator({
-    type: 'search-tab',
-    tab: 'SEARCH'
-  })
-  // outline search
-  // &#8981;
-  // left facing icon
-  // &#128269;
-  // right facing icon
-  // &#128270;
-  
-  return html`<button @click=${clickHandler} class="box button"><span style='font-size:18px; padding-right:4px;'>&#128269;</span><span style='font-size:18px; padding-left:4px;'>Search</span></button>`
 }
 const HowTo = () => html`
   <ol>
@@ -422,7 +442,6 @@ const New = (subject) => {
   const {
     title,
     entries,
-    length,
   } = subject;
   const clickHandler = clickHandlerCreator({
     type: 'click-new',
@@ -430,7 +449,7 @@ const New = (subject) => {
     tab: 'SUBJECT',
   })
   return html`
-  ${FollowTitle(`${title} (${length})`, clickHandler)}
+  ${FollowTitle(`${title} ${entries?.length ? `(${entries.length})` : ''}`, clickHandler)}
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -451,7 +470,7 @@ const Collection = (subject) => {
   })
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
-  <h3 class="pointer" @click=${clickHandler}>${title} (${length})</h3>
+  <h3 class="pointer" @click=${clickHandler}><a href="">${title} (${length})</a></h3>
   <ul class="subject-list">
     ${list.map(entry => {
       return SubjectEntry(entry)
@@ -503,7 +522,7 @@ const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}) => {
     (isSubject && clickSubject)
     || (isAuthor && clickAuthor)
     || (isCategory && clickCategory)
-    || (isCollection && clickCollection)}>${title} ${length ? `(${length})` : ''}</h3>
+    || (isCollection && clickCollection)}><a href="">${title} ${length ? `(${length})` : ''}</a></h3>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -647,7 +666,7 @@ const ViewAuthorArray = (authorArray) => {
       tab:'AUTHOR',
       query: author.name,
     })
-    return html`<p><a class="pointer" @click=${clickAuthor}>${author.name}</a></p>`
+    return html`<p><a href="" class="pointer" @click=${clickAuthor}>${author.name}</a></p>`
   })
 }
 
@@ -749,11 +768,11 @@ const DetailView = (entry) => {
     <div class="modal">
       <div class="modal-content">
         <button @click=${clickClose} class="close">X</button>
-        <a @click=${clickAdd}>
+        <a href="" @click=${clickAdd}>
           <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
         </a>
         <div>
-          <h2 class="pointer"><a @click=${clickAdd}>${title}</a></h2>
+          <h2 class="pointer"><a href="" @click=${clickAdd}>${title}</a></h2>
           <button @click=${shareHandler} class="share ${wasCopySuccessfull ? 'copied':''}">${wasCopySuccessfull ? html`&#9989;` : html`&#128279;`}</button>
           <button class="follow" @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
@@ -781,6 +800,9 @@ const clickHandlerCreator = (action, cb = () => {}) => {
     handleEvent(e) {
       e.preventDefault();
       const searchParams = new URLSearchParams(action);
+      if (action?.tab === "LIBRARY" || action?.tab === "NEW" || action?.tab === "SEARCH") {
+        lastActiveTab = action.tab
+      }
       window.history.pushState(action, "", `?${searchParams}`);
       callRender(action)
       cb()
@@ -800,7 +822,7 @@ const CollectionList = (collection) => {
       categoryTerm: cat.term,
       tab: 'COLLECTION',
     })
-    return html`<li class="category-list-item pointer" @click=${clickHandler}><a>${cat.term}</a> #${cat.position}</li>`
+    return html`<li class="category-list-item pointer" @click=${clickHandler}><a href="">${cat.term}</a> #${cat.position}</li>`
   })}
   </ul>
   `
@@ -815,7 +837,7 @@ const CategoryList = (categories) => {
       categoryTerm: cat.term,
       tab: 'CATEGORY',
     })
-    return html`<li class="category-list-item pointer" @click=${clickHandler}><a >${cat.term}</a></li>`
+    return html`<li class="category-list-item pointer" @click=${clickHandler}><a href="">${cat.term}</a></li>`
   })}
   </ul>
   `
@@ -823,7 +845,7 @@ const CategoryList = (categories) => {
 const FollowTitle = (titleText, clickHandler, linkText = 'See All') => html`
 <div class="flex-title">
   <h2 @click=${clickHandler}>
-    ${titleText}
+  <a href="">${titleText}</a>
   </h2>
   <h2>
     <strong class="pointer see-all" @click=${clickHandler}>${linkText} ></strong>
@@ -904,8 +926,8 @@ const FollowedCategories = (followedCategories) => {
   `
   : html``
 }
-const H1Title = (props) => {
-  const {activeTab, searchResults, activeCategory} = props;
+const Breadcrumbs = (props) => {
+  const {activeTab, activeCategory} = props;
 
   const browseHandler = clickHandlerCreator({
     type: 'new-tab',
@@ -923,16 +945,8 @@ const H1Title = (props) => {
   const COLLECTIONTITLE = "By Collection"
   const SUBJECTTITLE = "By Subject"
   switch(activeTab) {
-    case('AUTHOR'): {
-      return html`
-      <h1 class="pointer">
-      ${toTitleCase(searchResults.query)}
-      </h1>
-      `
-    }
     case('BROWSE'):{
       return html`
-      <h1 class="pointer">Subjects</h1>
       <div class="top-nav__breadcrumb">
         <a @click=${browseHandler}>${BROWSETITLE}</a> | ${SUBJECTTITLE}
       </div>
@@ -941,13 +955,11 @@ const H1Title = (props) => {
     case('SUBJECT'):{
       return activeCategory?.title === "Newest 30 Standard Ebooks" ? (
         html`
-        <h1 class="pointer">${activeCategory?.title}</h1>
         <div class="top-nav__breadcrumb">
           <a @click=${browseHandler}>${BROWSETITLE}</a> | ${activeCategory?.title}
         </div>
         `
       ) : (html`
-      <h1 class="pointer">${activeCategory?.title}</h1>
       <div class="top-nav__breadcrumb">
         <a @click=${browseHandler}>${BROWSETITLE}</a> | <a @click=${allSubjectsHandler}>${SUBJECTTITLE}</a> | ${activeCategory?.title}
       </div>
@@ -955,7 +967,6 @@ const H1Title = (props) => {
     }
     case('COLLECTIONS'): {
       return html`
-      <h1 class="pointer">${toTitleCase(activeTab)}</h1>
       <div class="top-nav__breadcrumb">
         <a @click=${browseHandler}>${BROWSETITLE}</a> | ${COLLECTIONTITLE}
       </div>
@@ -963,33 +974,51 @@ const H1Title = (props) => {
     }
     case('COLLECTION'): {
       return html`
-      <h1 class="pointer">${activeCategory?.title}</h1>
       <div class="top-nav__breadcrumb">
         <a @click=${browseHandler}>${BROWSETITLE}</a> | <a @click=${allCollectionsHandler}>${COLLECTIONTITLE}</a> | ${activeCategory?.title}
       </div>
       `
     }
+    default: {
+      return html``
+    }
+  }
+}
+const SideNavTitle = (props) => {
+  const {activeTab, searchResults, activeCategory} = props
+  const BROWSETITLE = "Browse Books"
+  switch(activeTab) {
+    case('AUTHOR'): {
+      return html`
+      ${toTitleCase(searchResults.query)}
+      `
+    }
+    case('BROWSE'):{
+      return html`
+      Subjects
+      `
+    }
+    case('SUBJECT'):
+    case('COLLECTION'): 
     case('CATEGORY'): {
       return html`
-      <h1 class="pointer">${activeCategory?.title}</h1>
+      ${activeCategory?.title}
       `
     }
     case('NEW'): {
       return html`
-      <h1 class="pointer">${BROWSETITLE}</h1>
+      ${BROWSETITLE}
       `
     }
     case('LIBRARY') : {
       return html`
-      <h1 class="pointer">
       My Library
-      </h1>`
+      `
     }
     default: {
       return html`
-      <h1 class="pointer">
       ${toTitleCase(activeTab ? activeTab : 'Standard Ebooks')}
-      </h1>`
+      `
     }
   }
 }
@@ -1013,7 +1042,6 @@ const LoadingMessages = (index = 0) => {
   return msgs[index]
 }
 function rerender(props) {
-  log('re Render')
   const {
     detail = '{}',
   } = props
@@ -1031,7 +1059,6 @@ function rerender(props) {
       followedSearchResults,
       searchResults,
       showDetailModal,
-      showSideBarMenu,
       isLoading,
       loadingMessageindex,
     } = state
@@ -1087,18 +1114,34 @@ function rerender(props) {
       type:'help-tab',
       tab: 'HELP'
     })
+    if (
+      (lastActiveTab === '' || lastActiveTab !== "LIBRARY" || lastActiveTab !== "NEW" || lastActiveTab !== "SEARCH") &&
+      (activeTab === "LIBRARY" || activeTab === "NEW" || activeTab === "SEARCH")
+    ) {
+      lastActiveTab = activeTab
+    }
     return html`
-      ${H1Title({activeTab, searchResults, activeCategory})}
-      <div id="sidebar" class="sidebar ${showSideBarMenu}">
+      <div class="title-bar">
+        <span class="open-nav-button" onclick="toggleSideNav()">&#9776;</span>
+        <h1 class="title">
+          ${SideNavTitle({activeTab, searchResults, activeCategory})}
+        </h1>
+        <button name="Toggle dark mode" role="button" value="light" id="dark-button">&nbsp;</button>
+      </div>
+      <div id="mySidenav" class="sidenav">
+        <span class="open-nav-button" onclick="toggleSideNav()">&#9776;</span>
+        <h2 class="title">
+          ${SideNavTitle({activeTab, searchResults, activeCategory})}
+        </h2>
         <nav class="parent-nav">
           <div class="parent">
-            ${LibraryNavigation()}
-            ${NewBrowseNavigation()}
-            ${SearchNavigation()}
+            ${LibraryNavigation(lastActiveTab === "LIBRARY")}
+            ${NewBrowseNavigation(lastActiveTab === "NEW")}
+            ${SearchNavigation(lastActiveTab === "SEARCH")}
           </div>
         </nav>
       </div>
-      <div id="main">
+      <div id="main" class="main">
         ${!isLoading ? html`
           ${TabContent(activeTab)}
           <footer>
@@ -1108,6 +1151,13 @@ function rerender(props) {
         ` : LoadingMessages(loadingMessageindex)}
         ${showDetailModal ? DetailView(activeEntry) : html``}
       </div>
+      <nav class="parent-nav mobile-nav">
+        <div class="parent">
+          ${LibraryNavigation(lastActiveTab === "LIBRARY")}
+          ${NewBrowseNavigation(lastActiveTab === "NEW")}
+          ${SearchNavigation(lastActiveTab === "SEARCH")}
+        </div>
+      </nav>
     `
   }
   console.log(state)
@@ -1172,3 +1222,9 @@ document.addEventListener('swiped-up', function(e) {
     }
   }
 });
+const sideNav = document.getElementById("mySidenav")
+sideNav.addEventListener('click',function(event) {
+  if (event.target.closest('button')) {
+    sideNav.classList.remove("open")
+  }
+},false)

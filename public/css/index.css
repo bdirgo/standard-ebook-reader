@@ -11,12 +11,13 @@ nav a, footer div a {
 }
 
 nav.parent-nav {
-    background: #fff;
+    background: #ececf0;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 900;
     position: fixed;
+    padding-top: 2px;
 }
 
 footer {
@@ -70,7 +71,7 @@ body {
 	background-color: rgb(32, 37, 48);
 }
 .dark nav.parent-nav {
-	background-color: rgb(32,37,48);
+	background-color: rgb(42, 45, 51);
 	color: whitesmoke;
 }
 
@@ -108,6 +109,41 @@ img, video{
 nav {
 	padding: 0 0 20px;
 }
+.icon {
+    line-height: 22px;
+}
+.icon-search::before {
+	/* content: "\01F50D"; */
+	content: "\002315";
+    font-size: 55px;
+    vertical-align: middle;
+}
+.icon-browse::before {
+	/* content: "\01F4DA"; */
+	content: "\002606";
+	font-size: 30px;
+    vertical-align: middle;
+}
+.icon-home::before {
+	/* content: "\01F3E0"; */
+	content: "\002302";
+	font-size: 50px;
+}
+.parent-nav button.box.button.active {
+	color: #1271e6;
+}
+.dark .parent-nav button.box.button.active {
+	color: #1d6dd0;
+}
+/* 
+li a {
+	text-decoration: none;
+	color: inherit;
+} */
+
+a {
+	text-decoration: none;
+}
 
 button.button {
 	background-color: rgb(188, 223, 254);
@@ -115,6 +151,26 @@ button.button {
 	color: #1d6dd0;
 	padding: 4px 0;
 	cursor: pointer;
+}
+.parent-nav button.box.button {
+	border: none;
+	color: #797979;
+	background-color: transparent;
+}
+
+.button-text {
+	font-size:18px;
+	padding-left:4px;
+}
+
+.dark .parent-nav button.box.button {
+	color: lightgray;
+}
+
+.parent-nav .parent {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .root.loading {
@@ -140,15 +196,13 @@ a.nav-link {
 
 .box.button {
 	flex: 1 1; 
-	height: 50px;
+	height: 65px;
 	font-size: 16px;
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.results {
-	margin-top: 2rem;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .page-title {
@@ -207,4 +261,159 @@ h2 strong {
 .flex-title {
 	display: flex;
 	justify-content: space-between;
+}
+
+.open-nav-button {
+	display: none;
+	visibility: hidden;
+}
+
+.sidenav {
+	height: 100%;
+	width: 0;
+	position: fixed;
+	z-index: 1;
+	top: 0;
+	left: 0;
+	background-color: #fff;
+	overflow-x: hidden;
+	transition: 0.5s;
+	padding-top: 60px;
+	visibility: hidden;
+  }
+  .dark .sidenav {
+	  background-color: rgb(42, 45, 51);
+  }
+  
+  .sidenav a {
+	padding: 8px 8px 8px 32px;
+	text-decoration: none;
+	font-size: 25px;
+	color: #818181;
+	display: block;
+	transition: 0.3s;
+  }
+  
+  .sidenav a:hover {
+	color: #f1f1f1;
+  }
+  
+  .sidenav .closebtn {
+	position: absolute;
+	top: 0;
+	right: 25px;
+	font-size: 36px;
+	margin-left: 50px;
+  }
+  
+  @media screen and (max-height: 450px) {
+	.sidenav {padding-top: 15px;}
+	.sidenav a {font-size: 18px;}
+  }
+
+@media only screen and (min-width: 768px) {
+
+  	.sidenav.open {
+		visibility:visible;
+		width: 312px;
+	}
+	#dark-button {
+		position: initial;
+	}
+	.title-bar {
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+	.title-bar .title {
+		display: inline-block;
+		font-size: 1.17em;
+		margin-block-start: 1em;
+		margin-block-end: 1em;
+		margin-inline-start: 0px;
+		margin-inline-end: 0px;
+		font-weight: bold;
+	}
+	.open-nav-button {
+		display: inline-block;
+		visibility: visible;
+		font-size:30px;
+		cursor:pointer
+	}
+	.title-bar h1 {
+		display: inline-block;
+	}
+	.sidenav {
+		padding-left: 24px;
+		padding-top: 18px;
+	}
+	.sidenav .title {
+		display: block;
+		font-size: 2em;
+		margin-block-start: 0.67em;
+		margin-block-end: 0.67em;
+		margin-inline-start: 0px;
+		margin-inline-end: 0px;
+		font-weight: bold;
+	}
+	.top-nav__breadcrumb {
+		display: none;
+	}
+	nav.parent-nav {
+		position: initial;
+		background-color: transparent;
+	}
+	.parent-nav .parent {
+		flex-direction: column;
+	}
+	.mobile-nav {
+		display: none;
+	}
+	.icon {
+		min-width: 40px;
+	}
+	button.box.button {
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+		max-width: 248px;
+		min-height: 45px;
+	}
+
+	.button-text {
+		padding-left:12px;
+	}
+}
+
+@media only screen and (min-width: 1024px) {
+	.sidenav {
+		padding-top: 45px;
+		visibility:visible;
+		width: 280px;
+	}
+	.main {
+		transition: 0.5s;
+		margin-left: 300px;
+	}
+	.title-bar {
+		margin-left: 300px;
+	}
+	.title-bar .title {
+		display: inline-block;
+		font-size: 1.5em;
+		margin-block-start: 0.83em;
+		margin-block-end: 0.83em;
+		margin-inline-start: 0px;
+		margin-inline-end: 0px;
+		font-weight: bold;
+	}
+	.sidenav .title {
+		visibility: hidden;
+		display: none;
+	}
+	.open-nav-button {
+		visibility: hidden;
+		display: none;
+	}
 }

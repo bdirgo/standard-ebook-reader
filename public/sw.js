@@ -1,4 +1,4 @@
-const cacheName = 'cache-v1.5.6g';
+const cacheName = 'cache-v1.5.6i';
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [
     `/`,

@@ -707,6 +707,7 @@ async function bookLibraryReducer(state = [], action) {
                     let entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
                         ...entriesNew,
+                        length: 30,
                         updated: new Date(),
                     }
                 } catch (err) {
@@ -1182,6 +1183,7 @@ async function activeCategoryReducer(state = null, action) {
                     let entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
                         ...entriesNew,
+                        length: 30,
                         updated: new Date(),
                     }
                 } catch (err) {
