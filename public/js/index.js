@@ -1,4 +1,5 @@
 import { html, render } from 'https://unpkg.com/lit-html?module';
+import config from './config.js'
 
 const w = new Worker("./js/appState.js");
 let state = history.state;
@@ -333,6 +334,7 @@ ${HowToFollow()}
 <p>Clicking the Moon/Sun button will toggle the site into dark mode</p>
 <p>When reading clicking the chapter title at the top of the screen will bring up a chapter selection menu</p>
 <p>If you toggle dark mode while reading a book, you may need to refresh the page for the colors to load correctly.</p>
+<small>version: ${config.version}</small>
 `
 
 const ItemView = (entry, isLibraryListView = false) => {
