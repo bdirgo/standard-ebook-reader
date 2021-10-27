@@ -1,6 +1,6 @@
 {
-    "name": "Standard Ebook reader",
-    "short_name": "Standard Ebooks",
+    "name": "Standard Ebook Reader",
+    "short_name": "Standard Books",
     "description": "Read, download, and browse books from the Standard Ebook library",
     "start_url": "/",
     "scope":"/",
@@ -30,6 +30,11 @@
             "src": "/android-chrome-512x512.png",
             "sizes": "512x512",
             "type": "image/png"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
         }
-    ]
+]
 }
