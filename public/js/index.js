@@ -78,14 +78,6 @@ if ('serviceWorker' in navigator) {
             })
     })
 }
-function toggleSideNav() {
-  const sideNav = document.getElementById("mySidenav")
-  if (sideNav.classList.contains("open")) {
-    sideNav.classList.remove("open");
-  } else {
-    sideNav.classList.add("open");
-  }
-}
 function unregister() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready
