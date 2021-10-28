@@ -533,7 +533,7 @@ async function fetchEntriesBySubject(subjects) {
 
 async function createCategroiesFrom(entriesBySubject) {
     // TODO: fix this... localforage has an empty array???
-    console.log('finding categories')
+    // console.log('finding categories')
     let categoriesFound = []
     await Promise.all(entriesBySubject.subjects.map(async subject => {
         await Promise.all(subject.entries.map(async subjectFeedEntryId => {
@@ -609,7 +609,7 @@ async function userLibraryReducer(state = [], action) {
                 return v.id === entryId
             })
             if (alreadyInLibrary.length === 0) {
-                console.log('adding entry to library')
+                // console.log('adding entry to library')
                 newEntry.inUserLibrary = true;
                 try {
                     userLibrary.entries.push(newEntry) 
@@ -667,10 +667,10 @@ async function bookLibraryReducer(state = [], action) {
                 subjects: [],
             }
             if (isOld || action?.shouldForceRefresh) {
-                console.log('fetching new subjects')
+                // console.log('fetching new subjects')
                 bookLibrary = await fetchStandardBooks();
             } else {
-                console.log('subjects in storage')
+                // console.log('subjects in storage')
                 bookLibrary = entriesBySubject
             }
             bookLibrary = await Promise.all(bookLibrary.subjects
@@ -700,10 +700,10 @@ async function bookLibraryReducer(state = [], action) {
         case('new-tab'): {
             let newEntries = await myDB.getItem('entriesNew')
             const isOld = lastUpdated(newEntries, 1.5)
-            console.log(isOld)
+            // console.log(isOld)
             if (isOld) {
                 try {
-                    console.log('checking for new realeases...')
+                    // console.log('checking for new realeases...')
                     let entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
                         ...entriesNew,
@@ -724,10 +724,10 @@ async function bookLibraryReducer(state = [], action) {
             const entriesByCollection = await myDB.getItem('entriesByCollection')
             const isOld = lastUpdated(entriesByCollection)
             if (isOld || action?.shouldForceRefresh) {
-                console.log('repopulating collections')
+                // console.log('repopulating collections')
                 bookLibrary = await fetchCollections()
             } else {
-                console.log('collections in storage')
+                // console.log('collections in storage')
                 bookLibrary = entriesByCollection
             }
             bookLibrary = bookLibrary.collections
@@ -815,7 +815,7 @@ async function followedSearchResultsReducer(state = [], action) {
                 return v.title === query
             })
             if (alreadyInLibrary.length === 0) {
-                console.log('adding search results to library')
+                // console.log('adding search results to library')
                 
                 const fuse = new Fuse(books, {
                     keys: ['authorArray.name'],
@@ -833,9 +833,9 @@ async function followedSearchResultsReducer(state = [], action) {
                     length: entries.length,
                     inUserLibrary: true,
                 }
-                console.log(searchResults)
-                console.log(collection)
-                console.log(userLibrary)
+                // console.log(searchResults)
+                // console.log(collection)
+                // console.log(userLibrary)
                 let newEntry = collection
                 try {
                     userLibrary.followedSearchResults.push(newEntry) 
@@ -888,16 +888,16 @@ async function followedCollectionsReducer(state = [], action) {
             const alreadyInLibrary = userLibrary.followedCollections.filter(v => {
                 return v.title === collectionName
             })
-            console.log(alreadyInLibrary);
+            // console.log(alreadyInLibrary);
             if (alreadyInLibrary.length === 0) {
-                console.log('adding collection to library')
+                // console.log('adding collection to library')
                 const entriesByCollection = await myDB.getItem('entriesByCollection')
                 const isOld = lastUpdated(entriesByCollection)
                 if (isOld || action?.shouldForceRefresh) {
-                    console.log('repopulating collections')
+                    // console.log('repopulating collections')
                     bookLibrary = await fetchCollections()
                 } else {
-                    console.log('collections in storage')
+                    // console.log('collections in storage')
                     bookLibrary = entriesByCollection
                 }
                 collection = bookLibrary.collections
@@ -913,9 +913,9 @@ async function followedCollectionsReducer(state = [], action) {
                             inUserLibrary: true,
                         }
                     })[0]
-                console.log(bookLibrary)
-                console.log(collection)
-                console.log(userLibrary)
+                // console.log(bookLibrary)
+                // console.log(collection)
+                // console.log(userLibrary)
                 let newEntry = collection
                 try {
                     userLibrary.followedCollections.push(newEntry) 
@@ -930,7 +930,7 @@ async function followedCollectionsReducer(state = [], action) {
             let userLibrary = await getUserLibrary();
             const newCollections = userLibrary.followedCollections
                 .filter(v => v.title !== collectionName)
-            console.log(newCollections);
+            // console.log(newCollections);
             userLibrary.followedCollections = newCollections
             await myDB.setItem('userLibrary', userLibrary)
 
@@ -967,17 +967,17 @@ async function followedSubjectsReducer(state = [], action) {
                 return v.title === subjectName
             })
             if (alreadyInLibrary.length === 0) {
-                console.log('adding subjects to library')
+                // console.log('adding subjects to library')
                 const entriesBySubject = await myDB.getItem('entriesBySubject')
                 const isOld = lastUpdated(entriesBySubject)
                 let subject = {
                     subjects: [],
                 };
                 if (isOld || action?.shouldForceRefresh) {
-                    console.log('fetching new subjects')
+                    // console.log('fetching new subjects')
                     subject = await fetchStandardBooks();
                 } else {
-                    console.log('subjects in storage')
+                    // console.log('subjects in storage')
                     subject = entriesBySubject
                 }
                 subject = subject.subjects
@@ -993,8 +993,8 @@ async function followedSubjectsReducer(state = [], action) {
                             inUserLibrary: true,
                         }
                     })[0]
-                console.log(subject)
-                console.log(userLibrary)
+                // console.log(subject)
+                // console.log(userLibrary)
                 let newEntry = subject
                 try {
                     userLibrary.followedSubjects.push(newEntry) 
@@ -1055,12 +1055,12 @@ async function followedCategoriesReducer(state = [], action) {
                 return v.title === categoryName
             })
             if (alreadyInLibrary.length === 0) {
-                console.log('adding subjects to library')
+                // console.log('adding subjects to library')
                 const cats = await myDB.getItem('entriesByCategory')
                 const category = cats.categories.filter(val => val.term === categoryName)[0];
                 category.inUserLibrary = true;
-                console.log(category)
-                console.log(userLibrary)
+                // console.log(category)
+                // console.log(userLibrary)
                 let newEntry = category
                 try {
                     userLibrary.followedCategories.push(newEntry) 
@@ -1176,10 +1176,9 @@ async function activeCategoryReducer(state = null, action) {
         case('click-new'): {
             let newEntries = await myDB.getItem('entriesNew')
             const isOld = lastUpdated(newEntries, 1.5)
-            console.log(isOld)
             if (isOld) {
                 try {
-                    console.log('checking for new realeases...')
+                    // console.log('checking for new realeases...')
                     let entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
                         ...entriesNew,
@@ -1263,7 +1262,7 @@ async function searchReducer(state = {}, action) {
             }
         }
         case('click-remove-search-results-from-library'): {
-            console.log('searchReducer click remove results');
+            // console.log('searchReducer click remove results');
             return {
                 ...state,
                 query,
@@ -1271,7 +1270,7 @@ async function searchReducer(state = {}, action) {
             }
         }
         case('search-author'):{
-            console.log('search-author');
+            // console.log('search-author');
             const fuse = new Fuse(books, {
                 keys: ['authorArray.name'],
                 threshold: 0.1,
@@ -1287,7 +1286,7 @@ async function searchReducer(state = {}, action) {
         }
         default:
             const inUserLibrary = await isResultInUserLibrary(query);
-            console.log('searchReducer default');
+            // console.log('searchReducer default');
             return {
                 ...state,
                 inUserLibrary,
@@ -1416,7 +1415,7 @@ self.onmessage = async function(event) {
         clearInterval(loadingInterval)
     }
     loadingInterval = setInterval(() => {
-        console.log('loading...')
+        // console.log('loading...')
         postLoading()
     }, LOAD_TIME);
     switch (type) {
@@ -1430,8 +1429,6 @@ self.onmessage = async function(event) {
                 activeCategory: null,
             }
             state = await initApp(state, parsedPayload.action)
-            log(state?.userLibrary?.currentlyReading)
-            log(state?.userLibrary?.entries)
             if (
                 (
                     state?.userLibrary?.currentlyReading?.length === 0 &&
@@ -1442,7 +1439,6 @@ self.onmessage = async function(event) {
                     state?.userLibrary?.entries === undefined
                 )
             ) {
-                console.log('no currently reading');
                 state = await app(state, {
                     tab: 'NEW',
                     type: 'new-tab',

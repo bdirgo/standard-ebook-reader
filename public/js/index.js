@@ -4,6 +4,9 @@ import config from './config.js'
 const w = new Worker("./js/appState.js");
 let state = history.state;
 let lastActiveTab = ''
+let previousAction = null;
+const standardURL = 'https://standardebooks.org'
+
 const log = console.log;
 const populateStorage = (id, value) => {
     window.localStorage.setItem(id, value);
@@ -71,7 +74,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', {type: 'module'})
             .then(reg => {
-                console.log("Registered!", reg)
+                // console.log("Registered!", reg)
                     // registration worked
             }).catch(err => {
                 console.log('Registration failed with ' + err);
@@ -85,18 +88,30 @@ function unregister() {
                 registration.unregister();
             })
             .catch((error) => {
-                console.error(error.message);
+                // console.error(error.message);
             });
     }
 }
 // unregister()
 
-function initializeApp (state, searchParams) {
-  if (state?.tab === "LIBRARY" || state?.tab === "NEW" || state?.tab === "SEARCH") {
-    lastActiveTab = state.tab
+function initializeApp(initialState, searchParams) {
+  if (initialState?.tab === "LIBRARY" || initialState?.tab === "NEW" || initialState?.tab === "SEARCH") {
+    lastActiveTab = initialState.tab
   }
-  window.history.replaceState(state, "", `?${searchParams}`);
-  initialRenderCall();
+  window.history.pushState(initialState, "", `?${searchParams}`);
+  const hasPath = Array.from(searchParams).length > 0
+  if (hasPath) {
+    state = initialState;
+    initialRenderCall(initialState);
+  } else {
+    let action = {
+      tab: 'NEW',
+      type: 'new-tab',
+    }
+    const searchParams = new URLSearchParams(action);
+    window.history.pushState(action, "", `?${searchParams}`);
+    initialRenderCall(action)
+  }
 }
 let displayMode = 'browser tab';
 window.addEventListener('DOMContentLoaded', () => {
@@ -107,7 +122,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
         displayMode = 'standalone';
     }
-    console.log('DISPLAY_MODE_LAUNCH:', displayMode);
+    // console.log('DISPLAY_MODE_LAUNCH:', displayMode);
 
 });
 
@@ -147,12 +162,13 @@ const getCurrentlyReadingStorage = () => {
     }
 }
 
-const initialRenderCall = () => {
-  log('initial call render')
+const initialRenderCall = (state) => {
+  // log('initial call render')
   w.postMessage({
       type: "init",
       payload: JSON.stringify({
           action: {
+              ...state,
               currentlyReading: getCurrentlyReadingStorage()
           }
       })
@@ -160,17 +176,21 @@ const initialRenderCall = () => {
 }
 
 const callRender = (state) => {
+  // log('call render')
   const payload = {
     action: {
       ...state,
       currentlyReading:getCurrentlyReadingStorage()
     },
   }
+  // if (state?.tab !== undefined) {
+  //   previousAction = state
+  // }
   w.postMessage({type:'click', payload:JSON.stringify(payload)})
 }
 
 window.onload = function () {
-  log('onload')
+  // log('onload')
   const url = new URL(window.location.href);
   const searchParams = new URLSearchParams(url.search);
   const urlAction = Object.fromEntries(searchParams);
@@ -178,10 +198,20 @@ window.onload = function () {
 }
 
 window.onpopstate = function (event) {
-  log('onpopstate')
+  // log('onpopstate')
   if (event.state) {
     state = event.state
   }
+  // if (previousAction !== null) {
+  //     if (state.type === 'click-title' && previousAction.type !== 'click-title') {
+  //         log('previous action')
+  //         log(previousAction)
+  //         callRender({
+  //           ...previousAction,
+  //           isPreviousAction: true,
+  //         })
+  //     }
+  // }
   callRender(state)
 }
 
@@ -349,11 +379,10 @@ const ItemView = (entry, isLibraryListView = false) => {
     type: 'click-title',
     entryId: entry?.id,
   });
-  const standardURL = 'https://standardebooks.org/'
   return html`
   <li class="library-list-image">
     <a href="" @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} >
-      <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail?.href} alt=${title}/>
+      <img crossorigin='anonymous' class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail?.href} alt=${title}/>
     </a>
     <div class="card-body" @click=${clickOpenDetailView}>
     ${isLibraryListView
@@ -425,11 +454,10 @@ const SubjectEntry = (entry, isCoverOnly = true, subjectTitle = '') => {
     entryId: entry?.id,
   })
   const collectionNum = collectionID(entry, subjectTitle)
-  const standardURL = 'https://standardebooks.org/'
   return entry === null ? html``: html`
     <li class="subject-list-image" @click=${clickHandler}>
       <div class="collectionId">${collectionNum}</div>
-      <img class="book-cover" loading=lazy id=${entry?.id} width=350 height=525 src=${standardURL + entry?.thumbnail?.href} alt=${entry?.title}/>
+      <img crossorigin='anonymous' class="book-cover" loading=lazy id=${entry?.id} width=350 height=525 src=${standardURL + entry?.thumbnail?.href} alt=${entry?.title}/>
       ${isCoverOnly
         ? ''
         : html`
@@ -563,7 +591,7 @@ const Subject = (category) => {
     // <h2>${title}</h2>
     return html`
     ${title !== 'Newest 30 Standard Ebooks' ? html`
-      <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
+      <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
     ` : html``}
     <ul class="category-list">
       ${entries.map(entry => {
@@ -588,7 +616,7 @@ const Category = (category) => {
   })
   // <h2>${title}</h2>
   return html`
-  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
+  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   <ul class="category-list">
     ${entries.map(entry => {
       return SubjectEntry(entry, isCoverOnly)
@@ -613,7 +641,7 @@ const CollectionCategory = (category) => {
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   // <h2>${title}</h2>
   return html`
-  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
+  <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
@@ -650,7 +678,7 @@ const AuthorList = (queryResults) => {
   })
   // <h2>${title}</h2>
   return html`
-  <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Library' : 'Add to Library'}</b></button>
+  <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   <ul class="list-style-none">
     ${results.length === 0
       ? html`${EmptySearch()}`
@@ -704,10 +732,15 @@ const DetailView = (entry) => {
     wasCopySuccessfull = false,
     collection = [],
   } = entry
+
+
+
+
+
+
   const readLink = `/ebook.html?book=${ebookLink.href}`
   const READINGEASEID = `${ebookLink.href}.epub-readingEase`
   const readingEase = getStorage(READINGEASEID) ?? 'unknown'
-  const standardURL = 'https://standardebooks.org/'
   const clickAdd = clickHandlerCreator({
     type: 'click-add-to-library',
     entryId: entry.id,
@@ -745,7 +778,7 @@ const DetailView = (entry) => {
   async function copyShareUrl() {
     try {
       await navigator.clipboard.writeText(shareURL);
-      console.log('Page URL copied to clipboard');
+      // console.log('Page URL copied to clipboard');
       callRender({
         type: 'click-copied-share-url',
         entryId: entry.id,
@@ -757,7 +790,7 @@ const DetailView = (entry) => {
   const shareHandler = async () => {
     try {
       await navigator.share(shareData)
-      log('shared successfully')
+      // log('shared successfully')
     } catch(err) {
       log('Error: ' + err)
       await copyShareUrl();
@@ -772,7 +805,7 @@ const DetailView = (entry) => {
       <div class="modal-content">
         <button @click=${clickClose} class="close">X</button>
         <a href="" @click=${clickAdd}>
-          <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
+          <img crossorigin='anonymous' class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
         </a>
         <div>
           <h2 class="pointer"><a href="" @click=${clickAdd}>${title}</a></h2>
@@ -780,7 +813,7 @@ const DetailView = (entry) => {
           <button class="follow" @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
             entryId: entry.id,
-          }, cacheBook)}><b>${inUserLibrary ? 'Remove from library' : 'Add to library'}</b></button>
+          }, cacheBook)}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : ''}</span></p>
           <p>${convertContentToString(content)}</p>
@@ -931,7 +964,6 @@ const FollowedCategories = (followedCategories) => {
 }
 const Breadcrumbs = (props) => {
   const {activeTab, activeCategory} = props;
-
   const browseHandler = clickHandlerCreator({
     type: 'new-tab',
     tab: 'NEW'
@@ -951,7 +983,7 @@ const Breadcrumbs = (props) => {
     case('BROWSE'):{
       return html`
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>${BROWSETITLE}</a> | ${SUBJECTTITLE}
+        <a class="pointer" @click=${browseHandler}>${BROWSETITLE}</a> | ${SUBJECTTITLE}
       </div>
       `
     }
@@ -959,26 +991,26 @@ const Breadcrumbs = (props) => {
       return activeCategory?.title === "Newest 30 Standard Ebooks" ? (
         html`
         <div class="top-nav__breadcrumb">
-          <a @click=${browseHandler}>${BROWSETITLE}</a> | ${activeCategory?.title}
+          <a class="pointer" @click=${browseHandler}>${BROWSETITLE}</a> | ${activeCategory?.title}
         </div>
         `
       ) : (html`
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>${BROWSETITLE}</a> | <a @click=${allSubjectsHandler}>${SUBJECTTITLE}</a> | ${activeCategory?.title}
+        <a class="pointer" @click=${browseHandler}>${BROWSETITLE}</a> | <a class="pointer" @click=${allSubjectsHandler}>${SUBJECTTITLE}</a> | ${activeCategory?.title}
       </div>
       `)
     }
     case('COLLECTIONS'): {
       return html`
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>${BROWSETITLE}</a> | ${COLLECTIONTITLE}
+        <a class="pointer" @click=${browseHandler}>${BROWSETITLE}</a> | ${COLLECTIONTITLE}
       </div>
       `
     }
     case('COLLECTION'): {
       return html`
       <div class="top-nav__breadcrumb">
-        <a @click=${browseHandler}>${BROWSETITLE}</a> | <a @click=${allCollectionsHandler}>${COLLECTIONTITLE}</a> | ${activeCategory?.title}
+        <a class="pointer" @click=${browseHandler}>${BROWSETITLE}</a> | <a class="pointer" @click=${allCollectionsHandler}>${COLLECTIONTITLE}</a> | ${activeCategory?.title}
       </div>
       `
     }
@@ -1187,7 +1219,7 @@ const closeModalForSwipe = () => {
 }
 
 document.addEventListener('swiped-down', function(e) {
-  console.log("swiped-down");
+  // console.log("swiped-down");
   // console.log(e.target); // element that was swiped
   // console.log(e.detail); // see event data below
   const {
@@ -1207,7 +1239,7 @@ document.addEventListener('swiped-down', function(e) {
 });
 
 document.addEventListener('swiped-up', function(e) {
-  console.log("swiped-up");
+  // console.log("swiped-up");
   // {
   //   dir: 'up',            // swipe direction (up,down,left,right)
   //   touchType: 'direct',  // touch type (stylus,direct) - stylus=apple pencil and direct=finger

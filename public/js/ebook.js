@@ -66,7 +66,7 @@ console.log(whichStyleSheet())
   var book = ePub(buffer);
   console.log('book')
   console.log(book)
-  var rendition = book.renderTo("viewer", {
+  var rendition = book.renderTo(document.getElementById("viewer"), {
     manager: "continuous",
     flow: "paginated",
     width: targetWidth,
