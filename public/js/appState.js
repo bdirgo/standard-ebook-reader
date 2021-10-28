@@ -870,7 +870,7 @@ async function followedCollectionsReducer(state = [], action) {
         type,
         collectionName,
     } = action
-    console.log(collectionName);
+    // console.log(collectionName);
     switch (type) {
         case('library-tab'): {
             let userLibrary = await getUserLibrary();
@@ -1430,7 +1430,18 @@ self.onmessage = async function(event) {
                 activeCategory: null,
             }
             state = await initApp(state, parsedPayload.action)
-            if (state?.userLibrary?.currentlyReading?.length === 0 && state?.userLibrary?.entries?.length === 0) {
+            log(state?.userLibrary?.currentlyReading)
+            log(state?.userLibrary?.entries)
+            if (
+                (
+                    state?.userLibrary?.currentlyReading?.length === 0 &&
+                    state?.userLibrary?.entries?.length === 0
+                ) ||
+                (
+                    state?.userLibrary?.currentlyReading === undefined &&
+                    state?.userLibrary?.entries === undefined
+                )
+            ) {
                 console.log('no currently reading');
                 state = await app(state, {
                     tab: 'NEW',

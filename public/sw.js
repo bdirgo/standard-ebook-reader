@@ -1,4 +1,5 @@
 import config from './js/config.js'
+
 const cacheName = config.cacheName
 const bookCache = `offline-book-${cacheName}`
 const resourcesToPrecache = [

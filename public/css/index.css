@@ -59,6 +59,8 @@ body {
 	position: absolute;
     min-width: 40px;
     min-height: 40px;
+    background: transparent;
+    border: none;
 }
 
 .flex-group {
@@ -133,7 +135,7 @@ nav {
 	color: #1271e6;
 }
 .dark .parent-nav button.box.button.active {
-	color: #1d6dd0;
+	color: #4096ff;
 }
 /* 
 li a {
@@ -214,10 +216,10 @@ a.nav-link {
 	margin: 0 10px 0 0;
 }
 
-ol > li:hover, ol > li:focus {
+/* ol > li:hover, ol > li:focus {
 	background-color: #ebedef;
 	color: black;
-}
+} */
 
 .card-title {
 	text-decoration: underline;
@@ -293,11 +295,7 @@ h2 strong {
 	display: block;
 	transition: 0.3s;
   }
-  
-  .sidenav a:hover {
-	color: #f1f1f1;
-  }
-  
+
   .sidenav .closebtn {
 	position: absolute;
 	top: 0;

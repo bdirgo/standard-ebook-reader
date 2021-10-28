@@ -11,4 +11,3 @@ darkButton.innerHTML = Moon;
 if(!window.localStorage.getItem(darkModeID)) {
     populateStorage(darkModeID, light);
 }
-setStyles(body, darkButton)
