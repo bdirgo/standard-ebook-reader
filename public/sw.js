@@ -51,9 +51,6 @@ self.addEventListener('fetch', event => {
     event.respondWith(caches.match(event.request)
         .then(cachedResponse => {
             return cachedResponse || fetch(event.request).then(async function (response) {
-                if (response.status !== 200) {
-                    return response;
-                }
                 const clonedRes = response.clone();
                 console.log('caching for next time', url)
                 await caches.open(cacheName)
