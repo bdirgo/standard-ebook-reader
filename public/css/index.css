@@ -390,6 +390,8 @@ h2 strong {
 		padding-top: 45px;
 		visibility:visible;
 		width: 280px;
+		border-right: #797979 solid 4px;
+		border-radius: 6px;
 	}
 	.main {
 		transition: 0.5s;

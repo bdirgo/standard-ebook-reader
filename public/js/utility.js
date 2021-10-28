@@ -6,11 +6,15 @@ let populateStorage = (id, value) => {
 let setStyles = (body, darkButton) => {
     let darkMode = window.localStorage.getItem(darkModeID);
     if (darkMode === dark) {
-        body.classList.toggle(dark)
-        darkButton.innerHTML = Sun;
+        if (!body.classList.contains(dark)) {
+            body.classList.add(dark)
+            darkButton.innerHTML = Moon;
+        }
     } else {
-        body.classList.toggle(dark)
-        darkButton.innerHTML = Moon;
+        if (body.classList.contains(dark)) {
+            body.classList.remove(dark)
+            darkButton.innerHTML = Sun;
+        }
     }
     darkButton.setAttribute('value', darkMode)
 }
