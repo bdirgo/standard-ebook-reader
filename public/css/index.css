@@ -253,6 +253,10 @@ h2 {
 	min-width: 80px;
 }
 
+body.modal-open {
+	overflow: hidden;
+}
+
 h2 strong {
 	display: inline-block;
 	font-size: 75%;
@@ -354,9 +358,6 @@ h2 strong {
 		margin-inline-start: 0px;
 		margin-inline-end: 0px;
 		font-weight: bold;
-	}
-	.top-nav__breadcrumb {
-		display: none;
 	}
 	nav.parent-nav {
 		position: initial;

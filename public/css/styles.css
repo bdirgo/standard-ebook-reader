@@ -192,5 +192,16 @@ h2 {
     cursor: pointer;
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (min-width: 768px) {
+    .modal {
+        max-width: 75%;
+        left: 12.5%;
+    }
+}
+
+@media only screen and (min-width: 1024px) {
+    .modal {
+        max-width: 50%;
+        left: 25%;
+    }
 }

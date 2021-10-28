@@ -1123,6 +1123,11 @@ function rerender(props) {
     ) {
       lastActiveTab = activeTab
     }
+    if (showDetailModal) {
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.classList.remove("modal-open");
+    }
     return html`
       <div class="title-bar">
         <span class="open-nav-button" onclick="toggleSideNav()">&#9776;</span>
