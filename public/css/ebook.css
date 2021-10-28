@@ -17,6 +17,14 @@ body {
 .header-wrapper {
     max-width: fit-content;
 }
+
+#dark-button {
+	top:20px;
+	right:20px;
+	position: absolute;
+    min-width: 40px;
+    min-height: 40px;
+}
   
 header {
     grid-column: 1 / 4;

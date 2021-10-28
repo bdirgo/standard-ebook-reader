@@ -1145,6 +1145,7 @@ function rerender(props) {
         </nav>
       </div>
       <div id="main" class="main">
+        ${Breadcrumbs({activeTab, searchResults, activeCategory})}
         ${!isLoading ? html`
           ${TabContent(activeTab)}
           <footer>
