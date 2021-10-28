@@ -382,7 +382,7 @@ const ItemView = (entry, isLibraryListView = false) => {
   return html`
   <li class="library-list-image">
     <a href="" @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} >
-      <img crossorigin='anonymous' class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail?.href} alt=${title}/>
+      <img class="book-cover" loading=lazy id=${id} width=350 height=525 src=${standardURL + thumbnail?.href} alt=${title}/>
     </a>
     <div class="card-body" @click=${clickOpenDetailView}>
     ${isLibraryListView
@@ -457,7 +457,7 @@ const SubjectEntry = (entry, isCoverOnly = true, subjectTitle = '') => {
   return entry === null ? html``: html`
     <li class="subject-list-image" @click=${clickHandler}>
       <div class="collectionId">${collectionNum}</div>
-      <img crossorigin='anonymous' class="book-cover" loading=lazy id=${entry?.id} width=350 height=525 src=${standardURL + entry?.thumbnail?.href} alt=${entry?.title}/>
+      <img class="book-cover" loading=lazy id=${entry?.id} width=350 height=525 src=${standardURL + entry?.thumbnail?.href} alt=${entry?.title}/>
       ${isCoverOnly
         ? ''
         : html`
@@ -805,7 +805,7 @@ const DetailView = (entry) => {
       <div class="modal-content">
         <button @click=${clickClose} class="close">X</button>
         <a href="" @click=${clickAdd}>
-          <img crossorigin='anonymous' class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
+          <img class="img-fluid detail-book-cover " src=${standardURL + thumbnail.href} />
         </a>
         <div>
           <h2 class="pointer"><a href="" @click=${clickAdd}>${title}</a></h2>
