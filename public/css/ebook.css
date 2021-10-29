@@ -96,7 +96,7 @@ main {
 }
 
 footer {
-    margin-top:0;
+    margin-top: -8px;
     grid-column: 1 / 4;
     font-size: smaller;
 }
