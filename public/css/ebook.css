@@ -68,6 +68,9 @@ header {
     background: transparent;
     border: none;
 }
+.dark #styles-button {
+    color: white
+}
 
 .left-side {
     grid-column: 1 / 2;
