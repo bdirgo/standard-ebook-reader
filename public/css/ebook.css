@@ -34,6 +34,12 @@ header {
     min-width: 40px;
     min-height: 40px;
     font-size: 20px;
+    background-color: transparent;
+    border: none;
+}
+
+.dark .style-button {
+    color: white;
 }
 
 #stylesModal {
@@ -55,6 +61,11 @@ header {
     font-size: 20px;
     margin: 0 0 0 1.25em;
     top: 0;
+}
+
+.modal-content {
+    padding-bottom: 0;
+    min-height: 400px;
 }
 
 #styles-button {
@@ -165,6 +176,43 @@ img {
 .myTopBar-page > p {
     text-align: center;
     margin: 0;
+}
+
+
+.myTopBar-controls.font-size {
+    text-align: left;
+    position: relative;
+    white-space: nowrap;
+    vertical-align: top; 
+}
+
+.myTopBar-controls.font-size input {
+    display: inline-block;
+    margin: 0;
+    vertical-align: top;
+    box-shadow: none;
+}
+
+.myTopBar-controls.font-size .minus,
+.myTopBar-controls.font-size .plus {
+    padding: 7px 10px 8px;
+    height: 41px;
+    background-color: #ffffff;
+    border: 1px solid #efefef;
+    cursor:pointer;
+}
+
+.myTopBar-controls.font-size .minus {
+    border-right: 0; 
+}
+
+.myTopBar-controls.font-size .plus {
+    border-left: 0; 
+}
+
+.myTopBar-controls.font-size .minus:hover,
+.myTopBar-controls.font-size .plus:hover {
+    background: #eeeeee; 
 }
 
 select {

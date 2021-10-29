@@ -67,7 +67,6 @@
             <div class="myTopBar-title">
                 <p><b id="topbar-book-title"></b></p>
             </div>
-            <!-- <label for="tocSelect">Chapter:</label> -->
             <div class="select">
                 <select name="chapter" id="tocSelect"></select>
             </div>
@@ -79,13 +78,16 @@
     </header>
     <div class="modal" id="stylesModal">
         <div class="modal-content">
-            <span class="close" onclick="closeStylesModal()">X</span>
-            <p>Font Size: 
-              <button class="style-button" onclick="biggerFont()">+</button>
-              <button class="style-button" onclick="smallerFont()">-</button>
-            </p>
+            <div class='myTopBar-controls font-size'>
+                <p>
+                    <a href="javascript:void(0)" class="closebtn" onclick="closeStylesModal()">&times;</a>
+                    Font Size: 
+                    <button class="style-button" onclick="biggerFont()">+</button>
+                    <button class="style-button" onclick="smallerFont()">-</button>
+                </p>
+            </div>
             <p id='font-size-example'>
-                Example Text, Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                Lorem ipsum dolor sit amet consectetur adipisicing elit.
             </p>
         </div>
     </div>
@@ -104,7 +106,7 @@
         switchOnSize()
         function biggerFont() {
             let size = window.localStorage.getItem(fontSize)
-            if (Number(size) < 2) {
+            if (Number(size) < 3) {
                 size++;
                 window.localStorage.setItem(fontSize, size);
             }
@@ -134,7 +136,7 @@
                     break;
                 }
                 case('0'): {
-                    console.log('zero')
+                    console.log('medium')
                     absFontSize = 'large';
                     break;
                 }
@@ -148,13 +150,18 @@
                     absFontSize = 'xx-large';
                     break;
                 }
+                case('3'): {
+                    console.log('xx-large')
+                    absFontSize = 'xxx-large';
+                    break;
+                }
                 default: {
                     console.log('default')
                     break;
                 }
             }
             window.localStorage.setItem('fontSize', absFontSize)
-            document.getElementById('font-size-example').style.fontSize = `${absFontSize}`
+            document.getElementById('font-size-example').style.fontSize = `${size === '3' ? "48px" : absFontSize}`
             document.getElementById('font-size-example').style.lineHeight = `${
                 size <= '0'
                 ? '1'
