@@ -20,6 +20,10 @@ nav.parent-nav {
     padding-top: 2px;
 }
 
+h1.title {
+	margin-top: 0;
+}
+
 footer {
 	margin-top:40px;
 	text-align: center;
@@ -307,6 +311,28 @@ h2 strong {
 	font-size: 36px;
 	margin-left: 50px;
   }
+
+  #myProgress {
+	margin-top: -17px;
+	margin-bottom: 12px;
+	width: 100%;
+	background-color: grey;
+  }
+  
+  #myBar {
+	transition: 0.3s;
+	width: 1%;
+	height: 3px;
+	background-color: #1271e6;
+  }
+
+  .dark #myProgress {
+	  background-color: rgb(42, 45, 51);
+  }
+
+  .dark #myBar {
+	  background-color: #4096ff;
+  }
   
   @media screen and (max-height: 450px) {
 	.sidenav {padding-top: 15px;}
@@ -399,6 +425,10 @@ h2 strong {
 	}
 	.title-bar {
 		margin-left: 300px;
+	}
+	#myProgress {
+		margin-left: 300px;
+		width: auto;
 	}
 	.title-bar .title {
 		display: inline-block;

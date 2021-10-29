@@ -14,7 +14,7 @@ function toTitleCase(str) {
     );
 }
 
-const LOAD_TIME = 2000
+const LOAD_TIME = 650
 
 var myDB = localforage.createInstance({
     name: "myDB"
@@ -1400,14 +1400,15 @@ self.onmessage = async function(event) {
     const parsedPayload = JSON.parse(payload)
     console.log(parsedPayload)
 
-    let i = 0
+    let i = 1
     const postLoading = () => {
+        i = Math.min(i+4, 98);
         self.postMessage({
             type:'state',
             payload: JSON.stringify({
                 isLoading: true,
                 showSideBarMenu: !!state?.showSideBarMenu,
-                loadingMessageindex: i++ % 13
+                loadingMessageindex: i,
             })
         })
     }
@@ -1415,9 +1416,8 @@ self.onmessage = async function(event) {
         clearInterval(loadingInterval)
     }
     loadingInterval = setInterval(() => {
-        // console.log('loading...')
         postLoading()
-    }, LOAD_TIME);
+    }, LOAD_TIME + (150 * Math.random()));
     switch (type) {
         case 'init': {
             console.log('init')

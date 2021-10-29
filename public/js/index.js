@@ -1057,24 +1057,13 @@ const SideNavTitle = (props) => {
     }
   }
 }
-const LoadingMessages = (index = 0) => {
-  const msgs = [
-    html`Loading...`,
-  ]  
-  // html`The first load is the longest...`,
-  // html`Downloading new Standard Books...`,
-  // html`Collections may take a minute to load...`,
-  // html`Organizing Libraries...`,
-  // html`Collecting Collections...`,
-  // html`Parsing New books...`,
-  // html`Reticulating Splines...`,
-  // html`Ordering LLamas...`,
-  // html`Generating witty dialog...`,
-  // html`Swapping time and space...`,
-  // html`Tokenizing real life...`,
-  // html`Downloading new Standard Books...`,
-  // html`The servers are having a slow day, today.`,
-  return msgs[index]
+
+const LoadingMessages = (index = 1) => {
+  return html`
+  <div id="myProgress">
+    <div id="myBar" style="width:${index}%"></div>
+  </div>
+  `
 }
 function rerender(props) {
   const {
@@ -1161,6 +1150,9 @@ function rerender(props) {
       document.body.classList.remove("modal-open");
     }
     return html`
+      ${isLoading ? html`
+        ${LoadingMessages(loadingMessageindex)}
+      `: ""}
       <div class="title-bar">
         <span class="open-nav-button" onclick="toggleSideNav()">&#9776;</span>
         <h1 class="title">
@@ -1189,7 +1181,7 @@ function rerender(props) {
             <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p>
             <a class="pointer" @click=${helpHandler}>Help</a>
           </footer> 
-        ` : LoadingMessages(loadingMessageindex)}
+        ` : ''}
         ${showDetailModal ? DetailView(activeEntry) : html``}
       </div>
       <nav class="parent-nav mobile-nav">
