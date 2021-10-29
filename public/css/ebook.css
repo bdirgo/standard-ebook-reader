@@ -48,21 +48,25 @@ header {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    padding: 4px 8px 0;
 }
 
 #dark-button {
     font-size: 20px;
     margin: 0 0 0 1.25em;
+    top: 0;
 }
 
 #styles-button {
-	top: 20px;
+    top: 0;
 	right: 68px;
 	position: absolute;
     min-width: 40px;
     min-height: 40px;
     font-size: 20px;
     margin: 0 1.25em 0 0;
+    background: transparent;
+    border: none;
 }
 
 .left-side {
@@ -80,7 +84,6 @@ main {
 footer {
     margin-top:0;
     grid-column: 1 / 4;
-    color: grey;
     font-size: smaller;
 }
 
@@ -103,22 +106,12 @@ img {
     left: -7px;
 }
 
-.dark > .left-side {
-    background-color: rgb(70, 80, 89);
-
-}
-
-.dark > .right-side {
-    background-color: rgb(70, 80, 89);
-
-}
 
 .left-side {
     background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M20 .755l-14.374 11.245 14.374 11.219-.619.781-15.381-12 15.391-12 .609.755z"/></svg>');
     background-position: 50%;
     background-repeat: no-repeat;
     z-index: 100;
-    background-color: azure;
 }
 
 .right-side {
@@ -126,7 +119,6 @@ img {
     background-position: 50%;
     background-repeat: no-repeat;
     z-index: 100;
-    background-color: azure;
 }
 
 *,
@@ -144,27 +136,18 @@ img {
     background-color: rgb(70, 80, 89);
 }
 .closebtn {
-    font-size: 40px;
-    line-height: 0;
-    margin-left: 4px;
+    margin-left: 2px;
     margin-right: 12px;
     text-decoration: none;
-    top: 14px;
-    left: 0px;
-    position: relative;
-    z-index: 100;
+    padding: 0 12px 0 6px;
+    font-size: 25px;
 }
 .myTopBar-controls {
-    margin: 0.5em 0 0;
-    position: relative;
-    top: -30px;
-    max-width: calc(100% - 8px);
-}
-.myTopBar-controls {
-    margin-left: 48px;
+    margin: 0;
 }
 .myTopBar-controls > p {
-    margin-bottom: 0;
+    margin: 0;
+    line-height: 34px;
 }
 .myTopBar-title {
     margin: 0.5em 0 1em;
@@ -185,7 +168,6 @@ select {
     appearance: none;
     background-color: transparent;
     border: none;
-    /* color: rgba(99, 99, 99, 0.406); */
     cursor: inherit;
     font-family: inherit;
     font-size: inherit;
@@ -197,4 +179,9 @@ select {
 
 select::-ms-expand {
     display: none;
+}
+@media only screen and (min-width: 768px) {
+    button {
+        top: 20px;
+    }
 }
