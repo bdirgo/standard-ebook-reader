@@ -1175,10 +1175,10 @@ async function activeCategoryReducer(state = null, action) {
         }
         case('click-new'): {
             let newEntries = await myDB.getItem('entriesNew')
-            const isOld = lastUpdated(newEntries, 1.5)
-            if (isOld) {
+            // const isOld = lastUpdated(newEntries, 1.5)
+            // if (isOld) {
                 try {
-                    // console.log('checking for new realeases...')
+                    console.log('checking for new realeases...')
                     let entriesNew = await fetchNewReleases(new_url)
                     newEntries = {
                         ...entriesNew,
@@ -1188,7 +1188,7 @@ async function activeCategoryReducer(state = null, action) {
                 } catch (err) {
                     console.log('trouble fetching new releases, ', err)
                 }
-            }
+            // }
             const books = await getEntriesFrom(newEntries?.entries ?? [])
             return {
                 ...newEntries,
@@ -1315,9 +1315,16 @@ const initialLoadTime = Date.now();
 async function initApp(state, action) {
     const {
         currentlyReading,
-    } = action
-    const bookLibrary = await fetchStandardBooks();
-    await createCategroiesFrom(bookLibrary);
+    } = action;
+
+    let userLibrary = await myDB.getItem('userLibrary');
+    let entriesByCategory = await myDB.getItem('entriesByCategory');
+
+    if (!userLibrary || !entriesByCategory) {
+        const bookLibrary = await fetchStandardBooks();
+        await createCategroiesFrom(bookLibrary);
+    }
+
     return await app(state, {
         tab: 'LIBRARY',
         type: 'library-tab',
