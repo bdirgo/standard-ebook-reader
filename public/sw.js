@@ -1,7 +1,6 @@
-import config from './js/config.js'
-
-const cacheName = config.cacheName
-const bookCache = `offline-book-${cacheName}`
+const version = '1.5.6a-10.30';
+const cacheName = `cache-v${version}`;
+const bookCache = `offline-book`
 const resourcesToPrecache = [
     `/`,
     `/index.html`,
@@ -22,6 +21,7 @@ const resourcesToPrecache = [
     '/js/utility.js',
     '/splashscreens/',
     'https://unpkg.com/lit-html?module',
+    "https://unpkg.com/pwacompat"
 ] 
 
 self.addEventListener('install', event => {
@@ -53,6 +53,10 @@ self.addEventListener('fetch', event => {
             return cachedResponse || fetch(event.request).then(async function (response) {
                 if (response.status === 0) {
                     // dont cache opaque responses
+                    return response
+                }
+                if (response.protocol === "chrome-extension:") {
+                    // dont cache weird chrome PWA compat things
                     return response
                 }
                 const clonedRes = response.clone();

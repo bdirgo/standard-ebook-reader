@@ -72,9 +72,9 @@ const EaseToString = (ease) => {
      */
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', {type: 'module'})
+        navigator.serviceWorker.register('./sw.js')
             .then(reg => {
-                // console.log("Registered!", reg)
+                console.log("Registered!", reg)
                     // registration worked
             }).catch(err => {
                 console.log('Registration failed with ' + err);
@@ -1179,7 +1179,7 @@ function rerender(props) {
           ${TabContent(activeTab)}
           <footer>
             <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p>
-            <a class="pointer" @click=${helpHandler}>Help</a>
+            ${activeTab === "HELP" ? '' : html`<a class="pointer" @click=${helpHandler}>Help</a>`}
           </footer> 
         ` : ''}
         ${showDetailModal ? DetailView(activeEntry) : html``}
