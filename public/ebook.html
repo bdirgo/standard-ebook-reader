@@ -35,6 +35,20 @@
   
           return false;
         };
+        /**
+         * Service Worker
+         */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        console.log("Registered!", reg)
+                            // registration worked
+                    }).catch(err => {
+                        console.log('Registration failed with ' + err);
+                    })
+            })
+        }
     </script>
     <style>
         link[rel="manifest"] {
