@@ -363,7 +363,7 @@ ${HowToFollow()}
 <p>Clicking the Moon/Sun button will toggle the site into dark mode</p>
 <p>When reading clicking the chapter title at the top of the screen will bring up a chapter selection menu</p>
 <p>If you toggle dark mode while reading a book, you may need to refresh the page for the colors to load correctly.</p>
-<small>version: ${config.version}</small>
+<p><small>version: ${config.version}</small></p>
 `
 
 const ItemView = (entry, isLibraryListView = false) => {
@@ -934,9 +934,6 @@ const FollowedAuthors = (followedAuthors) => {
   const isAuthor = true
   return followedAuthors.length
   ? html`
-  <h2>
-    Followed Authors
-  </h2>
   ${Browse(followedAuthors, {isAuthor})}
   `
   : html``
@@ -1065,6 +1062,10 @@ const LoadingMessages = (index = 1) => {
   </div>
   `
 }
+
+// TODO: add event listener to body, for click outside modal
+// only fire close modal action if showDetailModal is true and they clikc outside the modal
+// As well as click outside of the flyout to close the flyout, only if it is open
 function rerender(props) {
   const {
     detail = '{}',
@@ -1178,8 +1179,9 @@ function rerender(props) {
         ${!isLoading ? html`
           ${TabContent(activeTab)}
           <footer>
-            <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p>
             ${activeTab === "HELP" ? '' : html`<a class="pointer" @click=${helpHandler}>Help</a>`}
+            <p id="credit">Credit to <a href="https://standardebooks.org">Standard Ebooks</a> for the curated list.</p>
+            <p>Made with <i class="icon-heart"></i> by <a href="https://github.com/bdirgo/standard-ebook-reader">Benjamin Dirgo</a></p>
           </footer> 
         ` : ''}
         ${showDetailModal ? DetailView(activeEntry) : html``}

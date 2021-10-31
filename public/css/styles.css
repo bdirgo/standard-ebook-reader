@@ -34,6 +34,10 @@
     cursor: pointer;
 }
 
+.icon-heart::before {
+    content: '\01FAC0';
+}
+
 .subject-list {
     list-style-type: none;
     padding: 0;
