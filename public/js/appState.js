@@ -1368,8 +1368,8 @@ async function initApp(state, action) {
 
     if (
         !userLibrary ||
-        entriesByCategory?.categories?.[0]?.entries?.length > 0 ||
-        entriesBySubject?.subjects?.[0]?.entries?.length > 0
+        !entriesByCategory ||
+        !entriesBySubject
     ) {
         const bookLibrary = await fetchStandardBooks();
         await createCategroiesFrom(bookLibrary);
