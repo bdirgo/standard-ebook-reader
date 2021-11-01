@@ -122,7 +122,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
         displayMode = 'standalone';
     }
-    // console.log('DISPLAY_MODE_LAUNCH:', displayMode);
+    console.log('DISPLAY_MODE_LAUNCH:', displayMode);
 
 });
 
@@ -339,7 +339,7 @@ const BrowseNavigation = () => {
 }
 const HowTo = () => html`
   <ol>
-  <li>Add this web page to your homescreen.</li>
+  ${displayMode = 'browser tab' ? html`<li>Add this web page to your homescreen.</li>` : ''}
   <li>Browse to add a few books.</li>
   <li>The app will remember your place. So, you can come back and pick up where you left off.</li>
   </ol>`
@@ -433,6 +433,7 @@ const Library = (userLibrary) => {
   const {
     entries = [],
     currentlyReading = [],
+    moreByThisAuthor = {},
     title,
   } = userLibrary
   const dupBooks = [...currentlyReading, ...entries]
@@ -441,6 +442,12 @@ const Library = (userLibrary) => {
   return html`
     <h2>Currently reading</h2>
     ${LibraryList(books)}
+    ${moreByThisAuthor?.length > 1
+      ? html`
+      <h3>More by ${moreByThisAuthor?.title}</h3>
+      ${Browse([moreByThisAuthor], {isAuthor: true})}
+      `
+      : html``}
   `
 }
 
@@ -677,8 +684,8 @@ const AuthorList = (queryResults) => {
     query,
   })
   // <h2>${title}</h2>
+  // <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   return html`
-  <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   <ul class="list-style-none">
     ${results.length === 0
       ? html`${EmptySearch()}`
@@ -796,10 +803,10 @@ const DetailView = (entry) => {
       await copyShareUrl();
     }
   }
-  const cacheBook = async () => {
-      const url = `https://standardebooks.org${ebookLink.href}.epub`;
-      await fetch(url);
-  }
+  // const cacheBook = async () => {
+  //     const url = `https://standardebooks.org${ebookLink.href}.epub`;
+  //     await fetch(url);
+  // }
   return html`
     <div class="modal">
       <div class="modal-content">
@@ -813,7 +820,7 @@ const DetailView = (entry) => {
           <button class="follow" @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
             type: 'click-add-to-library',
             entryId: entry.id,
-          }, cacheBook)}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
+          })}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
           ${ViewAuthorArray(authorArray)}
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : ''}</span></p>
           <p>${convertContentToString(content)}</p>
@@ -1063,9 +1070,61 @@ const LoadingMessages = (index = 1) => {
   `
 }
 
-// TODO: add event listener to body, for click outside modal
-// only fire close modal action if showDetailModal is true and they clikc outside the modal
-// As well as click outside of the flyout to close the flyout, only if it is open
+
+function hideOnClickOutside(element) {
+  const outsideClickListener = event => {
+      // if (!element.contains(event.target) && isVisible(element)) { // or use: event.target.closest(selector) === null
+      if (event.target.closest(selector) === null) {
+        element.style.display = 'none'
+        removeClickListener()
+      }
+  }
+
+  const removeClickListener = () => {
+      document.removeEventListener('click', outsideClickListener)
+  }
+
+  document.addEventListener('click', outsideClickListener)
+}
+
+// const isVisible = elem => !!elem && !!( elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length ) // source (2018-03-11): https://github.com/jquery/jquery/blob/master/src/css/hiddenVisibleSelectors.js 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let isDetailModalOpen = false;
+// const bodyClickListener = function (event) {
+//   // only fire close modal action if showDetailModal is true and they clikc outside the modal
+//   // As well as click outside of the flyout to close the flyout, only if it is open
+//   if (isDetailModalOpen) {
+//     if (event.closest()) {
+      
+//     }
+//   }
+
+// }
+// document.body.addEventListener('click', bodyClickListener, false);
+
 function rerender(props) {
   const {
     detail = '{}',
@@ -1087,6 +1146,7 @@ function rerender(props) {
       isLoading,
       loadingMessageindex,
     } = state
+    isDetailModalOpen = showDetailModal;
     const TabContent = (activeTab) => {
       switch(activeTab) {
         case('LIBRARY'): {

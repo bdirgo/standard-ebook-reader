@@ -470,35 +470,39 @@ async function fetchCollections() {
         const entryId = createEntryId(item.repository.url);
         // https://standardebooks.org/ebooks/ford-madox-ford/no-more-parades
         const entry = await bookEntires.getItem(entryId);
-        // https://github.com/standardebooks/ford-madox-ford_some-do-not/blob/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
-        const opfUrl = RawGithubURL(item.html_url);
-        // https://raw.githubusercontent.com/standardebooks/ford-madox-ford_some-do-not/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
-        const res = await fetch(opfUrl);
-        const text = await res.text();
-        // TODO: books out of a collection have an ease score
-        // const readingEaseText = findReadingEase(text);
-        // entry.readingEase = readingEaseText;
-        const collectionTextArray = findCollectionTitles(text);
-        if (collectionTextArray === null) {
-            console.warn(text)
+        if (entry !== null) {
+            // https://github.com/standardebooks/ford-madox-ford_some-do-not/blob/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
+            const opfUrl = RawGithubURL(item.html_url);
+            // https://raw.githubusercontent.com/standardebooks/ford-madox-ford_some-do-not/532dc230d19205b5821abe009de0efd9ba469bf8/src/epub/content.opf
+            const res = await fetch(opfUrl);
+            const text = await res.text();
+            // TODO: books out of a collection have an ease score
+            // const readingEaseText = findReadingEase(text);
+            // entry.readingEase = readingEaseText;
+            const collectionTextArray = findCollectionTitles(text);
+            if (collectionTextArray === null) {
+                console.warn(text)
+            }
+            collectionTextArray.forEach(async collectionText => {
+                const collection = new BelongsToCollection(collectionText);
+                let foundIndex = collections.findIndex(val => val?.term === collection.term)
+                if (foundIndex === -1) {
+                    collections.push(new SECollection(collection))
+                    foundIndex = collections.findIndex(val => val?.term === collection.term)
+                }
+                const foundCollection = collections[foundIndex]
+                const entryInCollection = foundCollection.entries.findIndex(val => val?.id === entryId)
+                if (entryInCollection === -1) {
+                    foundCollection.addEntry(entry)
+                }
+                const arr = entry?.collection || []
+                arr.push(collection)
+                entry.collection = arr
+            })
+            await bookEntires.setItem(entryId, entry);
+        } else {
+            console.log(entryId);
         }
-        collectionTextArray.forEach(async collectionText => {
-            const collection = new BelongsToCollection(collectionText);
-            let foundIndex = collections.findIndex(val => val?.term === collection.term)
-            if (foundIndex === -1) {
-                collections.push(new SECollection(collection))
-                foundIndex = collections.findIndex(val => val?.term === collection.term)
-            }
-            const foundCollection = collections[foundIndex]
-            const entryInCollection = foundCollection.entries.findIndex(val => val?.id === entryId)
-            if (entryInCollection === -1) {
-                foundCollection.addEntry(entry)
-            }
-            const arr = entry?.collection || []
-            arr.push(collection)
-            entry.collection = arr
-        })
-        await bookEntires.setItem(entryId, entry);
     }))
     const updated = new Date()
     const rv =  {collections, updated}
@@ -597,6 +601,11 @@ async function userLibraryReducer(state = [], action) {
                     }
                 }))
                 userLibrary.currentlyReading = currentlyReadingEntires
+                const query = currentlyReadingEntires?.[0]?.authorArray?.[0]?.name
+                const authorEntries = await addAuthorToUserLibrary(`${query}`, false);
+                if (authorEntries.length > 1) {
+                    userLibrary.moreByThisAuthor = authorEntries;
+                }
                 await myDB.setItem('userLibrary',userLibrary)
                 return userLibrary
             }
@@ -797,12 +806,48 @@ const getUserLibrary = async () => {
     return userLibrary;
 }
 
+const addAuthorToUserLibrary = async (query, shouldAddFollowedSearchResults = true) => {
+    const books = await getAllBookEntires();
+    let userLibrary = await getUserLibrary();
+    const alreadyInLibrary = userLibrary.followedSearchResults.filter(v => {
+        return v.title === query
+    })
+    if (alreadyInLibrary.length === 0) {
+        const fuse = new Fuse(books, {
+            keys: ['authorArray.name'],
+            threshold: 0.1,
+        })
+        const searchResults = fuse.search(query)
+        const entries = searchResults
+            .map(val => {
+                return val.item
+            })
+        const collection = {
+            term: toTitleCase(query),
+            title: toTitleCase(query),
+            entries,
+            length: entries.length,
+            inUserLibrary: true,
+        }
+        if (shouldAddFollowedSearchResults) {
+            try {
+                userLibrary.followedSearchResults.push(collection) 
+            } catch (error) {
+                userLibrary.followedSearchResults = [collection]
+            }
+            await myDB.setItem('userLibrary', userLibrary)
+            return userLibrary.followedSearchResults;
+        } else {
+            return collection
+        }
+    }
+}
+
 async function followedSearchResultsReducer(state = [], action) {
     const {
         type,
         query,
     } = action;
-    const books = await getAllBookEntires();
     switch(type) {
         case('library-tab'): {
             let userLibrary = await getUserLibrary();
@@ -810,41 +855,7 @@ async function followedSearchResultsReducer(state = [], action) {
             return userLibrary.followedSearchResults ?? [];
         }
         case('click-add-search-results-to-library'): {
-            let userLibrary = await getUserLibrary();
-            const alreadyInLibrary = userLibrary.followedSearchResults.filter(v => {
-                return v.title === query
-            })
-            if (alreadyInLibrary.length === 0) {
-                // console.log('adding search results to library')
-                
-                const fuse = new Fuse(books, {
-                    keys: ['authorArray.name'],
-                    threshold: 0.1,
-                })
-                const searchResults = fuse.search(query)
-                const entries = searchResults
-                    .map(val => {
-                        return val.item
-                    })
-                const collection = {
-                    term: toTitleCase(query),
-                    title: toTitleCase(query),
-                    entries,
-                    length: entries.length,
-                    inUserLibrary: true,
-                }
-                // console.log(searchResults)
-                // console.log(collection)
-                // console.log(userLibrary)
-                let newEntry = collection
-                try {
-                    userLibrary.followedSearchResults.push(newEntry) 
-                } catch (error) {
-                    userLibrary.followedSearchResults = [newEntry]
-                }
-                await myDB.setItem('userLibrary', userLibrary)
-            }
-            return userLibrary.followedSearchResults;
+            return await addAuthorToUserLibrary(query);
         }
         case('click-remove-search-results-from-library'): {
             let userLibrary = await getUserLibrary();
@@ -1311,6 +1322,7 @@ function setInitialState(
 }
 
 const initialLoadTime = Date.now();
+let collectionWorker;
 
 async function initApp(state, action) {
     const {
@@ -1319,10 +1331,23 @@ async function initApp(state, action) {
 
     let userLibrary = await myDB.getItem('userLibrary');
     let entriesByCategory = await myDB.getItem('entriesByCategory');
+    let entriesByCollection = await myDB.getItem('entriesByCollection');
 
     if (!userLibrary || !entriesByCategory) {
         const bookLibrary = await fetchStandardBooks();
         await createCategroiesFrom(bookLibrary);
+    }
+
+    if (!entriesByCollection) {
+        collectionWorker = new Worker("./appState.js");
+        const payload = {
+          action: {
+            type: 'collection-tab',
+            tab: 'COLLECTIONS',
+            currentlyReading:'[]'
+          },
+        }
+        collectionWorker.postMessage({type:'click', payload:JSON.stringify(payload)});
     }
 
     return await app(state, {
@@ -1353,6 +1378,7 @@ function showDetailModalReducer(state = false, action) {
 }
 
 async function app(state = {}, action) {
+    // TODO: User Created collections
     return {
         userLibrary: await userLibraryReducer(state.userLibrary, action),
         bookLibrary: await bookLibraryReducer(state.bookLibrary, action),
@@ -1457,6 +1483,9 @@ self.onmessage = async function(event) {
             break;
         }
         case "click": {
+            if (parsedPayload.action?.type === 'COLLECTION') {
+                collectionWorker.terminate();
+            }
             state = await app(state, parsedPayload.action)
             clearInterval(loadingInterval)
             self.postMessage({type:"state", payload:JSON.stringify(state)});

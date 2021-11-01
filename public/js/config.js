@@ -1,4 +1,4 @@
-const version = '1.5.6f-10.29';
+const version = '1.5.6a-11.01';
 const cacheName = `cache-v${version}`;
 export default {
     cacheName,
