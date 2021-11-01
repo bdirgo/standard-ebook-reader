@@ -500,7 +500,9 @@ async function fetchCollections() {
                 arr.push(collection)
                 entry.collection = arr
             })
-            await bookEntires.setItem(entryId, entry);
+            if (entry !== undefined && entry !== null && entry?.id !== null) {
+                await bookEntires.setItem(entryId, entry);
+            }
         } else {
             console.log(entryId);
         }
@@ -590,40 +592,36 @@ async function userLibraryReducer(state = [], action) {
     } = action;
     switch (type) {
         case('library-tab'): {
-            const userLibrary = await myDB.getItem('userLibrary')
-            if (!userLibrary) {
-                return {}
-            } else {
-                const reading = JSON.parse(currentlyReading || '[]')
-                const currentlyReadingEntires = await Promise.all(reading.map(async curr => {
-                    if (curr?.length > 0) {
-                        const id = BookFeedEntry.getIdFromEbookLink(curr)
-                        return await bookEntires.getItem(id)
-                    }
-                }))
-                userLibrary.currentlyReading = currentlyReadingEntires
-                const query = currentlyReadingEntires?.[0]?.authorArray?.[0]?.name
-                const authorEntries = await addAuthorToUserLibrary(`${query}`, false);
-                if (authorEntries.length > 1) {
-                    userLibrary.moreByThisAuthor = authorEntries;
+            const userLibrary = await getUserLibrary();
+            const reading = JSON.parse(currentlyReading || '[]')
+            const currentlyReadingEntires = await Promise.all(reading.map(async curr => {
+                if (curr?.length > 0) {
+                    const id = BookFeedEntry.getIdFromEbookLink(curr)
+                    return await bookEntires.getItem(id)
                 }
-                const hasCollection = currentlyReadingEntires?.[0]?.collection !== undefined;
-                if (hasCollection) {
-                    const collectionArray = currentlyReadingEntires[0].collection;
-                    const entriesByCollection = await myDB.getItem('entriesByCollection');
-                    const seriesName = collectionArray.filter(val => {
-                        return val.type === 'series';
-                    })?.[0]?.title
-                    if (seriesName !== undefined) {
-                        const series = entriesByCollection.collections.filter(val => {
-                            return val.title === seriesName;
-                        })
-                        userLibrary.series = series;
-                    }
-                }
-                await myDB.setItem('userLibrary', userLibrary)
-                return userLibrary
+            }))
+            userLibrary.currentlyReading = currentlyReadingEntires
+            const query = currentlyReadingEntires?.[0]?.authorArray?.[0]?.name
+            const authorEntries = await addAuthorToUserLibrary(`${query}`, false);
+            if (authorEntries.length > 1) {
+                userLibrary.moreByThisAuthor = authorEntries;
             }
+            const hasCollection = currentlyReadingEntires?.[0]?.collection !== undefined;
+            if (hasCollection) {
+                const collectionArray = currentlyReadingEntires[0].collection;
+                const entriesByCollection = await myDB.getItem('entriesByCollection');
+                const seriesName = collectionArray.filter(val => {
+                    return val.type === 'series';
+                })?.[0]?.title
+                if (seriesName !== undefined) {
+                    const series = entriesByCollection.collections.filter(val => {
+                        return val.title === seriesName;
+                    })
+                    userLibrary.series = series;
+                }
+            }
+            await myDB.setItem('userLibrary', userLibrary)
+            return userLibrary
         }
 
         case('click-add-to-library'): {
@@ -760,7 +758,7 @@ async function bookLibraryReducer(state = [], action) {
                 if (shouldUpdateBookEntires) {
                     await Promise.all(entriesByCollection?.collections?.map(async collection => {
                         return await Promise.all(collection?.entries?.map(async entry => {
-                            if (entry?.id !== null) {
+                            if (entry !== undefined && entry !== null && entry?.id !== null) {
                                 await bookEntires.setItem(entry.id, entry)
                             }
                         }))
@@ -1360,10 +1358,15 @@ async function initApp(state, action) {
     } = action;
 
     let userLibrary = await myDB.getItem('userLibrary');
+    let entriesBySubject = await myDB.getItem('entriesBySubject');
     let entriesByCategory = await myDB.getItem('entriesByCategory');
     let entriesByCollection = await myDB.getItem('entriesByCollection');
 
-    if (!userLibrary || !entriesByCategory) {
+    if (
+        !userLibrary ||
+        entriesByCategory?.categories?.[0]?.entries?.length > 0 ||
+        entriesBySubject?.subjects?.[0]?.entries?.length > 0
+    ) {
         const bookLibrary = await fetchStandardBooks();
         await createCategroiesFrom(bookLibrary);
     }
@@ -1440,7 +1443,9 @@ async function populateBookEntires(subjects) {
     const entriesBySubject = {subjects:bookFeedEntries, updated}
     await Promise.all(entriesBySubject.subjects.map(async bookFeed => {
         await Promise.all(bookFeed.entries.map(async entry => {
-            await bookEntires.setItem(entry.id, entry)
+            if (entry !== undefined && entry !== null && entry?.id !== null) {
+                await bookEntires.setItem(entry.id, entry)
+            }
         }))
     }))
 }

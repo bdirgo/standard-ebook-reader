@@ -15,6 +15,10 @@ const getStorage = (id) => {
     return window.localStorage.getItem(id);
 }
 
+var timeGoals = localforage.createInstance({
+    name: "timeGoals"
+});
+timeGoals.setItem('today', new Date())
 /* 
 Reading Ease:
 90+   Grade 5 Very Easy
@@ -397,10 +401,12 @@ const ItemView = (entry, isLibraryListView = false) => {
   </li>`}
 const LibraryList = (items = []) => {
   return html`
-  ${items.length === 0
-    ? html`${EmptyLibrary()}`
-    : html`<ul class="library-list">${items.map((item) => ItemView(item, true))}</ul>`
-  }`}
+  ${items?.length > 0 ?
+    html`
+      <ul class="library-list">${items.map((item) => ItemView(item, true))}</ul>
+    ` : ''}
+  `
+}
 
 
 /**
@@ -441,11 +447,21 @@ const Library = (userLibrary) => {
   const books = Array.from(new Set(dupBooks.map(a => a?.id)))
         .map(id => dupBooks.find(a => a.id === id))
   const firstBook = books.shift()
+  const isEmpty = books?.length > 0 && firstBook?.id !== null;
   return html`
-    <h3>Currently reading</h3>
-    <ul class="library-list">${ItemView(firstBook, true)}</ul>
-    <h3>Recently read</h3>
-    ${LibraryList(books)}
+    ${isEmpty ?
+      html`
+        ${EmptyLibrary()}
+      ` : html`
+        <h3>Currently reading</h3>
+        <ul class="library-list">${ItemView(firstBook, true)}</ul>
+        ${books?.length > 0 ? html`
+          <h3>Recently read</h3>
+          ${LibraryList(books)}
+        ` : ''
+        }
+      `
+    }
     ${moreByThisAuthor?.length > 1 || series?.length > 0 ? (
       html`
       <h3>For you</h3>
@@ -601,7 +617,10 @@ const Browse = (
   ${items.length === 0
     ? html`${EmptyLibrary()}`
     : html`${items.map(subject => {
-                    return html`${Subjects(subject, {isAuthor, isSubject, isCategory, isCollection}, Title)}`
+                    return html`${subject?.entries?.length > 0 ?
+                        html`
+                          ${Subjects(subject, {isAuthor, isSubject, isCategory, isCollection}, Title)}
+                        ` : ''}`
                     })
             }`
   }`}
@@ -1196,8 +1215,9 @@ function rerender(props) {
             ${FollowedCollections(followedCollections)}
             ${FollowedSubjects(followedSubjects)}
             ${FollowedCategories(followedCategories)}
-            ${TimeGoals()}
+
           `
+          // TODO: time goals
         }
         case('BROWSE'): {
           const isSubject = true
