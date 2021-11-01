@@ -18,7 +18,6 @@ const getStorage = (id) => {
 var timeGoals = localforage.createInstance({
     name: "timeGoals"
 });
-timeGoals.setItem('today', new Date())
 /* 
 Reading Ease:
 90+   Grade 5 Very Easy
@@ -1115,9 +1114,17 @@ const LoadingMessages = (index = 1) => {
   `
 }
 
+
 const TimeGoals = () => {
+  let text = timeGoals.getItem('todays-goal') || '20';
+  const onInput = (e) => {
+    text = e.target.value;
+    var timeGoalInSec = text * 60;
+    timeGoals.setItem('todays-goal', timeGoalInSec);
+  };
   return html`
-  Time Goals
+  Today's reading time goal
+  <input type='number' min="1" max="60" .value=${text} @input=${onInput} />
   `
 }
 
@@ -1215,8 +1222,7 @@ function rerender(props) {
             ${FollowedCollections(followedCollections)}
             ${FollowedSubjects(followedSubjects)}
             ${FollowedCategories(followedCategories)}
-
-          `
+            `
           // TODO: time goals
         }
         case('BROWSE'): {
