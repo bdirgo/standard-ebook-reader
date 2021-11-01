@@ -62,6 +62,7 @@
     <link rel="stylesheet" type="text/css" href="./css/index.css" media="screen"/>
     <link rel="stylesheet" type="text/css" href="./css/ebook.css" media="screen"/>
     
+    <script src="./lib/localforage.js"></script>
     <script type="module" src="./js/darkMode.js"></script>
     <script src="./lib/jszip.3.5.0.js"></script>
     <script src="./lib/epub.0.3.88.js"></script>
@@ -113,6 +114,45 @@
     </main>
     <div id="next" class="right-side">&nbsp;</div>
     <footer id="footer" class="section"></footer>
+    <script>
+        var timeGoals = localforage.createInstance({
+            name: "timeGoals"
+        });
+        // let timeGoalInSec = 20 * 60;
+        // timeGoals.getItem('todays-goal').then(function(value) {
+        //     // value?.today === new Date().getDate()
+        //     if (value !== null) {
+        //         timeGoalInSec = value.timeGoalInSec;
+        //     } else {
+        //         timeGoals.setItem('todays-goal', {
+        //             timeGoalInSec,
+        //             today: new Date(),
+        //         });
+        //     }
+        // })
+        // function handleTimeGoal () {
+        //     console.log('reached time goal!');
+        //     timeGoals.setItem('counterVal', timeGoalInSec);
+
+        // }
+        // timeGoals.getItem('counterVal').then(function(value) {
+        //     let timeRef_ls = 0;
+        //     if (value !== null) {
+        //         timeRef_ls = value
+        //     }
+        //     const timeRef = (new Date()) - (timeRef_ls * 1000)
+        //     const CounterIntv = setInterval(() => {
+        //         let seconds = Math.floor(((new Date()) - timeRef) / 1000)
+        //         console.log(seconds)
+        //         if (seconds >= timeGoalInSec ) {
+        //             handleTimeGoal();
+        //             clearInterval(CounterIntv);
+        //         }
+        //         timeGoals.setItem('counterVal', seconds.toString(10))
+        //     }, 13 * 1000);
+        // })
+
+    </script>
     <script>
         const fontSize = 'fontSize-num'
         if(!window.localStorage.getItem(fontSize)) {
