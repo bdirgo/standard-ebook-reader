@@ -440,19 +440,27 @@ const Library = (userLibrary) => {
   const dupBooks = [...currentlyReading, ...entries]
   const books = Array.from(new Set(dupBooks.map(a => a?.id)))
         .map(id => dupBooks.find(a => a.id === id))
+  const firstBook = books.shift()
   return html`
-    <h2>Currently reading</h2>
+    <h3>Currently reading</h3>
+    <ul class="library-list">${ItemView(firstBook, true)}</ul>
+    <h3>Recently read</h3>
     ${LibraryList(books)}
+    ${moreByThisAuthor?.length > 1 || series?.length > 0 ? (
+      html`
+      <h3>For you</h3>
+      <p><small>We think you might like these as well</small><p>
+    `) : (
+      ''
+    )}
     ${moreByThisAuthor?.length > 1
       ? html`
-      <h3>More by ${moreByThisAuthor?.title}</h3>
-      ${Browse([moreByThisAuthor], {isAuthor: true})}
+      ${Browse([moreByThisAuthor], {isAuthor: true}, html`<h3>More by ${moreByThisAuthor?.title}</h3>`)}
       `
       : html``}
     ${series?.length
     ? html`
-      <h3>More in this series</h3>
-      ${Browse(series, {isCollection: true})}
+      ${Browse(series, {isCollection: true}, html`<h3>The ${series?.[0]?.title} series</h3>`)}
     `
     : html`
     `}
@@ -536,7 +544,7 @@ const Collections = (items = []) => {
             }`
   }`}
 
-const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}) => {
+const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}, Title) => {
   if (subject !== null) {
   const {
     title,
@@ -563,12 +571,13 @@ const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}) => {
     tab:'AUTHOR',
     query: title,
   })
-  return html`
+  return html`${Title === null ? html`
   <h3 class="pointer" @click=${
     (isSubject && clickSubject)
     || (isAuthor && clickAuthor)
     || (isCategory && clickCategory)
     || (isCollection && clickCollection)}><a href="">${title} ${length ? `(${length})` : ''}</a></h3>
+    ` : Title}
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
@@ -578,12 +587,21 @@ const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}) => {
 }
 }
 
-const Browse = (items = [], {isAuthor = false, isSubject = false, isCategory = false, isCollection = false}) => {
+const Browse = (
+    items = [],
+    {
+      isAuthor = false,
+      isSubject = false,
+      isCategory = false,
+      isCollection = false
+    },
+    Title = null,
+    ) => {
   return html`
   ${items.length === 0
     ? html`${EmptyLibrary()}`
     : html`${items.map(subject => {
-                    return html`${Subjects(subject, {isAuthor, isSubject, isCategory, isCollection})}`
+                    return html`${Subjects(subject, {isAuthor, isSubject, isCategory, isCollection}, Title)}`
                     })
             }`
   }`}
@@ -1078,6 +1096,12 @@ const LoadingMessages = (index = 1) => {
   `
 }
 
+const TimeGoals = () => {
+  return html`
+  Time Goals
+  `
+}
+
 
 function hideOnClickOutside(element) {
   const outsideClickListener = event => {
@@ -1160,10 +1184,19 @@ function rerender(props) {
         case('LIBRARY'): {
           return html`
             ${Library(userLibrary)}
+            ${(
+              followedSearchResults?.length > 0 ||
+              followedCollections?.length > 0 ||
+              followedSubjects?.length > 0 ||
+              followedCategories?.length > 0
+            ) ? html`
+            <h3>Collections you follow</h3>
+            ` : ''}
             ${FollowedAuthors(followedSearchResults)}
             ${FollowedCollections(followedCollections)}
             ${FollowedSubjects(followedSubjects)}
             ${FollowedCategories(followedCategories)}
+            ${TimeGoals()}
           `
         }
         case('BROWSE'): {
