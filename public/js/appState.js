@@ -605,6 +605,8 @@ async function userLibraryReducer(state = [], action) {
             const authorEntries = await addAuthorToUserLibrary(`${query}`, false);
             if (authorEntries.length > 1) {
                 userLibrary.moreByThisAuthor = authorEntries;
+            } else {
+                userLibrary.moreByThisAuthor = {}
             }
             const hasCollection = currentlyReadingEntires?.[0]?.collection !== undefined;
             if (hasCollection) {
@@ -618,6 +620,8 @@ async function userLibraryReducer(state = [], action) {
                         return val.title === seriesName;
                     })
                     userLibrary.series = series;
+                } else {
+                    userLibrary.series = [];
                 }
             }
             await myDB.setItem('userLibrary', userLibrary)

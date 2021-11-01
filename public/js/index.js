@@ -447,7 +447,7 @@ const Library = (userLibrary) => {
   const books = Array.from(new Set(dupBooks.map(a => a?.id)))
         .map(id => dupBooks.find(a => a.id === id))
   const firstBook = books.shift()
-  const isEmpty = books?.length > 0 && firstBook?.id !== null;
+  const isEmpty = dupBooks?.length === 0 && (firstBook === undefined);
   return html`
     ${isEmpty ?
       html`
