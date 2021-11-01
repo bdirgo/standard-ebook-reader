@@ -363,6 +363,7 @@ class MyLibrary extends MyCategory {
 class SECollection extends MyCategory {
     constructor(given) {
         super(given)
+        this.type = given.type
     }
 }
 
@@ -750,6 +751,21 @@ async function bookLibraryReducer(state = [], action) {
                 // console.log('repopulating collections')
                 bookLibrary = await fetchCollections()
             } else {
+                let shouldUpdateBookEntires = false
+                const firstEntryId = entriesByCollection?.collections?.[0]?.entries?.[0]?.id
+                const firstBookEntry = await bookEntires.getItem(firstEntryId)
+                if (firstBookEntry?.collection === undefined || firstBookEntry?.collection?.length === 0) {
+                    shouldUpdateBookEntires = true
+                }
+                if (shouldUpdateBookEntires) {
+                    await Promise.all(entriesByCollection?.collections?.map(async collection => {
+                        return await Promise.all(collection?.entries?.map(async entry => {
+                            if (entry?.id !== null) {
+                                await bookEntires.setItem(entry.id, entry)
+                            }
+                        }))
+                    }))
+                }
                 // console.log('collections in storage')
                 bookLibrary = entriesByCollection
             }
