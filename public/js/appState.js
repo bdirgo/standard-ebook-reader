@@ -606,7 +606,21 @@ async function userLibraryReducer(state = [], action) {
                 if (authorEntries.length > 1) {
                     userLibrary.moreByThisAuthor = authorEntries;
                 }
-                await myDB.setItem('userLibrary',userLibrary)
+                const hasCollection = currentlyReadingEntires?.[0]?.collection !== undefined;
+                if (hasCollection) {
+                    const collectionArray = currentlyReadingEntires[0].collection;
+                    const entriesByCollection = await myDB.getItem('entriesByCollection');
+                    const seriesName = collectionArray.filter(val => {
+                        return val.type === 'series';
+                    })?.[0]?.title
+                    if (seriesName !== undefined) {
+                        const series = entriesByCollection.collections.filter(val => {
+                            return val.title === seriesName;
+                        })
+                        userLibrary.series = series;
+                    }
+                }
+                await myDB.setItem('userLibrary', userLibrary)
                 return userLibrary
             }
         }

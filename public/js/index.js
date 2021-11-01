@@ -434,6 +434,7 @@ const Library = (userLibrary) => {
     entries = [],
     currentlyReading = [],
     moreByThisAuthor = {},
+    series = [],
     title,
   } = userLibrary
   const dupBooks = [...currentlyReading, ...entries]
@@ -448,6 +449,13 @@ const Library = (userLibrary) => {
       ${Browse([moreByThisAuthor], {isAuthor: true})}
       `
       : html``}
+    ${series?.length
+    ? html`
+      <h3>More in this series</h3>
+      ${Browse(series, {isCollection: true})}
+    `
+    : html`
+    `}
   `
 }
 
@@ -684,8 +692,8 @@ const AuthorList = (queryResults) => {
     query,
   })
   // <h2>${title}</h2>
-  // <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   return html`
+  <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   <ul class="list-style-none">
     ${results.length === 0
       ? html`${EmptySearch()}`
