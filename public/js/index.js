@@ -108,7 +108,7 @@ function initializeApp(initialState, searchParams) {
   if (hasPath) {
     state = initialState;
     initialRenderCall(initialState);
-  } else {
+  } else if(getCurrentlyReadingStorage()?.length === 2) {
     let action = {
       tab: 'NEW',
       type: 'new-tab',
@@ -116,6 +116,8 @@ function initializeApp(initialState, searchParams) {
     const searchParams = new URLSearchParams(action);
     window.history.pushState(action, "", `?${searchParams}`);
     initialRenderCall(action)
+  } else {
+    initialRenderCall({})
   }
 }
 let displayMode = 'browser tab';
@@ -127,7 +129,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
         displayMode = 'standalone';
     }
-    console.log('DISPLAY_MODE_LAUNCH:', displayMode);
+    // console.log('DISPLAY_MODE_LAUNCH:', displayMode);
 
 });
 
@@ -167,7 +169,7 @@ const spawnWorker = () => {
     action: {
       type: 'collection-tab',
       tab: 'COLLECTIONS',
-      currentlyReading:'[]'
+      currentlyReading:'[]',
     },
   }
   collectionWorker.postMessage({type:'click', payload:JSON.stringify(payload)});
@@ -524,18 +526,18 @@ const Library = (userLibrary) => {
     )}
     ${series?.length
     ? html`
-      ${Browse(series, {isCollection: true}, html`<h3>The ${series?.[0]?.title} series</h3>`)}
+      ${Browse(series, {isCollection: true}, html`The ${series?.[0]?.title} series`)}
     `
     : html`
     `}
     ${moreByThisAuthor?.length > 1
       ? html`
-      ${Browse([moreByThisAuthor], {isAuthor: true}, html`<h3>More by ${moreByThisAuthor?.title}</h3>`)}
+      ${Browse([moreByThisAuthor], {isAuthor: true}, html`More by ${moreByThisAuthor?.title}`)}
       `
       : html``}
     ${similarCategory?.length > 1
       ? html`
-        ${Browse([similarCategory], {isCategory: true}, html`<h3>${similarCategory?.title.split(' -- ').join(', ')}</h3>`)}
+        ${Browse([similarCategory], {isCategory: true}, html`${similarCategory?.title.split(' -- ').join(', ')}`)}
       `
       : html`
       `}
@@ -1000,7 +1002,7 @@ const clickHandlerCreator = (action, cb = () => {}) => {
       if (action?.tab === "LIBRARY" || action?.tab === "NEW" || action?.tab === "SEARCH") {
         lastActiveTab = action.tab
       }
-      if (action.tab === "COLLECTIONS" && collectionWorker !== null) {
+      if (collectionWorker !== null) {
         collectionWorker.terminate();
       }
       window.history.pushState(action, "", `?${searchParams}`);

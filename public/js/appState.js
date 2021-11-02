@@ -15,13 +15,20 @@ function toTitleCase(str) {
 }
 
 const LOAD_TIME = 650
+const dbName = 'myDB';
 
+// Create table 1 in databaseName
 var myDB = localforage.createInstance({
-    name: "myDB"
+    name        : dbName,
+    storeName   : 'entriesBy',
+    description : "Different collections of the book entries"
 });
 
+// Create table 2 in databaseName
 var bookEntires = localforage.createInstance({
-    name: "bookEntires"
+    name        : dbName,
+    storeName   : 'bookEntires',
+    description : "The book entries details"
 });
 
 class XMLObject {
@@ -500,7 +507,7 @@ async function fetchCollections() {
                 entry.collection = arr
             })
             if (entry !== undefined && entry !== null && entry?.id !== null) {
-                bookEntires.setItem(entryId, entry);
+                await bookEntires.setItem(entryId, entry);
             }
         } else {
             console.log(entryId);
@@ -656,7 +663,7 @@ async function userLibraryReducer(state = [], action) {
                 } catch (error) {
                     userLibrary.entries = [newEntry]
                 }
-                bookEntires.setItem(entryId, {...newEntry, inUserLibrary: true});
+                await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: true});
                 await myDB.setItem('userLibrary', userLibrary)
             }
             return userLibrary;
@@ -674,7 +681,7 @@ async function userLibraryReducer(state = [], action) {
             }
             // Remove book out of library
             newEntry.inUserLibrary = false;
-            bookEntires.setItem(entryId, {...newEntry, inUserLibrary: false});
+            await bookEntires.setItem(entryId, {...newEntry, inUserLibrary: false});
             await myDB.setItem('userLibrary', userLibrary);
             return userLibrary;
         }
@@ -793,7 +800,7 @@ async function bookLibraryReducer(state = [], action) {
                     await Promise.all(entriesByCollection?.collections?.map(async collection => {
                         return await Promise.all(collection?.entries?.map(async entry => {
                             if (entry !== undefined && entry !== null && entry?.id !== null) {
-                                bookEntires.setItem(entry.id, entry)
+                                await bookEntires.setItem(entry.id, entry)
                             }
                         }))
                     }))
@@ -1367,7 +1374,7 @@ async function searchReducer(state = {}, action) {
     }
 }
 
-function setInitialState(
+function initialState(
     userLibrary = {},
     bookLibrary = {},
     activeTab = 'LIBRARY',
@@ -1387,14 +1394,7 @@ const initialLoadTime = Date.now();
 let collectionWorker;
 
 async function initApp(state, action) {
-    let bookEntiresLength;
-    bookEntires.length().then(function(numberOfKeys) {
-        // Outputs the length of the database.
-        bookEntiresLength = numberOfKeys
-    }).catch(function(err) {
-        // This code runs if there were any errors
-        console.log(err);
-    });
+    let bookEntiresLength = await bookEntires.length() ?? false;
     let userLibrary = await myDB.getItem('userLibrary');
     let entriesBySubject = await myDB.getItem('entriesBySubject');
     let entriesByCategory = await myDB.getItem('entriesByCategory');
@@ -1415,10 +1415,12 @@ async function initApp(state, action) {
             })
         })
     }
-    action = {
-        ...action,
-        tab: 'LIBRARY',
-        type: 'library-tab',
+    if (!action?.tab) {
+        action = {
+            ...action,
+            tab: 'LIBRARY',
+            type: 'library-tab',
+        }
     }
     return await app(state, action)
 }
@@ -1476,7 +1478,7 @@ async function populateBookEntires(subjects) {
     await Promise.all(entriesBySubject.subjects.map(async bookFeed => {
         await Promise.all(bookFeed.entries.map(async entry => {
             if (entry !== undefined && entry !== null && entry?.id !== null) {
-                bookEntires.setItem(entry.id, entry)
+                await bookEntires.setItem(entry.id, entry)
             }
         }))
     }))
@@ -1516,35 +1518,32 @@ self.onmessage = async function(event) {
         clearInterval(loadingInterval)
     }
     loadingInterval = setInterval(() => {
-        // postLoading()
+        postLoading()
     }, LOAD_TIME + (150 * Math.random()));
+    let action = parsedPayload.action
     switch (type) {
         case 'init': {
             console.log('init')
-            state = {
-                userLibrary: {},
-                bookLibrary: {},
-                activeTab: 'LIBRARY',
-                activeEntry: null,
-                activeCategory: null,
-            }
-            state = await initApp(state, parsedPayload.action)
-            if (
-                (
-                    state?.userLibrary?.currentlyReading?.length === 0 &&
-                    state?.userLibrary?.entries?.length === 0
-                ) ||
-                (
-                    state?.userLibrary?.currentlyReading === undefined &&
-                    state?.userLibrary?.entries === undefined
-                )
-            ) {
-                log('go to new tab, library is empty')
-                state = await app(state, {
-                    tab: 'NEW',
-                    type: 'new-tab',
-                    currentlyReading: state?.userLibrary?.currentlyReading,
-                }) 
+            state = await initApp(initialState(), action)
+            if (action?.currentlyReading?.length === 2) {
+                if (
+                    (
+                        state?.userLibrary?.currentlyReading?.length === 0 &&
+                        state?.userLibrary?.entries?.length === 0
+                    ) ||
+                    (
+                        state?.userLibrary?.currentlyReading === undefined &&
+                        state?.userLibrary?.entries === undefined
+                    )
+                ) {
+                    log('go to new tab, library is empty')
+                    action = {
+                        ...action,
+                        tab: 'NEW',
+                        type: 'new-tab',
+                    }
+                    state = await app(state, action) 
+                }
             }
             log('app is initialized')
             clearInterval(loadingInterval)
@@ -1552,7 +1551,7 @@ self.onmessage = async function(event) {
             break;
         }
         case "click": {
-            state = await app(state, parsedPayload.action)
+            state = await app(state, action)
             clearInterval(loadingInterval)
             self.postMessage({type:"state", payload:JSON.stringify(state)});
             break;
