@@ -1405,15 +1405,12 @@ async function initApp(state, action) {
     }
     
     if (!entriesByCollection) {
-        collectionWorker = new Worker("./appState.js");
-        const payload = {
-          action: {
-            type: 'collection-tab',
-            tab: 'COLLECTIONS',
-            currentlyReading:'[]'
-          },
-        }
-        collectionWorker.postMessage({type:'click', payload:JSON.stringify(payload)});
+        self.postMessage({
+            type: 'spawn',
+            payload: JSON.stringify({
+                dbItem: 'entriesByCollection',
+            })
+        })
     }
 
     return await app(state, {
@@ -1550,9 +1547,6 @@ self.onmessage = async function(event) {
             break;
         }
         case "click": {
-            if (parsedPayload.action?.type === 'COLLECTION') {
-                collectionWorker.terminate();
-            }
             state = await app(state, parsedPayload.action)
             clearInterval(loadingInterval)
             self.postMessage({type:"state", payload:JSON.stringify(state)});

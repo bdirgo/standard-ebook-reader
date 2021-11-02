@@ -5,6 +5,8 @@ const w = new Worker("./js/appState.js");
 let state = history.state;
 let lastActiveTab = ''
 let previousAction = null;
+let carouselItems = null;
+let currentCarouselIndex = 0;
 const standardURL = 'https://standardebooks.org'
 
 const log = console.log;
@@ -28,7 +30,7 @@ Reading Ease:
 30-50 College Difficult
 0-30  Graduate Very Difficult
 */
-const EaseToGrade = (ease) => {
+const EaseToGrade = (ease = -1) => {
     if (ease >= 90) {
         return "5th Grade";
     } else if (ease >= 80 && ease < 90) {
@@ -52,7 +54,7 @@ const EaseToGrade = (ease) => {
     }
     return null
 }
-const EaseToString = (ease) => {
+const EaseToString = (ease = -1) => {
         if (ease >= 90) {
             return "Very Easy";
         } else if (ease >= 80 && ease < 90) {
@@ -150,11 +152,26 @@ w.onmessage = function(event) {
         callRender(state);
         break;
       }
+      case "spawn": {
+        spawnWorker()
+      }
       default:
         console.log(data)
         break;
     }
 };
+let collectionWorker = null;
+const spawnWorker = () => {
+  collectionWorker = new Worker("./js/appState.js");
+  const payload = {
+    action: {
+      type: 'collection-tab',
+      tab: 'COLLECTIONS',
+      currentlyReading:'[]'
+    },
+  }
+  collectionWorker.postMessage({type:'click', payload:JSON.stringify(payload)});
+}
 
 const getCurrentlyReadingStorage = () => {
     const stor = localStorage.getItem('currentlyReading')
@@ -228,7 +245,7 @@ function toTitleCase(str = '') {
 }
 
 
-function createElementFromHTML(htmlString) {
+function createElementFromHTML(htmlString = "<meta />") {
   var div = document.createElement('div');
   div.innerHTML = htmlString.trim();
 
@@ -262,6 +279,19 @@ const SearchBar = (queryResults) => {
     // listener options: capture, passive, and once.
     capture: true,
   }
+  function onEntryClick({entryId}) {
+    const items = results?.map(val => val.item)
+    if (items?.length > 1 ) {
+      carouselItems = items
+      currentCarouselIndex = items.findIndex(val => {
+        return val?.id === entryId
+      })
+    } else {
+      carouselItems = null;
+      currentCarouselIndex = 0;
+      return;
+    }
+  }
   return html `
   <form role="search" @submit=${submitHandler}><label class="no-padding" for="mySearch">You can search for a title, author, subject, etc.</label>
     <div>
@@ -280,7 +310,7 @@ const SearchBar = (queryResults) => {
   ${results.length === 0
     ? html`${EmptySearch()}`
     : html`<ul class="list-style-none library-list no-padding">${results.map(item => {
-              return html`${ItemView(item.item)}`
+              return html`${ItemView(item.item, false, onEntryClick)}`
               })
             }</ul>`
   }`
@@ -351,8 +381,8 @@ const BrowseNavigation = () => {
 }
 const HowTo = () => html`
   <ol>
-  ${displayMode = 'browser tab' ? html`<li>Add this web page to your homescreen.</li>` : ''}
-  <li>Browse to add a few books.</li>
+  ${displayMode === 'browser tab' ? html`<li>Add this web page to your homescreen.</li>` : ''}
+  <li>Browse or Search to add a book to Home.</li>
   <li>The app will remember your place. So, you can come back and pick up where you left off.</li>
   </ol>`
 const HowToFollow = () => html`<h2>How to Follow Categories</h2>
@@ -378,7 +408,7 @@ ${HowToFollow()}
 <p><small>version: ${config.version}</small></p>
 `
 
-const ItemView = (entry, isLibraryListView = false) => {
+const ItemView = (entry, isLibraryListView = false, onEntryClick = () => {}) => {
   const {
     id,
     thumbnail,
@@ -390,7 +420,7 @@ const ItemView = (entry, isLibraryListView = false) => {
   const clickOpenDetailView = clickHandlerCreator({
     type: 'click-title',
     entryId: entry?.id,
-  });
+  }, onEntryClick);
   return html`
   <li class="library-list-image">
     <a href="" @click=${isLibraryListView ? clickOpenBook : clickOpenDetailView} >
@@ -408,10 +438,22 @@ const ItemView = (entry, isLibraryListView = false) => {
     </div>
   </li>`}
 const LibraryList = (items = []) => {
+  function onEntryClick({entryId}) {
+    if (items?.length > 1 ) {
+      carouselItems = items
+      currentCarouselIndex = items.findIndex(val => {
+        return val?.id === entryId
+      })
+    } else {
+      carouselItems = null;
+      currentCarouselIndex = 0;
+      return;
+    }
+  }
   return html`
   ${items?.length > 0 ?
     html`
-      <ul class="library-list">${items.map((item) => ItemView(item, true))}</ul>
+      <ul class="library-list">${items.map((item) => ItemView(item, true, onEntryClick))}</ul>
     ` : ''}
   `
 }
@@ -502,11 +544,17 @@ function collectionID(entry, subjectTitle) {
   return entry?.collection?.filter(val => val.title === subjectTitle)[0]?.position
 }
 
-const SubjectEntry = (entry, isCoverOnly = true, subjectTitle = '') => {
+const SubjectEntry = (props) => {
+  const {
+    entry,
+    onEntryClick = () => {},
+    isCoverOnly = true,
+    subjectTitle = ''
+  } = props
   const clickHandler = clickHandlerCreator({
     type: 'click-title',
     entryId: entry?.id,
-  })
+  }, onEntryClick)
   const collectionNum = collectionID(entry, subjectTitle)
   return entry === null ? html``: html`
     <li class="subject-list-image" @click=${clickHandler}>
@@ -533,11 +581,17 @@ const New = (subject) => {
     categoryTerm: title,
     tab: 'SUBJECT',
   })
+  function onEntryClick({entryId}) {
+    carouselItems = entries
+    currentCarouselIndex = entries.findIndex(val => {
+      return val?.id === entryId
+    })
+  }
   return html`
   ${FollowTitle(`${title} ${entries?.length ? `(${entries.length})` : ''}`, clickHandler)}
   <ul class="subject-list">
     ${entries.map(entry => {
-      return SubjectEntry(entry)
+      return SubjectEntry({entry, onEntryClick})
     })}
   </ul>
   `
@@ -553,12 +607,18 @@ const Collection = (subject) => {
     categoryTerm: title,
     tab: 'COLLECTION',
   })
+  function onEntryClick({entryId}) {
+    carouselItems = entries
+    currentCarouselIndex = entries.findIndex(val => {
+      return val?.id === entryId
+    })
+  }
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   return html`
   <h3 class="pointer" @click=${clickHandler}><a href="">${title} (${length})</a></h3>
   <ul class="subject-list">
     ${list.map(entry => {
-      return SubjectEntry(entry)
+      return SubjectEntry({entry, onEntryClick})
     })}
   </ul>
   `
@@ -602,6 +662,12 @@ const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}, Titl
     tab:'AUTHOR',
     query: title,
   })
+  function onEntryClick({entryId}) {
+    carouselItems = entries
+    currentCarouselIndex = entries.findIndex(val => {
+      return val?.id === entryId
+    })
+  }
   return html`
   <h3 class="pointer" @click=${
     (isSubject && clickSubject)
@@ -610,7 +676,7 @@ const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}, Titl
     || (isCollection && clickCollection)}><a href="">${Title === null ? html`${title} ${length ? `(${length})` : ''}` : Title}</a></h3>
   <ul class="subject-list">
     ${entries.map(entry => {
-      return SubjectEntry(entry)
+      return SubjectEntry({entry, onEntryClick})
     })}
   </ul>
   `
@@ -654,6 +720,12 @@ const Subject = (category) => {
       type:'click-add-subject-to-library',
       subjectName: title
     })
+    function onEntryClick({entryId}) {
+      carouselItems = entries
+      currentCarouselIndex = entries.findIndex(val => {
+        return val?.id === entryId
+      })
+    }
     // <h2>${title}</h2>
     return html`
     ${title !== 'Newest 30 Standard Ebooks' ? html`
@@ -661,7 +733,7 @@ const Subject = (category) => {
     ` : html``}
     <ul class="category-list">
       ${entries.map(entry => {
-        return SubjectEntry(entry, isCoverOnly)
+        return SubjectEntry({entry, isCoverOnly, onEntryClick})
       })}
     </ul>`
   }
@@ -680,12 +752,18 @@ const Category = (category) => {
     type:'click-add-category-to-library',
     categoryName: title
   })
+  function onEntryClick({entryId}) {
+    carouselItems = entries
+    currentCarouselIndex = entries.findIndex(val => {
+      return val?.id === entryId
+    })
+  }
   // <h2>${title}</h2>
   return html`
   <button class="follow" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
   <ul class="category-list">
     ${entries.map(entry => {
-      return SubjectEntry(entry, isCoverOnly)
+      return SubjectEntry({entry, isCoverOnly, onEntryClick})
     })}
   </ul>`
 }
@@ -704,6 +782,12 @@ const CollectionCategory = (category) => {
     type:'click-add-collection-to-library',
     collectionName: title
   })
+  function onEntryClick({entryId}) {
+    carouselItems = list
+    currentCarouselIndex = list.findIndex(val => {
+      return val?.id === entryId
+    })
+  }
   const list = entries.sort((a,b) => parseInt(collectionID(a, title)) - parseInt(collectionID(b, title)))
   // <h2>${title}</h2>
   return html`
@@ -711,7 +795,7 @@ const CollectionCategory = (category) => {
   <p>All items in the collection are not yet in the public domain. So, there may be gaps.</p>
   <ul class="category-list">
     ${list.map(entry => {
-      return SubjectEntry(entry, isCoverOnly, title)
+      return SubjectEntry({entry, isCoverOnly, subjectTitle: title, onEntryClick})
     })}
   </ul>`
 }
@@ -742,6 +826,12 @@ const AuthorList = (queryResults) => {
     subjectName: title,
     query,
   })
+  function onEntryClick({entryId}) {
+    carouselItems = results?.map(val => val.item)
+    currentCarouselIndex = carouselItems.findIndex(val => {
+      return val?.id === entryId
+    })
+  }
   // <h2>${title}</h2>
   return html`
   <button class="follow" role="button" @click=${inUserLibrary ? removeHandler : clickHandler}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
@@ -749,7 +839,7 @@ const AuthorList = (queryResults) => {
     ${results.length === 0
       ? html`${EmptySearch()}`
       : html`${results.map(item => {
-                return html`${SubjectEntry(item.item, false)}`
+                return html`${SubjectEntry({entry: item.item, isCoverOnly: false, onEntryClick})}`
                 })
               }`
     }
@@ -800,8 +890,14 @@ const DetailView = (entry) => {
     collection = [],
   } = entry;
   const readLink = `/ebook.html?book=${ebookLink.href}`
-  const readingEaseNode = createElementFromHTML(readingEaseHTML)
-  const readingEase = readingEaseNode.nextSibling?.wholeText ?? ''
+  let readingEase = null;
+  if (readingEaseHTML) {
+    const readingEaseNode = createElementFromHTML(readingEaseHTML)
+    readingEase = readingEaseNode.nextSibling?.wholeText ?? undefined
+  } else {
+    const READINGEASEID = `${ebookLink.href}.epub-readingEase`
+    readingEase = getStorage(READINGEASEID) ?? undefined
+  }
   const clickAdd = clickHandlerCreator({
     type: 'click-add-to-library',
     entryId: entry.id,
@@ -824,7 +920,7 @@ const DetailView = (entry) => {
   }
   const clickClose = clickHandlerCreator({
     type: 'click-close-details-modal',
-  })
+  }, () => {carouselItems = null; currentCarouselIndex = 0;})
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       document.querySelector('.close').click()
@@ -870,12 +966,14 @@ const DetailView = (entry) => {
         </a>
         <div>
           <h2 class="pointer"><a href="" @click=${clickAdd}>${title}</a></h2>
-          <button @click=${shareHandler} class="share ${wasCopySuccessfull ? 'copied':''}">${wasCopySuccessfull ? html`&#9989;` : html`&#128279;`}</button>
-          <button class="follow" @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
-            type: 'click-add-to-library',
-            entryId: entry.id,
-          })}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
           ${ViewAuthorArray(authorArray)}
+          <div class="button-wrapper">
+            <button class="follow" @click=${inUserLibrary ? clickRemove() : clickHandlerCreator({
+              type: 'click-add-to-library',
+              entryId: entry.id,
+            })}><b>${inUserLibrary ? 'Remove from Home' : 'Add to Home'}</b></button>
+            <button @click=${shareHandler} class="share ${wasCopySuccessfull ? 'copied':''}">${wasCopySuccessfull ? html`&#9989;` : html`&#128279;`}</button>
+          </div>
           <p><span title="${EaseToString(readingEase)}">${EaseToGrade(readingEase) ? `${EaseToGrade(readingEase)} Reading Level` : ''}</span></p>
           <p>${convertContentToString(content)}</p>
           ${collection.length ? (
@@ -900,9 +998,12 @@ const clickHandlerCreator = (action, cb = () => {}) => {
       if (action?.tab === "LIBRARY" || action?.tab === "NEW" || action?.tab === "SEARCH") {
         lastActiveTab = action.tab
       }
+      if (action.tab === "COLLECTIONS" && collectionWorker !== null) {
+        collectionWorker.terminate();
+      }
       window.history.pushState(action, "", `?${searchParams}`);
       callRender(action)
-      cb()
+      cb(action)
     },
     // event listener objects can also define zero or more of the event 
     // listener options: capture, passive, and once.
@@ -1161,29 +1262,6 @@ function hideOnClickOutside(element) {
 
 // const isVisible = elem => !!elem && !!( elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length ) // source (2018-03-11): https://github.com/jquery/jquery/blob/master/src/css/hiddenVisibleSelectors.js 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 let isDetailModalOpen = false;
 // const bodyClickListener = function (event) {
 //   // only fire close modal action if showDetailModal is true and they clikc outside the modal
@@ -1295,6 +1373,7 @@ function rerender(props) {
     } else {
       document.body.classList.remove("modal-open");
     }
+    log(carouselItems)
     return html`
       ${isLoading ? html`
         ${LoadingMessages(loadingMessageindex)}
@@ -1352,6 +1431,8 @@ const closeModalForSwipe = () => {
   const action = {
     type: 'click-close-details-modal',
   }
+  carouselItems = null;
+  currentCarouselIndex = 0;
   const searchParams = new URLSearchParams(action);
   window.history.pushState(action, "", `?${searchParams}`);
   callRender(action)
@@ -1408,3 +1489,69 @@ sideNav.addEventListener('click',function(event) {
     sideNav.classList.remove("open")
   }
 },false)
+
+function advanceCarousel() {
+  if (carouselItems !== null) {   
+    if (currentCarouselIndex + 1 === carouselItems?.length) {
+      return;
+    }
+    const nextEntryIndex = ++currentCarouselIndex;
+    const nextEntryId = carouselItems?.[nextEntryIndex]?.id;
+    if (nextEntryId) {
+      const action = {
+        type: 'click-title',
+        entryId: nextEntryId,
+      }
+      const searchParams = new URLSearchParams(action);
+      window.history.pushState(action, "", `?${searchParams}`);
+      callRender(action)
+    }
+  }
+}
+function retreatCarousel() {
+  if (carouselItems !== null) {   
+    if (currentCarouselIndex - 1 < 0) {
+      return;
+    }
+    const nextEntryIndex = --currentCarouselIndex;
+    const nextEntryId = carouselItems?.[nextEntryIndex]?.id; 
+    if (nextEntryId) {
+      const action = {
+        type: 'click-title',
+        entryId: nextEntryId,
+      }
+      const searchParams = new URLSearchParams(action);
+      window.history.pushState(action, "", `?${searchParams}`);
+      callRender(action)
+    }
+  }
+}
+
+document.addEventListener('swiped-right', function(e) {
+  const {
+    xEnd,
+    xStart,
+  } = e.detail
+  const changeX = xEnd - xStart;
+  const modalEl = document.querySelector(".modal")
+  if (modalEl !== null) {
+    if(changeX > 100) {
+      // carousel left
+      retreatCarousel()
+    }
+  }
+});
+document.addEventListener('swiped-left', function(e) {
+  const {
+    xEnd,
+    xStart,
+  } = e.detail
+  const changeX = xStart - xEnd;
+  const modalEl = document.querySelector(".modal")
+  if (modalEl !== null) {
+    if(changeX > 100) {
+      // carousel right
+      advanceCarousel()
+    }
+  }
+});
