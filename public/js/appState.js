@@ -534,7 +534,7 @@ async function fetchEntriesBySubject(subjects) {
     }));
     const updated = new Date()
     const rv = {subjects:bookFeedEntries, updated}
-    myDB.setItem('entriesBySubject', rv)
+    await myDB.setItem('entriesBySubject', rv)
     return rv
 }
 
@@ -605,8 +605,8 @@ async function userLibraryReducer(state = [], action) {
             const authorEntries = await addAuthorToUserLibrary(`${query}`, false);
             if (authorEntries.length > 1) {
                 userLibrary.moreByThisAuthor = authorEntries;
-            } else {
-                userLibrary.moreByThisAuthor = {}
+            // } else {
+            //     userLibrary.moreByThisAuthor = {}
             }
             const hasCollection = currentlyReadingEntires?.[0]?.collection !== undefined;
             if (hasCollection) {
@@ -620,8 +620,25 @@ async function userLibraryReducer(state = [], action) {
                         return val.title === seriesName;
                     })
                     userLibrary.series = series;
-                } else {
-                    userLibrary.series = [];
+                // } else {
+                //     userLibrary.series = [];
+                }
+            }
+            const hasCategory = currentlyReadingEntires?.[0]?.categories !== undefined;
+            if (hasCategory) {
+                const entriesByCategory = await myDB.getItem('entriesByCategory');
+                const searchResults = currentlyReadingEntires[0].categories?.
+                    map(cat => {
+                        return entriesByCategory.categories.filter(val => val.term === cat.term)[0];
+                    })?.
+                    sort((a,b) => b?.entries?.length - a?.entries?.length)
+                    [0];
+                if (searchResults?.entries?.length > 1) {
+                    userLibrary.similarCategory = {
+                        title: searchResults.title,
+                        length: searchResults.entries.length,
+                        entries: await getEntriesFrom(searchResults.entries)
+                    }
                 }
             }
             await myDB.setItem('userLibrary', userLibrary)
@@ -1366,13 +1383,14 @@ async function initApp(state, action) {
     let entriesByCategory = await myDB.getItem('entriesByCategory');
     let entriesByCollection = await myDB.getItem('entriesByCollection');
 
-    if (
-        !userLibrary ||
-        !entriesByCategory ||
-        !entriesBySubject
-    ) {
-        const bookLibrary = await fetchStandardBooks();
-        await createCategroiesFrom(bookLibrary);
+
+    if (!userLibrary || !entriesBySubject) {
+        await fetchStandardBooks();
+    }
+    
+    if (!entriesByCategory) {
+        let entriesBySubject = await myDB.getItem('entriesBySubject');
+        await createCategroiesFrom(entriesBySubject);
     }
 
     if (!entriesByCollection) {

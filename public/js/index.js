@@ -15,9 +15,9 @@ const getStorage = (id) => {
     return window.localStorage.getItem(id);
 }
 
-var timeGoals = localforage.createInstance({
-    name: "timeGoals"
-});
+// var timeGoals = localforage.createInstance({
+//     name: "timeGoals"
+// });
 /* 
 Reading Ease:
 90+   Grade 5 Very Easy
@@ -440,6 +440,7 @@ const Library = (userLibrary) => {
     currentlyReading = [],
     moreByThisAuthor = {},
     series = [],
+    similarCategory = {},
     title,
   } = userLibrary
   const dupBooks = [...currentlyReading, ...entries]
@@ -468,17 +469,23 @@ const Library = (userLibrary) => {
     `) : (
       ''
     )}
-    ${moreByThisAuthor?.length > 1
-      ? html`
-      ${Browse([moreByThisAuthor], {isAuthor: true}, html`<h3>More by ${moreByThisAuthor?.title}</h3>`)}
-      `
-      : html``}
     ${series?.length
     ? html`
       ${Browse(series, {isCollection: true}, html`<h3>The ${series?.[0]?.title} series</h3>`)}
     `
     : html`
     `}
+    ${moreByThisAuthor?.length > 1
+      ? html`
+      ${Browse([moreByThisAuthor], {isAuthor: true}, html`<h3>More by ${moreByThisAuthor?.title}</h3>`)}
+      `
+      : html``}
+    ${similarCategory?.length > 1
+      ? html`
+        ${Browse([similarCategory], {isCategory: true}, html`<h3>${similarCategory?.title}</h3>`)}
+      `
+      : html`
+      `}
   `
 }
 
