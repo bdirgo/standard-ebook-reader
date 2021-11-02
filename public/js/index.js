@@ -482,7 +482,7 @@ const Library = (userLibrary) => {
       : html``}
     ${similarCategory?.length > 1
       ? html`
-        ${Browse([similarCategory], {isCategory: true}, html`<h3>${similarCategory?.title}</h3>`)}
+        ${Browse([similarCategory], {isCategory: true}, html`<h3>${similarCategory?.title.split(' -- ').join(', ')}</h3>`)}
       `
       : html`
       `}
@@ -593,13 +593,12 @@ const Subjects = (subject, {isAuthor, isSubject, isCategory, isCollection}, Titl
     tab:'AUTHOR',
     query: title,
   })
-  return html`${Title === null ? html`
+  return html`
   <h3 class="pointer" @click=${
     (isSubject && clickSubject)
     || (isAuthor && clickAuthor)
     || (isCategory && clickCategory)
-    || (isCollection && clickCollection)}><a href="">${title} ${length ? `(${length})` : ''}</a></h3>
-    ` : Title}
+    || (isCollection && clickCollection)}><a href="">${Title === null ? html`${title} ${length ? `(${length})` : ''}` : Title}</a></h3>
   <ul class="subject-list">
     ${entries.map(entry => {
       return SubjectEntry(entry)
