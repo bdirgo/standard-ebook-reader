@@ -105,6 +105,10 @@
     min-height: 604px;
 }
 
+.modal-content .img-fluid {
+    margin: 0 12px 0 0;
+}
+
 .modal-content .detail-book-cover {
     max-height: 444px;
 }
@@ -170,7 +174,8 @@ h2 {
     color: #aaaaaa;
     font-size: 28px;
     font-weight: bold;
-    padding: 0;
+    padding: 0 6px;
+    border: none;
     cursor: pointer;
     position: absolute;
     right: 18px;
