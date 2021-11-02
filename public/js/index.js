@@ -996,12 +996,16 @@ const FollowedAuthors = (followedAuthors) => {
   : html``
 }
 const AllCategories = () => {
+  // const clickHandler = clickHandlerCreator({
+  //   type:'help-tab',
+  //   tab: 'HELP'
+  // })
   const clickHandler = clickHandlerCreator({
-    type:'help-tab',
-    tab: 'HELP'
+    type:'all-categories-tab',
+    tab: 'ALL CATEGORIES'
   })
   return html`
-  ${FollowTitle('By Category', clickHandler, 'Learn')}
+  ${FollowTitle('By Category', clickHandler, 'See All')}
   `
 }
 const FollowedCategories = (followedCategories) => {
@@ -1234,6 +1238,10 @@ function rerender(props) {
         case('BROWSE'): {
           const isSubject = true
           return Browse(bookLibrary, {isSubject});
+        }
+        case('ALL CATEGORIES'): {
+          const isCategory = true
+          return Browse(bookLibrary, {isCategory});
         }
         case('COLLECTIONS'): {
           return Collections(bookLibrary);

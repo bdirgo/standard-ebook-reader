@@ -703,6 +703,22 @@ const lastUpdated = (db, h = 24) => {
 
 async function bookLibraryReducer(state = [], action) {
     switch (action.type) {
+        case('all-categories-tab'):{
+            const CATEGORYLIMIT = 2;
+            const entriesByCategory = await myDB.getItem('entriesByCategory')
+            const filteredCategories = entriesByCategory?.categories?.filter(val => val?.entries?.length > CATEGORYLIMIT);
+            const categories = await Promise.all(filteredCategories.map(async val => {
+                return {
+                    title: val?.title,
+                    length: val?.entries?.length,
+                    entries: await getEntriesFrom(val?.entries ?? [])
+                }
+            }))
+            categories.sort((a,b) => {
+                return b?.length - a?.length;
+            })
+            return categories
+        }
         case('browse-tab'): {
             const entriesBySubject = await myDB.getItem('entriesBySubject')
             const isOld = lastUpdated(entriesBySubject)
@@ -835,6 +851,7 @@ function activeTabReducer(state = 'LIBRARY', action) {
         case('library-tab'): 
         case('new-tab'): 
         case('help-tab'):
+        case('all-categories-tab'):
         case('search-author'):
         case('search-query'):
         case('search-tab'): {
