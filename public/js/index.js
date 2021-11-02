@@ -183,7 +183,7 @@ const getCurrentlyReadingStorage = () => {
 }
 
 const initialRenderCall = (state) => {
-  // log('initial call render')
+  log('initial call render version:', config.version)
   w.postMessage({
       type: "init",
       payload: JSON.stringify({
@@ -496,7 +496,9 @@ const Library = (userLibrary) => {
   } = userLibrary
   const dupBooks = [...currentlyReading, ...entries]
   const books = Array.from(new Set(dupBooks.map(a => a?.id)))
-        .map(id => dupBooks.find(a => a.id === id))
+        .map(id => dupBooks.find(a => {
+          return a && a.id === id
+        }))
   const firstBook = books.shift()
   const isEmpty = dupBooks?.length === 0 && (firstBook === undefined);
   return html`
@@ -1373,7 +1375,6 @@ function rerender(props) {
     } else {
       document.body.classList.remove("modal-open");
     }
-    log(carouselItems)
     return html`
       ${isLoading ? html`
         ${LoadingMessages(loadingMessageindex)}
