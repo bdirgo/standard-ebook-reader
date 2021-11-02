@@ -227,6 +227,15 @@ function toTitleCase(str = '') {
     );
 }
 
+
+function createElementFromHTML(htmlString) {
+  var div = document.createElement('div');
+  div.innerHTML = htmlString.trim();
+
+  // Change this to div.childNodes to support multiple top-level nodes
+  return div.firstChild; 
+}
+
 const SearchBar = (queryResults) => {
   let {
     query = '',
@@ -784,20 +793,15 @@ const DetailView = (entry) => {
     authorArray,
     summary,
     content,
+    readingEaseHTML,
     categories,
     inUserLibrary,
     wasCopySuccessfull = false,
     collection = [],
-  } = entry
-
-
-
-
-
-
+  } = entry;
   const readLink = `/ebook.html?book=${ebookLink.href}`
-  const READINGEASEID = `${ebookLink.href}.epub-readingEase`
-  const readingEase = getStorage(READINGEASEID) ?? 'unknown'
+  const readingEaseNode = createElementFromHTML(readingEaseHTML)
+  const readingEase = readingEaseNode.nextSibling?.wholeText ?? ''
   const clickAdd = clickHandlerCreator({
     type: 'click-add-to-library',
     entryId: entry.id,

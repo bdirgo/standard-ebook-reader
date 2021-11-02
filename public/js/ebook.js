@@ -13,7 +13,7 @@
     }
   }
   const CURRENTPAGEID = bookTag`${bookUrl}-currentPage`
-  const READINGEASEID = bookTag`${bookUrl}-readingEase`
+  // const READINGEASEID = bookTag`${bookUrl}-readingEase`
   const CURRENTLYREADING = 'currentlyReading'
   const isDarkMode = window.localStorage.getItem('darkMode') === 'dark'
   const setFontSize = window.localStorage.getItem('fontSize');
@@ -124,7 +124,7 @@ console.log(whichStyleSheet())
     const {
       tocByHref
     } = toc;
-    populateStorage(READINGEASEID,book.packaging.metadata.readingEaseFlesch)
+    // populateStorage(READINGEASEID,book.packaging.metadata.readingEaseFlesch)
     document.querySelector("#topbar-book-title").textContent = book.packaging.metadata.title
     console.log(toc);
     console.log(tocByHref);

@@ -478,8 +478,7 @@ async function fetchCollections() {
             const res = await fetch(opfUrl);
             const text = await res.text();
             // TODO: books out of a collection have an ease score
-            // const readingEaseText = findReadingEase(text);
-            // entry.readingEase = readingEaseText;
+            entry.readingEaseHTML = findReadingEase(text);
             const collectionTextArray = findCollectionTitles(text);
             if (collectionTextArray === null) {
                 console.warn(text)
@@ -1422,7 +1421,6 @@ async function initApp(state, action) {
         type: 'library-tab',
         currentlyReading,
     })
-    // populate database if it doesnt exist ?? Maybe only whent he user clicks browse?? if they first click search then, fallback on SE search and not myDB
 }
 
 function showDetailModalReducer(state = false, action) {
