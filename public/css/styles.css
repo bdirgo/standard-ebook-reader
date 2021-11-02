@@ -105,9 +105,26 @@
     min-height: 604px;
 }
 
+.modal-content .detail-book-cover {
+    max-height: 444px;
+}
+
+.modal-content .category-list-item {
+    text-align: center;
+}
+
 .modal-content a {
-    display: inline-block;
-    /* display: flex; iOS doesn't like this. Stretches the image */
+    display: flex;
+    justify-content: center;
+}
+
+.modal-content h2 {
+    white-space: initial;
+}
+
+.modal-content .button-wrapper {
+    display: flex;
+    justify-content: space-between;
 }
 
 .dark .modal-content {
@@ -153,8 +170,7 @@ h2 {
     color: #aaaaaa;
     font-size: 28px;
     font-weight: bold;
-    border: 1px solid black;
-    padding: 0 7px;
+    padding: 0;
     cursor: pointer;
     position: absolute;
     right: 18px;
@@ -181,9 +197,6 @@ h2 {
     border: 1px solid black;
     padding: 0 6px;
     cursor: pointer;
-    position: absolute;
-    right: 18px;
-    top: 60px;
 }
 .dark .share {
     background-color: #202530;
