@@ -1002,7 +1002,7 @@ const clickHandlerCreator = (action, cb = () => {}) => {
       if (action?.tab === "LIBRARY" || action?.tab === "NEW" || action?.tab === "SEARCH") {
         lastActiveTab = action.tab
       }
-      if (collectionWorker !== null) {
+      if (action?.tab === "COLLECTIONS" && collectionWorker !== null) {
         collectionWorker.terminate();
       }
       window.history.pushState(action, "", `?${searchParams}`);
