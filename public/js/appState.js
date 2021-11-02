@@ -534,7 +534,7 @@ async function fetchEntriesBySubject(subjects) {
     }));
     const updated = new Date()
     const rv = {subjects:bookFeedEntries, updated}
-    await myDB.setItem('entriesBySubject', rv)
+    myDB.setItem('entriesBySubject', rv)
     return rv
 }
 
@@ -1394,22 +1394,17 @@ async function initApp(state, action) {
     const {
         currentlyReading,
     } = action;
-
     let userLibrary = await myDB.getItem('userLibrary');
     let entriesBySubject = await myDB.getItem('entriesBySubject');
     let entriesByCategory = await myDB.getItem('entriesByCategory');
     let entriesByCollection = await myDB.getItem('entriesByCollection');
 
 
-    if (!userLibrary || !entriesBySubject) {
-        await fetchStandardBooks();
+    if (!userLibrary || !entriesBySubject || !entriesByCategory) {
+        const bookLibrary = await fetchStandardBooks();
+        await createCategroiesFrom(bookLibrary);
     }
     
-    if (!entriesByCategory) {
-        let entriesBySubject = await myDB.getItem('entriesBySubject');
-        await createCategroiesFrom(entriesBySubject);
-    }
-
     if (!entriesByCollection) {
         collectionWorker = new Worker("./appState.js");
         const payload = {
