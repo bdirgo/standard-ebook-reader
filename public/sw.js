@@ -1,4 +1,4 @@
-const version = '1.5.9f-11.02';
+const version = '1.5.9-11.03';
 const cacheName = `cache-v${version}`;
 const bookCache = `offline-book`
 const resourcesToPrecache = [

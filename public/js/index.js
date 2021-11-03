@@ -503,6 +503,10 @@ const Library = (userLibrary) => {
         }))
   const firstBook = books.shift()
   const isEmpty = dupBooks?.length === 0 && (firstBook === undefined);
+  const shouldShowMoreAuthor = moreByThisAuthor?.length > 1;
+  const shouldShowSeries = series?.length > 0;
+  const shouldShowSimilarCateogry = similarCategory?.length > 1;
+  const shouldShowForYou = shouldShowMoreAuthor || shouldShowSeries || shouldShowSimilarCateogry
   return html`
     ${isEmpty ?
       html`
@@ -517,30 +521,27 @@ const Library = (userLibrary) => {
         }
       `
     }
-    ${moreByThisAuthor?.length > 1 || series?.length > 0 ? (
-      html`
+    ${shouldShowForYou
+      ? html`
       <h3>For you</h3>
       <p><small>We think you might like these as well</small><p>
-    `) : (
-      ''
-    )}
-    ${series?.length
-    ? html`
+      `
+      : ('')}
+    ${shouldShowSeries
+      ? html`
       ${Browse(series, {isCollection: true}, html`The ${series?.[0]?.title} series`)}
-    `
-    : html`
-    `}
-    ${moreByThisAuthor?.length > 1
+      `
+      : html``}
+    ${shouldShowMoreAuthor
       ? html`
       ${Browse([moreByThisAuthor], {isAuthor: true}, html`More by ${moreByThisAuthor?.title}`)}
       `
       : html``}
-    ${similarCategory?.length > 1
+    ${shouldShowSimilarCateogry
       ? html`
-        ${Browse([similarCategory], {isCategory: true}, html`${similarCategory?.title.split(' -- ').join(', ')}`)}
+      ${Browse([similarCategory], {isCategory: true}, html`${similarCategory?.title.split(' -- ').join(', ')}`)}
       `
-      : html`
-      `}
+      : html``}
   `
 }
 
