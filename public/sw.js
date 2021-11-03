@@ -1,4 +1,4 @@
-const version = '1.5.9-11.03';
+const version = '1.5.9a-11.03';
 const cacheName = `cache-v${version}`;
 const bookCache = `offline-book`
 const resourcesToPrecache = [
@@ -47,16 +47,16 @@ self.addEventListener('activate', event => {
 })
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url)
+    if (url.protocol === "chrome-extension:") {
+        // dont cache weird chrome PWA compat things
+        return fetch(event.request);
+    }
     console.log('fetch intercepted for:', url)
     event.respondWith(caches.match(event.request)
         .then(cachedResponse => {
             return cachedResponse || fetch(event.request).then(async function (response) {
                 if (response.status === 0) {
                     // dont cache opaque responses
-                    return response
-                }
-                if (response.protocol === "chrome-extension:") {
-                    // dont cache weird chrome PWA compat things
                     return response
                 }
                 const clonedRes = response.clone();

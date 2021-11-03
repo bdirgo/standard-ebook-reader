@@ -1,7 +1,7 @@
 importScripts(
-    '../lib/localforage.js',
-    '../lib/tXml.js',
-    '../lib/fuse.js',
+    '../lib/localforage.min.js',
+    '../lib/tXml.min.js',
+    '../lib/fuse.min.js',
 )
 const log = console.log;
 
@@ -630,12 +630,12 @@ async function userLibraryReducer(state = [], action) {
                 const hasCategory = currentlyReadingEntires?.[0]?.categories !== undefined;
                 if (hasCategory) {
                     const entriesByCategory = await myDB.getItem('entriesByCategory');
-                    const searchResults = currentlyReadingEntires[0].categories?.
+                    const searchResultsArr = currentlyReadingEntires[0].categories?.
                         map(cat => {
                             return entriesByCategory.categories.filter(val => val.term === cat.term)[0];
                         })?.
-                        sort((a,b) => b?.entries?.length - a?.entries?.length)
-                        [0];
+                        sort((a,b) => b?.entries?.length - a?.entries?.length);
+                    const searchResults = searchResultsArr[0];
                     if (searchResults?.entries?.length > 1) {
                         userLibrary.similarCategory = {
                             title: searchResults.title,

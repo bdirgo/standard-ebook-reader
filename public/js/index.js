@@ -1,7 +1,7 @@
 import { html, render } from 'https://unpkg.com/lit-html?module';
 import config from './config.js'
 
-const w = new Worker("./js/appState.js");
+const w = new Worker("./js/appState.min.js");
 let state = history.state;
 let lastActiveTab = ''
 let previousAction = null;
@@ -164,7 +164,7 @@ w.onmessage = function(event) {
 };
 let collectionWorker = null;
 const spawnWorker = () => {
-  collectionWorker = new Worker("./js/appState.js");
+  collectionWorker = new Worker("./js/appState.min.js");
   const payload = {
     action: {
       type: 'collection-tab',
@@ -1220,7 +1220,7 @@ const SideNavTitle = (props) => {
     }
     default: {
       return html`
-      ${toTitleCase(activeTab ? activeTab : 'Standard Ebooks')}
+      ${toTitleCase(activeTab ? activeTab : 'Standard Ebook Reader')}
       `
     }
   }

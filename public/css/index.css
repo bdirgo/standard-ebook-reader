@@ -136,7 +136,7 @@ nav {
 	font-size: 50px;
 }
 .parent-nav button.box.button.active {
-	color: #1271e6;
+	color: #1067d1;
 }
 .dark .parent-nav button.box.button.active {
 	color: #4096ff;
@@ -160,7 +160,7 @@ button.button {
 }
 .parent-nav button.box.button {
 	border: none;
-	color: #797979;
+	color: #6a6a6a;
 	background-color: transparent;
 }
 

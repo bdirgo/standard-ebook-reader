@@ -6,7 +6,7 @@
     <!-- <meta name = "viewport" content = "width=device-width, minimum-scale=1.0, maximum-scale = 1.0, user-scalable = no"> -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Standard Books">
+    <meta name="apple-mobile-web-app-title" content="Books">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
     <meta name="theme-color" content="#202530">
@@ -14,7 +14,7 @@
     <meta property="og:title" content="Standard Ebook Reader" />
     <meta property="og:image" content="./android-chrome-512x512.png" />
     <link rel=preconnect href="https://standardebooks.org">
-    <link rel=preconnect href="https://github.com">
+    <link rel=preconnect href="https://unpkg.com">
 
     <script>
       window.addEventListener('unhandledrejection', event => {
@@ -59,25 +59,25 @@
     <!-- <link rel="manifest" href="./manifest.json" /> -->
     <link rel="manifest" href="manifest.webmanifest" />
     <script async src="https://unpkg.com/pwacompat" crossorigin="anonymous"></script>
-    <script defer src="./lib/localforage.js"></script>
-    <script defer type="module" src="./js/index.js"></script>
-    <script defer type="module" src="./js/darkMode.js"></script>
-    <script defer src="./lib/swiped-events.js"></script>
+    <script defer src="./lib/localforage.min.js"></script>
+    <script defer type="module" src="./js/index.min.js"></script>
+    <script defer type="module" src="./js/darkMode.min.js"></script>
+    <script defer src="./lib/swiped-events.min.js"></script>
     
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#202530">
     <meta name="msapplication-TileColor" content="#2b5797">
     
-    <link rel="stylesheet" type="text/css" href="./css/index.css" media="screen"/>
+    <link rel="stylesheet" type="text/css" href="./css/index.css"/>
     <link rel="stylesheet" type="text/css" href="./css/styles.css">
     
-    <title>Standard Ebook Reader</title>
+    <title>Books</title>
     <meta name="Description" content="Read books from Standard Ebooks">
   </head>
   <body class="dark">
     <div class="first-content">
-      <h1>Standard Ebooks</h1>
+      <h1>Standard Ebook Reader</h1>
       <div id="main">
       Loading...
       </div>

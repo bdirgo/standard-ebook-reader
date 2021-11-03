@@ -1,6 +1,6 @@
 {
     "name": "Standard Ebook Reader",
-    "short_name": "Standard Books",
+    "short_name": "Books",
     "description": "Read, download, and browse books from the Standard Ebook library",
     "start_url": "/",
     "scope":"/",
